@@ -134,9 +134,9 @@ export class ApiKeyStorage {
   }
 
   /**
-   * Convert base64 string to ArrayBuffer
+   * Convert base64 string to Uint8Array (compatible with SubtleCrypto in all environments)
    */
-  private base64ToArrayBuffer(base64: string): ArrayBuffer {
+  private base64ToArrayBuffer(base64: string): Uint8Array {
     const binary = atob(base64)
     const bytes = new Uint8Array(binary.length)
     for (let index = 0; index < binary.length; index++) {
@@ -145,7 +145,8 @@ export class ApiKeyStorage {
         bytes[index] = charCode
       }
     }
-    return bytes.buffer
+    // Return Uint8Array directly instead of .buffer for Node.js compatibility
+    return bytes
   }
 
   /**
