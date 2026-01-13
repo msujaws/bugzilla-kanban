@@ -3,6 +3,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { Assignee } from '@/hooks/use-board-assignees'
+import { formatAssignee } from '@/lib/bugzilla/display-utils'
 import { AssigneePicker } from './AssigneePicker'
 
 const BUGZILLA_BUG_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?id='
@@ -200,7 +201,7 @@ export function Card({
         ) : (
           <span className="material-icons text-sm">person</span>
         )}
-        <span className="min-w-0 flex-1 truncate">{displayedAssignee}</span>
+        <span className="min-w-0 flex-1 truncate">{formatAssignee(displayedAssignee)}</span>
       </div>
 
       {/* Assignee Picker */}
