@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ToastContainer } from './components/Notifications/ToastContainer'
 import { ApiKeyInput } from './components/Auth/ApiKeyInput'
 import { ApiKeyStatus } from './components/Auth/ApiKeyStatus'
@@ -35,6 +35,20 @@ function App() {
   const toasts = useStore((state) => state.toasts)
   const removeToast = useStore((state) => state.removeToast)
   const addToast = useStore((state) => state.addToast)
+
+  // Warn user before leaving page with unsaved staged changes
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (changes.size > 0) {
+        event.preventDefault()
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [changes.size])
 
   // Handle close modal
   const handleCloseModal = useCallback(() => {
