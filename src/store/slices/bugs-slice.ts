@@ -7,6 +7,14 @@ import type { BugzillaBug, BugFilters } from '@/lib/bugzilla/types'
 import type { ApiKey } from '@/types/branded'
 import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
 
+/**
+ * Check if a bug is public (not in any security or confidential groups).
+ * Bugs with a non-empty groups array are restricted and should be filtered out.
+ */
+function isPublicBug(bug: BugzillaBug): boolean {
+  return !bug.groups || bug.groups.length === 0
+}
+
 export interface BugsFilters {
   whiteboardTag: string
   component: string
@@ -55,7 +63,9 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
         bugFilters.component = filters.component
       }
 
-      const bugs = await client.getBugs(bugFilters)
+      const allBugs = await client.getBugs(bugFilters)
+      // Filter out security and confidential bugs (those with non-empty groups)
+      const bugs = allBugs.filter(isPublicBug)
       set({ bugs, isLoading: false, error: null })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

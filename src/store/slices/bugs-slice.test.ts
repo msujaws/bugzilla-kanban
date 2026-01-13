@@ -25,6 +25,8 @@ const mockBugs: BugzillaBug[] = [
     component: 'Core',
     whiteboard: '[kanban]',
     last_change_time: '2024-01-15T10:00:00Z',
+    creation_time: '2024-01-01T00:00:00Z',
+    groups: [],
   },
   {
     id: 2,
@@ -36,6 +38,50 @@ const mockBugs: BugzillaBug[] = [
     component: 'UI',
     whiteboard: '[kanban]',
     last_change_time: '2024-01-14T09:00:00Z',
+    creation_time: '2024-01-01T00:00:00Z',
+    groups: [],
+  },
+]
+
+const mockBugsWithSecurity: BugzillaBug[] = [
+  {
+    id: 1,
+    summary: 'Public bug',
+    status: 'NEW',
+    assigned_to: 'dev@example.com',
+    priority: 'P2',
+    severity: 'major',
+    component: 'Core',
+    whiteboard: '[kanban]',
+    last_change_time: '2024-01-15T10:00:00Z',
+    creation_time: '2024-01-01T00:00:00Z',
+    groups: [],
+  },
+  {
+    id: 2,
+    summary: 'Security bug',
+    status: 'NEW',
+    assigned_to: 'dev@example.com',
+    priority: 'P1',
+    severity: 'critical',
+    component: 'Core',
+    whiteboard: '[kanban]',
+    last_change_time: '2024-01-15T10:00:00Z',
+    creation_time: '2024-01-01T00:00:00Z',
+    groups: ['core-security'],
+  },
+  {
+    id: 3,
+    summary: 'Confidential bug',
+    status: 'ASSIGNED',
+    assigned_to: 'dev2@example.com',
+    priority: 'P1',
+    severity: 'major',
+    component: 'UI',
+    whiteboard: '[kanban]',
+    last_change_time: '2024-01-14T09:00:00Z',
+    creation_time: '2024-01-01T00:00:00Z',
+    groups: ['mozilla-corporation-confidential'],
   },
 ]
 
@@ -141,6 +187,47 @@ describe('BugsSlice', () => {
         whiteboardTag: '[kanban]',
         component: 'Core',
       })
+    })
+
+    it('should filter out security and confidential bugs', async () => {
+      mockGetBugs.mockResolvedValueOnce(mockBugsWithSecurity)
+
+      const { fetchBugs } = useStore.getState()
+      await fetchBugs(testApiKey)
+
+      const { bugs } = useStore.getState()
+      // Should only have the public bug (id: 1)
+      expect(bugs).toHaveLength(1)
+      expect(bugs[0].id).toBe(1)
+      expect(bugs[0].summary).toBe('Public bug')
+    })
+
+    it('should keep bugs with empty groups array', async () => {
+      const publicBugs: BugzillaBug[] = [
+        { ...mockBugs[0], groups: [] },
+        { ...mockBugs[1], groups: [] },
+      ]
+      mockGetBugs.mockResolvedValueOnce(publicBugs)
+
+      const { fetchBugs } = useStore.getState()
+      await fetchBugs(testApiKey)
+
+      const { bugs } = useStore.getState()
+      expect(bugs).toHaveLength(2)
+    })
+
+    it('should keep bugs with undefined groups', async () => {
+      const publicBugs: BugzillaBug[] = [
+        { ...mockBugs[0], groups: undefined },
+        { ...mockBugs[1], groups: undefined },
+      ]
+      mockGetBugs.mockResolvedValueOnce(publicBugs)
+
+      const { fetchBugs } = useStore.getState()
+      await fetchBugs(testApiKey)
+
+      const { bugs } = useStore.getState()
+      expect(bugs).toHaveLength(2)
     })
   })
 

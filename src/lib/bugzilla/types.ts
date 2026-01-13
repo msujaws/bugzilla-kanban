@@ -18,6 +18,8 @@ export interface BugzillaBug {
   whiteboard: string
   last_change_time: string
   creation_time: string
+  /** Security groups the bug belongs to. Non-empty means bug is restricted/confidential. */
+  groups?: string[]
 }
 
 export interface BugzillaSearchResponse {
