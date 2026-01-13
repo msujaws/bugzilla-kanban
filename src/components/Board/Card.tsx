@@ -161,7 +161,9 @@ export function Card({
       </div>
 
       {/* Summary */}
-      <p className="mb-3 truncate text-sm font-medium text-text-primary">{bug.summary}</p>
+      <p className="mb-3 truncate text-sm font-medium text-text-primary" title={bug.summary}>
+        {bug.summary}
+      </p>
 
       {/* Badges row */}
       <div className="mb-2 flex flex-wrap gap-2">

@@ -312,6 +312,18 @@ describe('Card', () => {
       expect(summary.className).toContain('truncate')
     })
 
+    it('should show full summary in tooltip on hover', () => {
+      const longSummaryBug = {
+        ...mockBug,
+        summary:
+          'This is a very long summary that should be truncated when it exceeds the maximum width of the card component in the Kanban board',
+      }
+      render(<Card bug={longSummaryBug} />)
+
+      const summary = screen.getByText(longSummaryBug.summary)
+      expect(summary).toHaveAttribute('title', longSummaryBug.summary)
+    })
+
     it('should truncate long assignee emails', () => {
       const longAssigneeBug = {
         ...mockBug,
