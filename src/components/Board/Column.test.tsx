@@ -146,6 +146,12 @@ describe('Column', () => {
       expect(screen.getByText('In Progress')).toBeInTheDocument()
     })
 
+    it('should display "In Testing" for in-testing column', () => {
+      render(<Column {...defaultProps} column="in-testing" />)
+
+      expect(screen.getByText('In Testing')).toBeInTheDocument()
+    })
+
     it('should display "Done" for done column', () => {
       render(<Column {...defaultProps} column="done" />)
 
@@ -193,6 +199,12 @@ describe('Column', () => {
       render(<Column {...defaultProps} column="in-progress" />)
 
       expect(screen.getByText('code')).toBeInTheDocument()
+    })
+
+    it('should show science icon for in-testing', () => {
+      render(<Column {...defaultProps} column="in-testing" />)
+
+      expect(screen.getByText('science')).toBeInTheDocument()
     })
 
     it('should show done icon for done', () => {

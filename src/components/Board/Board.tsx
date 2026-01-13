@@ -12,6 +12,7 @@ import {
 import { Column } from './Column'
 import { Card } from './Card'
 import { StatusMapper, type KanbanColumn } from '@/lib/bugzilla/status-mapper'
+import { assignBugToColumn } from '@/lib/bugzilla/column-assignment'
 import { sortByPriority } from '@/lib/bugzilla/sort-by-priority'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
@@ -80,7 +81,7 @@ export function Board({
       // If bug has a staged status change, show it in the target column
       const column = stagedChange?.status
         ? (stagedChange.status.to as KanbanColumn)
-        : statusMapper.statusToColumn(bug.status)
+        : assignBugToColumn(bug)
       const columnBugs = grouped.get(column) ?? []
       columnBugs.push(bug)
       grouped.set(column, columnBugs)

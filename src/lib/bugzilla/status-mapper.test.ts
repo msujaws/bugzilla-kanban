@@ -61,6 +61,10 @@ describe('StatusMapper', () => {
       expect(mapper.columnToStatus('in-progress')).toBe('IN_PROGRESS')
     })
 
+    it('should map in-testing to RESOLVED', () => {
+      expect(mapper.columnToStatus('in-testing')).toBe('RESOLVED')
+    })
+
     it('should map done to RESOLVED', () => {
       expect(mapper.columnToStatus('done')).toBe('RESOLVED')
     })
@@ -76,7 +80,7 @@ describe('StatusMapper', () => {
     it('should return all available columns', () => {
       const columns = mapper.getAvailableColumns()
 
-      expect(columns).toEqual(['backlog', 'todo', 'in-progress', 'done'])
+      expect(columns).toEqual(['backlog', 'todo', 'in-progress', 'in-testing', 'done'])
     })
 
     it('should return a new array each time', () => {
@@ -125,6 +129,7 @@ describe('StatusMapper', () => {
       expect(mapper.isValidColumn('backlog')).toBe(true)
       expect(mapper.isValidColumn('todo')).toBe(true)
       expect(mapper.isValidColumn('in-progress')).toBe(true)
+      expect(mapper.isValidColumn('in-testing')).toBe(true)
       expect(mapper.isValidColumn('done')).toBe(true)
     })
 
