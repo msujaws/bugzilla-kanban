@@ -47,13 +47,13 @@ vi.mock('@/lib/bugzilla/status-mapper', () => ({
         UNCONFIRMED: 'backlog',
         ASSIGNED: 'todo',
         IN_PROGRESS: 'in-progress',
-        RESOLVED: 'in-review',
+        RESOLVED: 'done',
         VERIFIED: 'done',
         CLOSED: 'done',
       }
       return mapping[status] ?? 'backlog'
     }),
-    getAvailableColumns: vi.fn(() => ['backlog', 'todo', 'in-progress', 'in-review', 'done']),
+    getAvailableColumns: vi.fn(() => ['backlog', 'todo', 'in-progress', 'done']),
   })),
 }))
 
@@ -128,22 +128,22 @@ describe('Board', () => {
   })
 
   describe('rendering', () => {
-    it('should render all five columns', () => {
+    it('should render all four columns', () => {
       render(<Board {...defaultProps} />)
 
       expect(screen.getByText('Backlog')).toBeInTheDocument()
       expect(screen.getByText('Todo')).toBeInTheDocument()
       expect(screen.getByText('In Progress')).toBeInTheDocument()
-      expect(screen.getByText('In Review')).toBeInTheDocument()
       expect(screen.getByText('Done')).toBeInTheDocument()
     })
 
     it('should distribute bugs to correct columns', () => {
       render(<Board {...defaultProps} />)
 
-      // Each column should show its bug count
-      const countBadges = screen.getAllByText('1')
-      expect(countBadges.length).toBe(5) // One bug per column
+      // Backlog, Todo, In Progress have 1 each; Done has 2 (RESOLVED + VERIFIED)
+      const singleBugBadges = screen.getAllByText('1')
+      expect(singleBugBadges.length).toBe(3)
+      expect(screen.getByText('2')).toBeInTheDocument() // Done column
     })
 
     it('should have horizontal scrolling container', () => {
@@ -319,7 +319,7 @@ describe('Board', () => {
       render(<Board {...defaultProps} isLoading={true} />)
 
       const loadingElements = screen.getAllByText(/loading/i)
-      expect(loadingElements.length).toBe(5)
+      expect(loadingElements.length).toBe(4)
     })
 
     it('should not show bugs when loading', () => {
@@ -334,7 +334,7 @@ describe('Board', () => {
       render(<Board {...defaultProps} bugs={[]} />)
 
       const emptyMessages = screen.getAllByText(/no bugs here/i)
-      expect(emptyMessages.length).toBe(5)
+      expect(emptyMessages.length).toBe(4)
     })
   })
 
@@ -702,7 +702,7 @@ describe('Board', () => {
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         fireEvent.keyDown(document, { key: 'Shift' })
 
-        expect(screen.getAllByText(/no bugs here/i).length).toBe(5)
+        expect(screen.getAllByText(/no bugs here/i).length).toBe(4)
       })
     })
 

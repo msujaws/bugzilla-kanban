@@ -146,12 +146,6 @@ describe('Column', () => {
       expect(screen.getByText('In Progress')).toBeInTheDocument()
     })
 
-    it('should display "In Review" for in-review column', () => {
-      render(<Column {...defaultProps} column="in-review" />)
-
-      expect(screen.getByText('In Review')).toBeInTheDocument()
-    })
-
     it('should display "Done" for done column', () => {
       render(<Column {...defaultProps} column="done" />)
 
@@ -199,12 +193,6 @@ describe('Column', () => {
       render(<Column {...defaultProps} column="in-progress" />)
 
       expect(screen.getByText('code')).toBeInTheDocument()
-    })
-
-    it('should show rate_review icon for in-review', () => {
-      render(<Column {...defaultProps} column="in-review" />)
-
-      expect(screen.getByText('rate_review')).toBeInTheDocument()
     })
 
     it('should show done icon for done', () => {
@@ -361,16 +349,6 @@ describe('Column', () => {
 
     it('should exclude nobody@mozilla.org in in-progress column', () => {
       render(<Column {...defaultProps} column="in-progress" allAssignees={assigneesWithNobody} />)
-
-      const card = screen.getByTestId('card-12345')
-      expect(card).toHaveAttribute(
-        'data-assignees',
-        expect.not.stringContaining('nobody@mozilla.org'),
-      )
-    })
-
-    it('should exclude nobody@mozilla.org in in-review column', () => {
-      render(<Column {...defaultProps} column="in-review" allAssignees={assigneesWithNobody} />)
 
       const card = screen.getByTestId('card-12345')
       expect(card).toHaveAttribute(

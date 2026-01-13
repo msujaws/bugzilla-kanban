@@ -26,7 +26,6 @@ const columnIcons: Record<KanbanColumn, string> = {
   backlog: 'inbox',
   todo: 'list',
   'in-progress': 'code',
-  'in-review': 'rate_review',
   done: 'done_all',
 }
 

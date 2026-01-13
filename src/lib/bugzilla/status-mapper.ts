@@ -3,7 +3,7 @@
  * Based on Mozilla Bugzilla workflow
  */
 
-export type KanbanColumn = 'backlog' | 'todo' | 'in-progress' | 'in-review' | 'done'
+export type KanbanColumn = 'backlog' | 'todo' | 'in-progress' | 'done'
 
 type StatusMapping = Record<KanbanColumn, string[]>
 
@@ -11,7 +11,6 @@ const DEFAULT_STATUS_MAPPING: StatusMapping = {
   backlog: ['UNCONFIRMED', 'NEW'],
   todo: ['ASSIGNED'],
   'in-progress': ['IN_PROGRESS'],
-  'in-review': [],
   done: ['RESOLVED', 'VERIFIED', 'CLOSED'],
 }
 
@@ -28,7 +27,6 @@ const COLUMN_TO_STATUS: Record<KanbanColumn, string> = {
   backlog: 'NEW',
   todo: 'ASSIGNED',
   'in-progress': 'IN_PROGRESS',
-  'in-review': 'IN_PROGRESS',
   done: 'RESOLVED',
 }
 
@@ -58,7 +56,7 @@ export class StatusMapper {
    * Get all available Kanban columns
    */
   getAvailableColumns(): KanbanColumn[] {
-    return ['backlog', 'todo', 'in-progress', 'in-review', 'done']
+    return ['backlog', 'todo', 'in-progress', 'done']
   }
 
   /**

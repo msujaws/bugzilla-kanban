@@ -61,10 +61,6 @@ describe('StatusMapper', () => {
       expect(mapper.columnToStatus('in-progress')).toBe('IN_PROGRESS')
     })
 
-    it('should map in-review to IN_PROGRESS', () => {
-      expect(mapper.columnToStatus('in-review')).toBe('IN_PROGRESS')
-    })
-
     it('should map done to RESOLVED', () => {
       expect(mapper.columnToStatus('done')).toBe('RESOLVED')
     })
@@ -80,7 +76,7 @@ describe('StatusMapper', () => {
     it('should return all available columns', () => {
       const columns = mapper.getAvailableColumns()
 
-      expect(columns).toEqual(['backlog', 'todo', 'in-progress', 'in-review', 'done'])
+      expect(columns).toEqual(['backlog', 'todo', 'in-progress', 'done'])
     })
 
     it('should return a new array each time', () => {
@@ -111,12 +107,6 @@ describe('StatusMapper', () => {
       expect(statuses).toEqual(['IN_PROGRESS'])
     })
 
-    it('should return empty array for in-review column (no statuses map to it)', () => {
-      const statuses = mapper.getStatusesForColumn('in-review')
-
-      expect(statuses).toEqual([])
-    })
-
     it('should return all statuses for done column', () => {
       const statuses = mapper.getStatusesForColumn('done')
 
@@ -135,7 +125,6 @@ describe('StatusMapper', () => {
       expect(mapper.isValidColumn('backlog')).toBe(true)
       expect(mapper.isValidColumn('todo')).toBe(true)
       expect(mapper.isValidColumn('in-progress')).toBe(true)
-      expect(mapper.isValidColumn('in-review')).toBe(true)
       expect(mapper.isValidColumn('done')).toBe(true)
     })
 
