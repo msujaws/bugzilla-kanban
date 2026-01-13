@@ -130,6 +130,10 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
 
         if (change.status) {
           update.status = statusMapper.columnToStatus(change.status.to)
+          // RESOLVED status requires a resolution
+          if (update.status === 'RESOLVED') {
+            update.resolution = 'FIXED'
+          }
         }
 
         if (change.assignee) {

@@ -85,6 +85,9 @@ export class BugzillaClient {
         if (update.status) {
           changes.status = update.status
         }
+        if (update.resolution) {
+          changes.resolution = update.resolution
+        }
         if (update.assigned_to) {
           changes.assigned_to = update.assigned_to
         }

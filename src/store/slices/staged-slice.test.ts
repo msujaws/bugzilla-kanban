@@ -23,8 +23,8 @@ vi.mock('@/lib/bugzilla/status-mapper', () => ({
         backlog: 'NEW',
         todo: 'ASSIGNED',
         'in-progress': 'IN_PROGRESS',
-        'in-review': 'RESOLVED',
-        done: 'VERIFIED',
+        'in-review': 'IN_PROGRESS',
+        done: 'RESOLVED',
       }
       return mapping[column] ?? 'NEW'
     }),
@@ -429,6 +429,38 @@ describe('StagedSlice', () => {
       expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
         { id: 123, status: 'ASSIGNED', assigned_to: 'new@example.com' },
       ])
+    })
+  })
+
+  describe('applyChanges with resolution', () => {
+    it('should include resolution FIXED when moving to done column', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageChange, applyChanges } = useStore.getState()
+
+      stageChange(123, 'in-progress', 'done')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, status: 'RESOLVED', resolution: 'FIXED' },
+      ])
+    })
+
+    it('should not include resolution when moving to non-done column', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageChange, applyChanges } = useStore.getState()
+
+      stageChange(123, 'backlog', 'in-progress')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([{ id: 123, status: 'IN_PROGRESS' }])
     })
   })
 

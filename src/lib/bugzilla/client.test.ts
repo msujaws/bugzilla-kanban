@@ -323,5 +323,23 @@ describe('BugzillaClient', () => {
         }),
       )
     })
+
+    it('should send resolution when provided with RESOLVED status', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, status: 'RESOLVED', resolution: 'FIXED' }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ status: 'RESOLVED', resolution: 'FIXED' }),
+        }),
+      )
+    })
   })
 })

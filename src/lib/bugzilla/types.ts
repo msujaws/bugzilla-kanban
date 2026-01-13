@@ -6,6 +6,7 @@ export interface BugzillaBug {
   id: number
   summary: string
   status: string
+  resolution?: string
   assigned_to: string
   assigned_to_detail?: {
     email: string
@@ -42,6 +43,7 @@ export interface BugFilters {
 export interface BugUpdate {
   id: number
   status?: string
+  resolution?: string
   assigned_to?: string
 }
 
