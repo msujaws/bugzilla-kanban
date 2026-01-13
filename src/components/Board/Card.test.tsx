@@ -224,6 +224,20 @@ describe('Card', () => {
 
       expect(screen.getByText(/staged/i)).toBeInTheDocument()
     })
+
+    it('should show staged border with accent-staged color when status is staged', () => {
+      const { container } = render(<Card bug={mockBug} isStaged={true} />)
+
+      const card = container.firstChild as HTMLElement
+      expect(card.className).toContain('ring-accent-staged')
+    })
+
+    it('should not show staged border when isStaged is false', () => {
+      const { container } = render(<Card bug={mockBug} isStaged={false} />)
+
+      const card = container.firstChild as HTMLElement
+      expect(card.className).not.toContain('ring-accent-staged')
+    })
   })
 
   describe('interaction', () => {
@@ -468,7 +482,7 @@ describe('Card', () => {
       expect(onClick).not.toHaveBeenCalled()
     })
 
-    it('should show isAssigneeStaged indicator when assignee is staged', () => {
+    it('should show isAssigneeStaged indicator with accent-staged border when assignee is staged', () => {
       render(
         <Card
           bug={mockBug}
@@ -478,9 +492,23 @@ describe('Card', () => {
         />,
       )
 
-      // The person icon button should have a visual indicator
+      // The person icon button should have accent-staged border
       const button = screen.getByLabelText('Change assignee')
-      expect(button.className).toContain('ring')
+      expect(button.className).toContain('ring-accent-staged')
+    })
+
+    it('should not show staged border on assignee button when assignee is not staged', () => {
+      render(
+        <Card
+          bug={mockBug}
+          allAssignees={mockAssignees}
+          onAssigneeChange={vi.fn()}
+          isAssigneeStaged={false}
+        />,
+      )
+
+      const button = screen.getByLabelText('Change assignee')
+      expect(button.className).not.toContain('ring-accent-staged')
     })
 
     it('should open picker when Space key is pressed on selected card', async () => {

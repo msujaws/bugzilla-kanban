@@ -14,6 +14,7 @@ export default {
         'accent-success': '#10b981',
         'accent-error': '#ef4444',
         'accent-warning': '#f59e0b',
+        'accent-staged': '#F28F16',
 
         // Text colors
         'text-primary': '#f5f5f5',

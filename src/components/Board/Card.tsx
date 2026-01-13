@@ -118,7 +118,7 @@ export function Card({
       return 'ring-2 ring-accent-primary shadow-xl'
     }
     if (isStaged) {
-      return 'ring-2 ring-accent-primary/50'
+      return 'ring-2 ring-accent-staged'
     }
     return 'hover:shadow-xl'
   }
@@ -192,7 +192,7 @@ export function Card({
             aria-label="Change assignee"
             onClick={handleAssigneeButtonClick}
             className={`flex items-center rounded p-0.5 transition-colors hover:bg-bg-tertiary hover:text-text-primary ${
-              isAssigneeStaged ? 'ring-2 ring-accent-primary/50' : ''
+              isAssigneeStaged ? 'ring-2 ring-accent-staged' : ''
             }`}
           >
             <span className="material-icons text-sm">person</span>
