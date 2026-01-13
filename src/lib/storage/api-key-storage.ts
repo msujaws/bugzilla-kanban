@@ -13,6 +13,14 @@ interface EncryptedData {
 export class ApiKeyStorage {
   private encoder = new TextEncoder()
   private decoder = new TextDecoder()
+  private keyMaterialOverride?: string
+
+  /**
+   * @param keyMaterialOverride - Optional override for key derivation (for testing only)
+   */
+  constructor(keyMaterialOverride?: string) {
+    this.keyMaterialOverride = keyMaterialOverride
+  }
 
   /**
    * Derive a crypto key from the user agent string
@@ -20,8 +28,9 @@ export class ApiKeyStorage {
    * but protects against casual inspection of localStorage
    */
   private async deriveCryptoKey(): Promise<CryptoKey> {
-    // Use user agent as key material (stable across sessions)
-    const keyMaterial = this.encoder.encode(navigator.userAgent + 'bugzilla-kanban-salt')
+    // Use user agent as key material (stable across sessions), or override for testing
+    const keySource = this.keyMaterialOverride ?? navigator.userAgent
+    const keyMaterial = this.encoder.encode(keySource + 'bugzilla-kanban-salt')
 
     // Import as raw key material
     const importedKey = await crypto.subtle.importKey(

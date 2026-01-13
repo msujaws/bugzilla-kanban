@@ -4,7 +4,7 @@ import { ApiKeyStorage } from './api-key-storage'
 describe('ApiKeyStorage', () => {
   let storage: ApiKeyStorage
   let localStorageMock: Record<string, string>
-  const mockUserAgent = 'Mozilla/5.0 (Test) TestBrowser/1.0'
+  const testKeyMaterial = 'test-key-material-for-encryption'
 
   beforeEach(() => {
     // Mock localStorage
@@ -27,19 +27,8 @@ describe('ApiKeyStorage', () => {
       key: vi.fn(),
     })
 
-    // Mock navigator.userAgent for consistent encryption key derivation
-    // Use Object.create to preserve the navigator prototype chain for jsdom in CI
-    const navigatorMock = Object.create(
-      Object.getPrototypeOf(globalThis.navigator),
-      Object.getOwnPropertyDescriptors(globalThis.navigator),
-    )
-    Object.defineProperty(navigatorMock, 'userAgent', {
-      value: mockUserAgent,
-      configurable: true,
-    })
-    vi.stubGlobal('navigator', navigatorMock)
-
-    storage = new ApiKeyStorage()
+    // Use constructor parameter for consistent key derivation in tests
+    storage = new ApiKeyStorage(testKeyMaterial)
   })
 
   afterEach(() => {
