@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import App from './App'
 import { useStore } from './store'
 
 describe('App', () => {
+  const originalLocation = window.location
+
   beforeEach(() => {
     // Reset store state before each test
     useStore.setState({
@@ -12,10 +14,39 @@ describe('App', () => {
       bugs: [],
       isLoading: false,
       error: '',
-      filters: { whiteboardTag: '', component: '' },
+      filters: { whiteboardTag: '', component: '', excludeMetaBugs: false, sortOrder: 'priority' },
       changes: new Map(),
       isApplying: false,
       applyError: '',
+    })
+
+    // Reset URL to base
+    const mockLocation = {
+      search: '',
+      pathname: '/',
+      href: 'http://localhost:3000/',
+      origin: 'http://localhost:3000',
+      host: 'localhost:3000',
+      hostname: 'localhost',
+      port: '3000',
+      protocol: 'http:',
+      hash: '',
+      assign: vi.fn(),
+      reload: vi.fn(),
+      replace: vi.fn(),
+      toString: () => 'http://localhost:3000/',
+    }
+    Object.defineProperty(window, 'location', {
+      value: mockLocation,
+      writable: true,
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
     })
   })
 
@@ -142,5 +173,92 @@ describe('App', () => {
 
     const appContainer = container.querySelector('.min-h-screen')
     expect(appContainer).toHaveClass('bg-bg-primary')
+  })
+
+  describe('auto-fetch with URL filters', () => {
+    it('should auto-fetch bugs when URL has filters and API key is loaded', async () => {
+      // Setup: URL has filters
+      window.location.search = '?whiteboard=%5Bkanban%5D'
+
+      const fetchBugs = vi.fn().mockResolvedValue([])
+
+      // Simulate async API key loading - resolves after a short delay
+      const loadApiKey = vi.fn().mockImplementation(async () => {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 10)
+        })
+        useStore.setState({ apiKey: 'test-api-key', isValid: true })
+      })
+
+      useStore.setState({
+        loadApiKey,
+        fetchBugs,
+        apiKey: '', // No API key initially
+      })
+
+      render(<App />)
+
+      // Wait for loadApiKey to complete and fetchBugs to be called
+      await waitFor(() => {
+        expect(fetchBugs).toHaveBeenCalledWith('test-api-key')
+      })
+    })
+
+    it('should not auto-fetch when URL has no filters even with API key', async () => {
+      // Setup: URL has no filters (search is empty)
+      window.location.search = ''
+
+      const fetchBugs = vi.fn().mockResolvedValue([])
+      const loadApiKey = vi.fn().mockImplementation(() => {
+        useStore.setState({ apiKey: 'test-api-key', isValid: true })
+        return Promise.resolve()
+      })
+
+      useStore.setState({
+        loadApiKey,
+        fetchBugs,
+        apiKey: '',
+      })
+
+      render(<App />)
+
+      // Wait a bit to ensure no auto-fetch happens
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50)
+      })
+
+      expect(fetchBugs).not.toHaveBeenCalled()
+    })
+
+    it('should apply filters from URL to store before fetching', async () => {
+      window.location.search = '?whiteboard=%5Bkanban%5D&component=Core'
+
+      const fetchBugs = vi.fn().mockResolvedValue([])
+      const setFilters = vi.fn()
+      const loadApiKey = vi.fn().mockImplementation(async () => {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 10)
+        })
+        useStore.setState({ apiKey: 'test-api-key', isValid: true })
+      })
+
+      useStore.setState({
+        loadApiKey,
+        fetchBugs,
+        setFilters,
+        apiKey: '',
+      })
+
+      render(<App />)
+
+      await waitFor(() => {
+        expect(setFilters).toHaveBeenCalledWith(
+          expect.objectContaining({
+            whiteboardTag: '[kanban]',
+            component: 'Core',
+          }),
+        )
+      })
+    })
   })
 })

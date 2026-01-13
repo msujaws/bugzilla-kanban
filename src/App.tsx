@@ -27,6 +27,7 @@ function App() {
   // URL filter persistence
   const { initialFilters, hasUrlFilters, updateUrl } = useUrlFilters()
   const hasInitializedFilters = useRef(false)
+  const hasAutoFetched = useRef(false)
 
   // Bugs state
   const bugs = useStore((state) => state.bugs)
@@ -67,7 +68,7 @@ function App() {
     }
   }, [changes.size])
 
-  // Initialize filters from URL on mount and auto-fetch if URL has filters
+  // Initialize filters from URL on mount
   useEffect(() => {
     if (hasInitializedFilters.current) {
       return
@@ -77,13 +78,17 @@ function App() {
     // Apply filters from URL
     if (hasUrlFilters) {
       setFilters(initialFilters)
-
-      // Auto-fetch if API key is available
-      if (apiKey) {
-        void fetchBugs(apiKey)
-      }
     }
-  }, [hasUrlFilters, initialFilters, setFilters, apiKey, fetchBugs])
+  }, [hasUrlFilters, initialFilters, setFilters])
+
+  // Auto-fetch when URL has filters and API key becomes available
+  useEffect(() => {
+    if (!hasUrlFilters || hasAutoFetched.current || !apiKey) {
+      return
+    }
+    hasAutoFetched.current = true
+    void fetchBugs(apiKey)
+  }, [hasUrlFilters, apiKey, fetchBugs])
 
   // Sync filters to URL when they change (after initialization)
   useEffect(() => {
