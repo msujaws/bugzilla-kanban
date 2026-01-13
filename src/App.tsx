@@ -15,6 +15,12 @@ function App() {
 
   // Auth state
   const apiKey = useStore((state) => state.apiKey)
+  const loadApiKey = useStore((state) => state.loadApiKey)
+
+  // Load persisted API key on mount
+  useEffect(() => {
+    void loadApiKey()
+  }, [loadApiKey])
 
   // Bugs state
   const bugs = useStore((state) => state.bugs)

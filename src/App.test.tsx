@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from './App'
 import { useStore } from './store'
@@ -20,6 +20,15 @@ describe('App', () => {
   })
 
   describe('without API key', () => {
+    it('should call loadApiKey on mount to restore persisted key', () => {
+      const loadApiKey = vi.fn()
+      useStore.setState({ loadApiKey })
+
+      render(<App />)
+
+      expect(loadApiKey).toHaveBeenCalledOnce()
+    })
+
     it('should render the app title', () => {
       render(<App />)
 
