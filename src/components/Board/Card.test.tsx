@@ -1,8 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Card } from './Card'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
+import type { Assignee } from '@/hooks/use-board-assignees'
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
@@ -28,6 +29,7 @@ vi.mock('framer-motion', () => ({
       <div {...props}>{children}</div>
     ),
   },
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
 const mockBug: BugzillaBug = {
@@ -40,7 +42,14 @@ const mockBug: BugzillaBug = {
   component: 'Authentication',
   whiteboard: '[kanban]',
   last_change_time: '2024-01-15T10:30:00Z',
+  creation_time: '2024-01-01T00:00:00Z',
 }
+
+const mockAssignees: Assignee[] = [
+  { email: 'developer@example.com', displayName: 'Developer', count: 3 },
+  { email: 'alice@example.com', displayName: 'Alice Johnson', count: 2 },
+  { email: 'bob@example.com', displayName: 'Bob Smith', count: 1 },
+]
 
 describe('Card', () => {
   describe('rendering', () => {
@@ -356,6 +365,84 @@ describe('Card', () => {
       // Selected should have full ring, staged should be dimmer
       expect(card.className).toContain('ring-accent-primary')
       expect(card.className).toContain('shadow-xl')
+    })
+  })
+
+  describe('assignee picker', () => {
+    it('should render account_circle button when allAssignees is provided', () => {
+      render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
+
+      expect(screen.getByLabelText('Change assignee')).toBeInTheDocument()
+    })
+
+    it('should not render assignee button when allAssignees is not provided', () => {
+      render(<Card bug={mockBug} />)
+
+      expect(screen.queryByLabelText('Change assignee')).not.toBeInTheDocument()
+    })
+
+    it('should open picker when button is clicked', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change assignee'))
+
+      expect(screen.getByRole('listbox')).toBeInTheDocument()
+    })
+
+    it('should call onAssigneeChange when assignee is selected', async () => {
+      const user = userEvent.setup()
+      const onAssigneeChange = vi.fn()
+      render(
+        <Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={onAssigneeChange} />,
+      )
+
+      await user.click(screen.getByLabelText('Change assignee'))
+      await user.click(screen.getByText('Alice Johnson'))
+
+      expect(onAssigneeChange).toHaveBeenCalledWith(mockBug.id, 'alice@example.com')
+    })
+
+    it('should close picker after selection', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change assignee'))
+      await user.click(screen.getByText('Alice Johnson'))
+
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    })
+
+    it('should not trigger card onClick when clicking assignee button', async () => {
+      const user = userEvent.setup()
+      const onClick = vi.fn()
+      render(
+        <Card
+          bug={mockBug}
+          onClick={onClick}
+          allAssignees={mockAssignees}
+          onAssigneeChange={vi.fn()}
+        />,
+      )
+
+      await user.click(screen.getByLabelText('Change assignee'))
+
+      expect(onClick).not.toHaveBeenCalled()
+    })
+
+    it('should show isAssigneeStaged indicator when assignee is staged', () => {
+      render(
+        <Card
+          bug={mockBug}
+          allAssignees={mockAssignees}
+          onAssigneeChange={vi.fn()}
+          isAssigneeStaged={true}
+        />,
+      )
+
+      // The account_circle button should have a visual indicator
+      const button = screen.getByLabelText('Change assignee')
+      expect(button.className).toContain('ring')
     })
   })
 })

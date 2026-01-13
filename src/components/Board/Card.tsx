@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
+import type { Assignee } from '@/hooks/use-board-assignees'
+import { AssigneePicker } from './AssigneePicker'
 
 interface CardProps {
   bug: BugzillaBug
@@ -8,7 +11,10 @@ interface CardProps {
   isDragging?: boolean
   isSelected?: boolean
   isGrabbed?: boolean
+  isAssigneeStaged?: boolean
   onClick?: (bug: BugzillaBug) => void
+  allAssignees?: Assignee[]
+  onAssigneeChange?: (bugId: number, newAssignee: string) => void
 }
 
 const priorityColors: Record<string, string> = {
@@ -35,11 +41,27 @@ export function Card({
   isDragging = false,
   isSelected = false,
   isGrabbed = false,
+  isAssigneeStaged = false,
   onClick,
+  allAssignees,
+  onAssigneeChange,
 }: CardProps) {
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: bug.id,
   })
+
+  const handleAssigneeButtonClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    setIsPickerOpen(true)
+  }
+
+  const handleAssigneeSelect = (email: string) => {
+    if (onAssigneeChange) {
+      onAssigneeChange(bug.id, email)
+    }
+    setIsPickerOpen(false)
+  }
 
   const priorityColor = priorityColors[bug.priority] ?? 'bg-priority-p5'
   const severityColor = severityColors[bug.severity] ?? 'text-text-tertiary'
@@ -132,8 +154,33 @@ export function Card({
       {/* Assignee */}
       <div className="flex items-center gap-2 text-xs text-text-tertiary">
         <span className="material-icons text-sm">person</span>
-        <span className="truncate">{bug.assigned_to}</span>
+        <span className="min-w-0 flex-1 truncate">{bug.assigned_to}</span>
+        {allAssignees && onAssigneeChange && (
+          <button
+            type="button"
+            aria-label="Change assignee"
+            onClick={handleAssigneeButtonClick}
+            className={`rounded p-0.5 transition-colors hover:bg-bg-tertiary hover:text-text-primary ${
+              isAssigneeStaged ? 'ring-2 ring-accent-primary/50' : ''
+            }`}
+          >
+            <span className="material-icons text-base">account_circle</span>
+          </button>
+        )}
       </div>
+
+      {/* Assignee Picker */}
+      {allAssignees && (
+        <AssigneePicker
+          isOpen={isPickerOpen}
+          onClose={() => {
+            setIsPickerOpen(false)
+          }}
+          onSelect={handleAssigneeSelect}
+          assignees={allAssignees}
+          currentAssignee={bug.assigned_to}
+        />
+      )}
     </div>
   )
 }
