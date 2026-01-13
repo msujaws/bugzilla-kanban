@@ -569,4 +569,42 @@ describe('Card', () => {
       expect(screen.getByText('developer@example.com')).toBeInTheDocument()
     })
   })
+
+  describe('story points', () => {
+    it('should display story points when cf_fx_points is set', () => {
+      const bugWithPoints = { ...mockBug, cf_fx_points: 5 }
+      render(<Card bug={bugWithPoints} />)
+
+      expect(screen.getByLabelText('story points')).toBeInTheDocument()
+      expect(screen.getByText('5')).toBeInTheDocument()
+    })
+
+    it('should not display story points when cf_fx_points is not set', () => {
+      render(<Card bug={mockBug} />)
+
+      expect(screen.queryByLabelText('story points')).not.toBeInTheDocument()
+    })
+
+    it('should not display story points when cf_fx_points is 0', () => {
+      const bugWithZeroPoints = { ...mockBug, cf_fx_points: 0 }
+      render(<Card bug={bugWithZeroPoints} />)
+
+      expect(screen.queryByLabelText('story points')).not.toBeInTheDocument()
+    })
+
+    it('should not display story points when cf_fx_points is "0"', () => {
+      const bugWithZeroPoints = { ...mockBug, cf_fx_points: '0' }
+      render(<Card bug={bugWithZeroPoints} />)
+
+      expect(screen.queryByLabelText('story points')).not.toBeInTheDocument()
+    })
+
+    it('should handle string values for cf_fx_points', () => {
+      const bugWithStringPoints = { ...mockBug, cf_fx_points: '3' }
+      render(<Card bug={bugWithStringPoints} />)
+
+      expect(screen.getByLabelText('story points')).toBeInTheDocument()
+      expect(screen.getByText('3')).toBeInTheDocument()
+    })
+  })
 })

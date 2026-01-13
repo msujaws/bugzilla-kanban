@@ -159,6 +159,18 @@ export function Card({
             Staged
           </span>
         )}
+        {/* Story Points - top right */}
+        {bug.cf_fx_points !== undefined &&
+          bug.cf_fx_points !== 0 &&
+          bug.cf_fx_points !== '0' &&
+          bug.cf_fx_points !== '' && (
+            <span
+              aria-label="story points"
+              className="ml-auto rounded-full bg-accent-primary/20 px-2 py-0.5 text-xs font-bold text-accent-primary"
+            >
+              {bug.cf_fx_points}
+            </span>
+          )}
       </div>
 
       {/* Summary */}
