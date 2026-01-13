@@ -13,6 +13,9 @@ const statusMapper = new StatusMapper()
 export interface StagedChange {
   status?: { from: string; to: string }
   assignee?: { from: string; to: string }
+  whiteboard?: { from: string; to: string }
+  points?: { from: number | string | undefined; to: number | string | undefined }
+  priority?: { from: string; to: string }
 }
 
 export interface ApplyResult {
@@ -29,6 +32,13 @@ export interface StagedSlice {
   // Actions
   stageChange: (bugId: number, fromColumn: string, toColumn: string) => void
   stageAssigneeChange: (bugId: number, fromAssignee: string, toAssignee: string) => void
+  stageWhiteboardChange: (bugId: number, fromWhiteboard: string, toWhiteboard: string) => void
+  stagePointsChange: (
+    bugId: number,
+    fromPoints: number | string | undefined,
+    toPoints: number | string | undefined,
+  ) => void
+  stagePriorityChange: (bugId: number, fromPriority: string, toPriority: string) => void
   unstageChange: (bugId: number) => void
   clearAllChanges: () => void
   applyChanges: (apiKey: ApiKey) => Promise<ApplyResult>
@@ -96,6 +106,97 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
     })
   },
 
+  // Stage a whiteboard change for a bug
+  stageWhiteboardChange: (bugId: number, fromWhiteboard: string, toWhiteboard: string) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      // If moving back to original whiteboard, remove the whiteboard change
+      if (fromWhiteboard === toWhiteboard) {
+        if (existing) {
+          const { whiteboard: _removed, ...rest } = existing
+          // Check if there are other changes remaining
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        // Add/update whiteboard change, preserve other changes
+        newChanges.set(bugId, {
+          ...existing,
+          whiteboard: { from: fromWhiteboard, to: toWhiteboard },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
+  // Stage a points change for a bug
+  stagePointsChange: (
+    bugId: number,
+    fromPoints: number | string | undefined,
+    toPoints: number | string | undefined,
+  ) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      // If moving back to original points, remove the points change
+      if (fromPoints === toPoints) {
+        if (existing) {
+          const { points: _removed, ...rest } = existing
+          // Check if there are other changes remaining
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        // Add/update points change, preserve other changes
+        newChanges.set(bugId, {
+          ...existing,
+          points: { from: fromPoints, to: toPoints },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
+  // Stage a priority change for a bug
+  stagePriorityChange: (bugId: number, fromPriority: string, toPriority: string) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      // If moving back to original priority, remove the priority change
+      if (fromPriority === toPriority) {
+        if (existing) {
+          const { priority: _removed, ...rest } = existing
+          // Check if there are other changes remaining
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        // Add/update priority change, preserve other changes
+        newChanges.set(bugId, {
+          ...existing,
+          priority: { from: fromPriority, to: toPriority },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
   // Remove a staged change
   unstageChange: (bugId: number) => {
     set((state) => {
@@ -138,6 +239,18 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
 
         if (change.assignee) {
           update.assigned_to = change.assignee.to
+        }
+
+        if (change.whiteboard) {
+          update.whiteboard = change.whiteboard.to
+        }
+
+        if (change.points) {
+          update.cf_fx_points = change.points.to
+        }
+
+        if (change.priority) {
+          update.priority = change.priority.to
         }
 
         updates.push(update)

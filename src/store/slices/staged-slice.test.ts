@@ -501,4 +501,249 @@ describe('StagedSlice', () => {
       expect(getChangeCount()).toBe(1)
     })
   })
+
+  describe('stageWhiteboardChange', () => {
+    it('should add a new whiteboard change', () => {
+      const { stageWhiteboardChange } = useStore.getState()
+
+      stageWhiteboardChange(123, '[old-tag]', '[old-tag] [bzkanban-sprint]')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.whiteboard).toEqual({
+        from: '[old-tag]',
+        to: '[old-tag] [bzkanban-sprint]',
+      })
+    })
+
+    it('should update existing whiteboard change', () => {
+      const { stageWhiteboardChange } = useStore.getState()
+
+      stageWhiteboardChange(123, '', '[bzkanban-sprint]')
+      stageWhiteboardChange(123, '', '[bzkanban-sprint] [other]')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.whiteboard).toEqual({
+        from: '',
+        to: '[bzkanban-sprint] [other]',
+      })
+    })
+
+    it('should remove whiteboard change if reverting to original', () => {
+      const { stageWhiteboardChange } = useStore.getState()
+
+      stageWhiteboardChange(123, '[tag]', '[tag] [bzkanban-sprint]')
+      stageWhiteboardChange(123, '[tag]', '[tag]')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should preserve other changes when adding whiteboard change', () => {
+      const { stageChange, stageWhiteboardChange } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageWhiteboardChange(123, '', '[bzkanban-sprint]')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.whiteboard).toEqual({ from: '', to: '[bzkanban-sprint]' })
+    })
+
+    it('should only remove whiteboard when reverting, keeping other changes', () => {
+      const { stageChange, stageWhiteboardChange } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageWhiteboardChange(123, '', '[bzkanban-sprint]')
+      stageWhiteboardChange(123, '', '')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.whiteboard).toBeUndefined()
+    })
+  })
+
+  describe('stagePointsChange', () => {
+    it('should add a new points change', () => {
+      const { stagePointsChange } = useStore.getState()
+
+      stagePointsChange(123, 3, 5)
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.points).toEqual({ from: 3, to: 5 })
+    })
+
+    it('should handle string points values', () => {
+      const { stagePointsChange } = useStore.getState()
+
+      stagePointsChange(123, '?', '5')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.points).toEqual({ from: '?', to: '5' })
+    })
+
+    it('should handle undefined to value', () => {
+      const { stagePointsChange } = useStore.getState()
+
+      stagePointsChange(123, undefined, 3)
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.points).toEqual({ from: undefined, to: 3 })
+    })
+
+    it('should remove points change if reverting to original', () => {
+      const { stagePointsChange } = useStore.getState()
+
+      stagePointsChange(123, 3, 5)
+      stagePointsChange(123, 3, 3)
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should preserve other changes when adding points change', () => {
+      const { stageAssigneeChange, stagePointsChange } = useStore.getState()
+
+      stageAssigneeChange(123, 'a@x.com', 'b@x.com')
+      stagePointsChange(123, 1, 5)
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.assignee).toEqual({ from: 'a@x.com', to: 'b@x.com' })
+      expect(changes.get(123)?.points).toEqual({ from: 1, to: 5 })
+    })
+  })
+
+  describe('stagePriorityChange', () => {
+    it('should add a new priority change', () => {
+      const { stagePriorityChange } = useStore.getState()
+
+      stagePriorityChange(123, 'P3', 'P1')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.priority).toEqual({ from: 'P3', to: 'P1' })
+    })
+
+    it('should remove priority change if reverting to original', () => {
+      const { stagePriorityChange } = useStore.getState()
+
+      stagePriorityChange(123, 'P3', 'P1')
+      stagePriorityChange(123, 'P3', 'P3')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should preserve other changes when adding priority change', () => {
+      const { stageChange, stagePriorityChange } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stagePriorityChange(123, 'P5', 'P2')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.priority).toEqual({ from: 'P5', to: 'P2' })
+    })
+  })
+
+  describe('applyChanges with new fields', () => {
+    it('should include whiteboard in API call', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageWhiteboardChange, applyChanges } = useStore.getState()
+
+      stageWhiteboardChange(123, '[old]', '[old] [bzkanban-sprint]')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, whiteboard: '[old] [bzkanban-sprint]' },
+      ])
+    })
+
+    it('should include cf_fx_points in API call', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stagePointsChange, applyChanges } = useStore.getState()
+
+      stagePointsChange(123, 3, 8)
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([{ id: 123, cf_fx_points: 8 }])
+    })
+
+    it('should include priority in API call', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stagePriorityChange, applyChanges } = useStore.getState()
+
+      stagePriorityChange(123, 'P3', 'P1')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([{ id: 123, priority: 'P1' }])
+    })
+
+    it('should include all new fields together', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageWhiteboardChange, stagePointsChange, stagePriorityChange, applyChanges } =
+        useStore.getState()
+
+      stageWhiteboardChange(123, '', '[sprint]')
+      stagePointsChange(123, 1, 5)
+      stagePriorityChange(123, 'P3', 'P2')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, whiteboard: '[sprint]', cf_fx_points: 5, priority: 'P2' },
+      ])
+    })
+
+    it('should include all fields when combined with status and assignee', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const {
+        stageChange,
+        stageAssigneeChange,
+        stageWhiteboardChange,
+        stagePointsChange,
+        stagePriorityChange,
+        applyChanges,
+      } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageAssigneeChange(123, 'a@x.com', 'b@x.com')
+      stageWhiteboardChange(123, '', '[sprint]')
+      stagePointsChange(123, 1, 5)
+      stagePriorityChange(123, 'P3', 'P2')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        {
+          id: 123,
+          status: 'ASSIGNED',
+          assigned_to: 'b@x.com',
+          whiteboard: '[sprint]',
+          cf_fx_points: 5,
+          priority: 'P2',
+        },
+      ])
+    })
+  })
 })
