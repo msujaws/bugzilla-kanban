@@ -1,6 +1,10 @@
 import { test, expect, type Page, type Locator } from '@playwright/test'
 
 // Mock bug responses
+// Column assignment:
+// - Backlog: NEW/UNCONFIRMED without [bzkanban-sprint] tag
+// - Todo: NEW/UNCONFIRMED with [bzkanban-sprint] tag
+// - In Progress: ASSIGNED status
 const mockBugsResponse = {
   bugs: [
     {
@@ -11,40 +15,43 @@ const mockBugsResponse = {
       priority: 'P1',
       severity: 'critical',
       component: 'Frontend',
-      whiteboard: '[kanban]',
+      whiteboard: '[kanban]', // No sprint tag = backlog
       last_change_time: '2026-01-12T00:00:00Z',
+      cf_fx_points: 3,
     },
     {
       id: 200002,
       summary: 'Bug in todo',
-      status: 'ASSIGNED',
+      status: 'NEW',
       assigned_to: 'dev2@example.com',
       priority: 'P2',
       severity: 'major',
       component: 'Backend',
-      whiteboard: '[kanban]',
+      whiteboard: '[kanban] [bzkanban-sprint]', // Sprint tag = todo
       last_change_time: '2026-01-12T00:00:00Z',
+      cf_fx_points: 5,
     },
     {
       id: 200003,
       summary: 'Bug in progress',
-      status: 'IN_PROGRESS',
+      status: 'ASSIGNED',
       assigned_to: 'dev3@example.com',
       priority: 'P3',
       severity: 'normal',
       component: 'API',
       whiteboard: '[kanban]',
       last_change_time: '2026-01-12T00:00:00Z',
+      cf_fx_points: 8,
     },
   ],
 }
 
-// Response after update
+// Response after bug is moved from backlog to todo (sprint tag added)
 const updatedBugsResponse = {
   bugs: [
     {
       ...mockBugsResponse.bugs[0],
-      status: 'ASSIGNED', // Moved to Todo
+      whiteboard: '[kanban] [bzkanban-sprint]', // Sprint tag added = now in todo
     },
     mockBugsResponse.bugs[1],
     mockBugsResponse.bugs[2],
@@ -113,7 +120,7 @@ test.describe('Kanban Flow', () => {
     await setupWithBugs(page)
 
     // Verify bugs appear in correct columns
-    const backlogColumn = page.getByRole('region', { name: 'Backlog column' })
+    const backlogColumn = page.getByRole('region', { name: 'Backlog section' })
     const todoColumn = page.getByRole('region', { name: 'Todo column' })
     const inProgressColumn = page.getByRole('region', { name: 'In Progress column' })
 
@@ -142,7 +149,7 @@ test.describe('Kanban Flow', () => {
     await setupWithBugs(page)
 
     // Find the bug in backlog
-    const backlogColumn = page.getByRole('region', { name: 'Backlog column' })
+    const backlogColumn = page.getByRole('region', { name: 'Backlog section' })
     const todoColumn = page.getByRole('region', { name: 'Todo column' })
     const bugCard = backlogColumn.getByRole('article', { name: /Bug #200001/i })
 
@@ -164,7 +171,7 @@ test.describe('Kanban Flow', () => {
     await setupWithBugs(page)
 
     // Drag first bug
-    const backlogColumn = page.getByRole('region', { name: 'Backlog column' })
+    const backlogColumn = page.getByRole('region', { name: 'Backlog section' })
     const todoColumn = page.getByRole('region', { name: 'Todo column' })
     const bugCard = backlogColumn.getByRole('article', { name: /Bug #200001/i })
 
@@ -222,7 +229,7 @@ test.describe('Kanban Flow', () => {
     await page.getByRole('button', { name: 'Apply Filters' }).click()
 
     // Wait for bugs to appear
-    const backlogColumn = page.getByRole('region', { name: 'Backlog column' })
+    const backlogColumn = page.getByRole('region', { name: 'Backlog section' })
     const todoColumn = page.getByRole('region', { name: 'Todo column' })
     const bugCard = backlogColumn.getByRole('article', { name: /Bug #200001/i })
     await expect(bugCard).toBeVisible({ timeout: 10000 })
@@ -240,9 +247,13 @@ test.describe('Kanban Flow', () => {
       (response) => response.request().method() === 'PUT' && response.url().includes('/bug/'),
     )
 
-    // Verify the update request was made
+    // Verify the update request was made (backlog->todo adds sprint tag to whiteboard)
     expect(updateRequestMade).toBe(true)
-    expect(updateRequestBody).toHaveProperty('status')
+    // The update should contain either status or whiteboard changes
+    expect(
+      Object.prototype.hasOwnProperty.call(updateRequestBody, 'status') ||
+        Object.prototype.hasOwnProperty.call(updateRequestBody, 'whiteboard'),
+    ).toBe(true)
 
     // Button should disappear after successful apply
     await expect(applyButton).not.toBeVisible({ timeout: 10000 })
@@ -284,7 +295,7 @@ test.describe('Kanban Flow', () => {
     await page.waitForResponse('**/api/bugzilla/**')
 
     // Drag and attempt to apply
-    const backlogColumn = page.getByRole('region', { name: 'Backlog column' })
+    const backlogColumn = page.getByRole('region', { name: 'Backlog section' })
     const todoColumn = page.getByRole('region', { name: 'Todo column' })
     const bugCard = backlogColumn.getByRole('article', { name: /Bug #200001/i })
 
@@ -309,7 +320,7 @@ test.describe('Kanban Flow', () => {
     await setupWithBugs(page)
 
     // Drag bug from Backlog to Todo
-    const backlogColumn = page.getByRole('region', { name: 'Backlog column' })
+    const backlogColumn = page.getByRole('region', { name: 'Backlog section' })
     const todoColumn = page.getByRole('region', { name: 'Todo column' })
     const bugCard = backlogColumn.getByRole('article', { name: /Bug #200001/i })
 
@@ -330,5 +341,102 @@ test.describe('Kanban Flow', () => {
 
     // Apply button should be hidden (no net changes)
     await expect(page.getByRole('button', { name: /Apply.*change/i })).not.toBeVisible()
+  })
+
+  test('should show story points on cards', async ({ page }) => {
+    await setupWithBugs(page)
+
+    // Find the first bug card with points
+    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    await expect(bugCard).toBeVisible({ timeout: 10000 })
+
+    // Verify points badge shows "3"
+    await expect(bugCard.getByText('3')).toBeVisible()
+  })
+
+  test('should open points picker when clicking points badge', async ({ page }) => {
+    await setupWithBugs(page)
+
+    // Find the bug card with points
+    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    await expect(bugCard).toBeVisible({ timeout: 10000 })
+
+    // Click the points badge button
+    await bugCard.getByRole('button', { name: 'Change story points' }).click()
+
+    // Points picker should appear
+    const pointsPicker = page.getByRole('listbox', { name: 'Select story points' })
+    await expect(pointsPicker).toBeVisible({ timeout: 5000 })
+
+    // Verify Fibonacci values are shown
+    await expect(pointsPicker.getByText('1')).toBeVisible()
+    await expect(pointsPicker.getByText('5')).toBeVisible()
+    await expect(pointsPicker.getByText('13')).toBeVisible()
+  })
+
+  test('should stage points change when selecting a different value', async ({ page }) => {
+    await setupWithBugs(page)
+
+    // Find the bug card
+    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    await expect(bugCard).toBeVisible({ timeout: 10000 })
+
+    // Click the points badge button
+    await bugCard.getByRole('button', { name: 'Change story points' }).click()
+
+    // Select "5" points
+    const pointsPicker = page.getByRole('listbox', { name: 'Select story points' })
+    await expect(pointsPicker).toBeVisible({ timeout: 5000 })
+    await pointsPicker.getByRole('option', { name: /^5$/ }).click()
+
+    // Bug should now show "5" and have staged indicator
+    await expect(bugCard.getByText('5')).toBeVisible()
+
+    // Apply Changes button should appear
+    await expect(page.getByRole('button', { name: /Apply 1 change/i })).toBeVisible()
+  })
+
+  test('should open priority picker when clicking priority badge', async ({ page }) => {
+    await setupWithBugs(page)
+
+    // Find a bug card
+    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    await expect(bugCard).toBeVisible({ timeout: 10000 })
+
+    // Click the priority badge button
+    await bugCard.getByRole('button', { name: 'Change priority' }).click()
+
+    // Priority picker should appear
+    const priorityPicker = page.getByRole('listbox', { name: 'Select priority' })
+    await expect(priorityPicker).toBeVisible({ timeout: 5000 })
+
+    // Verify all priorities are shown
+    await expect(priorityPicker.getByText('P1')).toBeVisible()
+    await expect(priorityPicker.getByText('P2')).toBeVisible()
+    await expect(priorityPicker.getByText('P3')).toBeVisible()
+    await expect(priorityPicker.getByText('P4')).toBeVisible()
+    await expect(priorityPicker.getByText('P5')).toBeVisible()
+  })
+
+  test('should stage priority change when selecting a different value', async ({ page }) => {
+    await setupWithBugs(page)
+
+    // Find the bug card (P1 priority)
+    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    await expect(bugCard).toBeVisible({ timeout: 10000 })
+
+    // Click the priority badge button
+    await bugCard.getByRole('button', { name: 'Change priority' }).click()
+
+    // Select P3
+    const priorityPicker = page.getByRole('listbox', { name: 'Select priority' })
+    await expect(priorityPicker).toBeVisible({ timeout: 5000 })
+    await priorityPicker.getByRole('option', { name: /P3.*Normal/i }).click()
+
+    // Bug should now show P3
+    await expect(bugCard.getByText('P3')).toBeVisible()
+
+    // Apply Changes button should appear
+    await expect(page.getByRole('button', { name: /Apply 1 change/i })).toBeVisible()
   })
 })
