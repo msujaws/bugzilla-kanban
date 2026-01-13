@@ -84,6 +84,9 @@ async function setupWithBugs(page: Page, bugsResponse = mockBugsResponse) {
 // Helper to perform drag and drop using mouse events
 // @dnd-kit requires specific pointer events to work correctly
 async function dragAndDrop(page: Page, source: Locator, target: Locator) {
+  // First scroll both elements into view
+  await source.scrollIntoViewIfNeeded()
+
   const sourceBox = await source.boundingBox()
   const targetBox = await target.boundingBox()
 
@@ -105,7 +108,10 @@ async function dragAndDrop(page: Page, source: Locator, target: Locator) {
   await page.mouse.down()
   // Move slowly to trigger drag detection (8px minimum for @dnd-kit PointerSensor)
   await page.mouse.move(sourceCenter.x + 10, sourceCenter.y, { steps: 5 })
-  await page.mouse.move(targetCenter.x, targetCenter.y, { steps: 10 })
+  // Move in more steps for longer distances (backlog to board)
+  await page.mouse.move(targetCenter.x, targetCenter.y, { steps: 20 })
+  // Small delay to ensure dnd-kit registers the drop target
+  await page.waitForTimeout(100)
   await page.mouse.up()
 }
 
@@ -357,8 +363,9 @@ test.describe('Kanban Flow', () => {
   test('should open points picker when clicking points badge', async ({ page }) => {
     await setupWithBugs(page)
 
-    // Find the bug card with points
-    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    // Find the bug card with points - use the one in todo column (inside the board, not backlog)
+    const todoColumn = page.getByRole('region', { name: 'Todo column' })
+    const bugCard = todoColumn.getByRole('article', { name: /Bug #200002/i })
     await expect(bugCard).toBeVisible({ timeout: 10000 })
 
     // Click the points badge button
@@ -368,29 +375,35 @@ test.describe('Kanban Flow', () => {
     const pointsPicker = page.getByRole('listbox', { name: 'Select story points' })
     await expect(pointsPicker).toBeVisible({ timeout: 5000 })
 
-    // Verify Fibonacci values are shown
-    await expect(pointsPicker.getByText('1')).toBeVisible()
-    await expect(pointsPicker.getByText('5')).toBeVisible()
-    await expect(pointsPicker.getByText('13')).toBeVisible()
+    // Verify options are shown (at least 9 options including ---, ?, 1, 2, 3, 5, 8, 13, 21)
+    const options = pointsPicker.getByRole('option')
+    await expect(options).toHaveCount(9)
   })
 
   test('should stage points change when selecting a different value', async ({ page }) => {
     await setupWithBugs(page)
 
-    // Find the bug card
-    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    // Find the bug card - use the one in todo column (inside the board, not backlog)
+    const todoColumn = page.getByRole('region', { name: 'Todo column' })
+    const bugCard = todoColumn.getByRole('article', { name: /Bug #200002/i })
     await expect(bugCard).toBeVisible({ timeout: 10000 })
 
     // Click the points badge button
     await bugCard.getByRole('button', { name: 'Change story points' }).click()
 
-    // Select "5" points
+    // Select "8" points (changing from 5 to 8)
     const pointsPicker = page.getByRole('listbox', { name: 'Select story points' })
     await expect(pointsPicker).toBeVisible({ timeout: 5000 })
-    await pointsPicker.getByRole('option', { name: /^5$/ }).click()
 
-    // Bug should now show "5" and have staged indicator
-    await expect(bugCard.getByText('5')).toBeVisible()
+    // Click option
+    const option = pointsPicker.getByRole('option', { name: /^8$/ })
+    await option.click()
+
+    // Wait for picker to close
+    await expect(pointsPicker).not.toBeVisible({ timeout: 5000 })
+
+    // Bug should now show "8" on the points button
+    await expect(bugCard.getByRole('button', { name: 'Change story points' })).toContainText('8')
 
     // Apply Changes button should appear
     await expect(page.getByRole('button', { name: /Apply 1 change/i })).toBeVisible()
@@ -399,8 +412,9 @@ test.describe('Kanban Flow', () => {
   test('should open priority picker when clicking priority badge', async ({ page }) => {
     await setupWithBugs(page)
 
-    // Find a bug card
-    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    // Find a bug card in the todo column (inside the board, not backlog)
+    const todoColumn = page.getByRole('region', { name: 'Todo column' })
+    const bugCard = todoColumn.getByRole('article', { name: /Bug #200002/i })
     await expect(bugCard).toBeVisible({ timeout: 10000 })
 
     // Click the priority badge button
@@ -421,8 +435,9 @@ test.describe('Kanban Flow', () => {
   test('should stage priority change when selecting a different value', async ({ page }) => {
     await setupWithBugs(page)
 
-    // Find the bug card (P1 priority)
-    const bugCard = page.getByRole('article', { name: /Bug #200001/i })
+    // Find a bug card in the todo column (P2 priority)
+    const todoColumn = page.getByRole('region', { name: 'Todo column' })
+    const bugCard = todoColumn.getByRole('article', { name: /Bug #200002/i })
     await expect(bugCard).toBeVisible({ timeout: 10000 })
 
     // Click the priority badge button
@@ -431,10 +446,16 @@ test.describe('Kanban Flow', () => {
     // Select P3
     const priorityPicker = page.getByRole('listbox', { name: 'Select priority' })
     await expect(priorityPicker).toBeVisible({ timeout: 5000 })
-    await priorityPicker.getByRole('option', { name: /P3.*Normal/i }).click()
 
-    // Bug should now show P3
-    await expect(bugCard.getByText('P3')).toBeVisible()
+    // Click option
+    const option = priorityPicker.getByRole('option', { name: /P3.*Normal/i })
+    await option.click()
+
+    // Wait for picker to close
+    await expect(priorityPicker).not.toBeVisible({ timeout: 5000 })
+
+    // Bug should now show P3 on the priority button
+    await expect(bugCard.getByRole('button', { name: 'Change priority' })).toContainText('P3')
 
     // Apply Changes button should appear
     await expect(page.getByRole('button', { name: /Apply 1 change/i })).toBeVisible()

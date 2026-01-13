@@ -243,10 +243,10 @@ test.describe('Filter Flow', () => {
     ])
 
     // All columns should be empty (show empty state message)
-    const backlogColumn = page.getByRole('region', { name: 'Backlog column' })
-    await expect(backlogColumn).toBeVisible()
+    const backlogSection = page.getByRole('region', { name: 'Backlog section' })
+    await expect(backlogSection).toBeVisible()
     // Should show empty state text in at least one column
-    await expect(backlogColumn.getByText('No bugs here!')).toBeVisible()
+    await expect(backlogSection.getByText('No bugs here!')).toBeVisible()
   })
 
   test('should clear filters and reload', async ({ page }) => {
