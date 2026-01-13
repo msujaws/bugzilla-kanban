@@ -50,8 +50,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       fetchOptions.body = JSON.stringify(req.body)
     }
 
+    console.log(`Proxying ${req.method ?? 'GET'} ${url.toString()}`)
     const response = await fetch(url.toString(), fetchOptions)
-    const data: unknown = await response.json()
+
+    // Get response as text first to handle non-JSON responses
+    const responseText = await response.text()
+
+    // Try to parse as JSON
+    let data: unknown
+    try {
+      data = JSON.parse(responseText)
+    } catch {
+      // If response isn't JSON, return an error with the raw text
+      console.error('Non-JSON response from Bugzilla:', responseText.slice(0, 500))
+      res.status(502).json({
+        error: true,
+        message: 'Invalid response from Bugzilla API',
+        details: responseText.slice(0, 200),
+      })
+      return
+    }
 
     // Return response with same status code
     res.status(response.status).json(data)
