@@ -46,6 +46,11 @@ function App() {
     setShowApiKeyModal(true)
   }, [])
 
+  // Handle open FAQ
+  const handleOpenFAQ = useCallback(() => {
+    setShowFAQModal(true)
+  }, [])
+
   // Handle filter changes
   const handleWhiteboardTagChange = useCallback(
     (value: string) => {
@@ -143,7 +148,7 @@ function App() {
         </div>
 
         {/* Always show API key input when no key */}
-        <ApiKeyInput isOpen={true} onClose={() => {}} />
+        <ApiKeyInput isOpen={true} onClose={() => {}} onOpenFAQ={handleOpenFAQ} />
 
         {/* FAQ Modal */}
         <FAQModal
@@ -233,7 +238,7 @@ function App() {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       {/* API Key Modal */}
-      <ApiKeyInput isOpen={showApiKeyModal} onClose={handleCloseModal} />
+      <ApiKeyInput isOpen={showApiKeyModal} onClose={handleCloseModal} onOpenFAQ={handleOpenFAQ} />
 
       {/* FAQ Modal */}
       <FAQModal
