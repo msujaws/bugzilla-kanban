@@ -95,9 +95,21 @@ describe('Branded Types', () => {
       })
     })
 
+    describe('relative paths', () => {
+      it('should accept relative paths starting with /', () => {
+        const url = createBugzillaBaseUrl('/api/bugzilla')
+        expect(url).toBe('/api/bugzilla')
+      })
+
+      it('should remove trailing slashes from relative paths', () => {
+        const url = createBugzillaBaseUrl('/api/bugzilla/')
+        expect(url).toBe('/api/bugzilla')
+      })
+    })
+
     describe('DEFAULT_BUGZILLA_URL', () => {
-      it('should be the Mozilla Bugzilla REST URL', () => {
-        expect(DEFAULT_BUGZILLA_URL).toBe('https://bugzilla.mozilla.org/rest')
+      it('should be the proxy URL', () => {
+        expect(DEFAULT_BUGZILLA_URL).toBe('/api/bugzilla')
       })
 
       it('should be a BugzillaBaseUrl type', () => {

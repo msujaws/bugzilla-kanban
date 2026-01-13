@@ -24,6 +24,24 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/api/bugzilla': {
+        target: 'https://bugzilla.mozilla.org/rest',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/bugzilla/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+            // Forward the API key header
+            const apiKey = req.headers['x-bugzilla-api-key']
+            if (apiKey) {
+              proxyReq.setHeader('X-BUGZILLA-API-KEY', apiKey as string)
+            }
+          })
+        },
+      },
+    },
+  },
   build: {
     target: 'esnext',
     minify: 'esbuild',

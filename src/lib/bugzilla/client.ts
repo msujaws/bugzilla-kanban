@@ -24,24 +24,27 @@ export class BugzillaClient {
    * Fetch bugs from Bugzilla with optional filters
    */
   async getBugs(filters: BugFilters = {}): Promise<BugzillaBug[]> {
-    const url = new URL(`${this.baseUrl}/bug`)
+    // Build query string manually to support relative URLs
+    const params = new URLSearchParams()
 
-    // Add filters to query params
     if (filters.whiteboardTag) {
-      url.searchParams.append('whiteboard', filters.whiteboardTag)
+      params.append('whiteboard', filters.whiteboardTag)
     }
 
     if (filters.component) {
-      url.searchParams.append('component', filters.component)
+      params.append('component', filters.component)
     }
 
     if (filters.status && filters.status.length > 0) {
       for (const status of filters.status) {
-        url.searchParams.append('status', status)
+        params.append('status', status)
       }
     }
 
-    const response = await this.request<BugzillaSearchResponse>(url.toString())
+    const queryString = params.toString()
+    const url = `${this.baseUrl}/bug${queryString ? `?${queryString}` : ''}`
+
+    const response = await this.request<BugzillaSearchResponse>(url)
     return response.bugs
   }
 

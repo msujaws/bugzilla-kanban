@@ -64,16 +64,23 @@ export function tryCreateApiKey(key: string | undefined | null): ApiKey | undefi
  */
 export type BugzillaBaseUrl = Brand<string, 'BugzillaBaseUrl'>
 
-/** Default Bugzilla base URL */
-export const DEFAULT_BUGZILLA_URL = 'https://bugzilla.mozilla.org/rest' as BugzillaBaseUrl
+/** Default Bugzilla base URL - uses proxy to avoid CORS issues */
+export const DEFAULT_BUGZILLA_URL = '/api/bugzilla' as BugzillaBaseUrl
 
 /**
  * Create a branded BugzillaBaseUrl from a string.
- * Validates that the URL is valid.
+ * Validates that the URL is valid (absolute or relative path starting with /).
  */
 export function createBugzillaBaseUrl(url: string): BugzillaBaseUrl {
   const trimmed = url.trim()
-  // Validate URL format
+
+  // Allow relative paths starting with /
+  if (trimmed.startsWith('/')) {
+    const normalized = trimmed.replace(/\/+$/, '')
+    return normalized as BugzillaBaseUrl
+  }
+
+  // Validate absolute URL format
   try {
     new URL(trimmed)
   } catch {

@@ -6,7 +6,7 @@ import { createApiKey, createBugId } from '@/types/branded'
 describe('BugzillaClient', () => {
   let client: BugzillaClient
   const mockApiKey = createApiKey('test-api-key-123')
-  const baseUrl = 'https://bugzilla.mozilla.org/rest'
+  const baseUrl = '/api/bugzilla' // Using proxy URL
 
   beforeEach(() => {
     client = new BugzillaClient(mockApiKey)
