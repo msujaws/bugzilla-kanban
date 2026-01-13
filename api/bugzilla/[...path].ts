@@ -33,17 +33,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  console.log('Path from query:', path)
-  console.log('Extracted bugzillaPath:', bugzillaPath)
-
   // Build the Bugzilla URL
   const url = new URL(`${BUGZILLA_BASE_URL}/${bugzillaPath}`)
 
-  // Forward query parameters
+  // Forward query parameters (exclude Vercel's catch-all route params)
   if (typeof req.url === 'string') {
     const reqUrl = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`)
     for (const [key, value] of reqUrl.searchParams) {
-      if (key !== 'path') {
+      // Exclude both 'path' and '...path' (Vercel encodes catch-all routes as '...path')
+      if (key !== 'path' && key !== '...path') {
         url.searchParams.append(key, value)
       }
     }
