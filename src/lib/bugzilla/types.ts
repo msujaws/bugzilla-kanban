@@ -58,6 +58,9 @@ export interface BugUpdate {
   status?: string
   resolution?: string
   assigned_to?: string
+  whiteboard?: string
+  cf_fx_points?: number | string
+  priority?: string
 }
 
 export interface BatchUpdateResult {

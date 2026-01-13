@@ -112,6 +112,15 @@ export class BugzillaClient {
         if (update.assigned_to) {
           changes.assigned_to = update.assigned_to
         }
+        if (update.whiteboard !== undefined) {
+          changes.whiteboard = update.whiteboard
+        }
+        if (update.cf_fx_points !== undefined) {
+          changes.cf_fx_points = update.cf_fx_points
+        }
+        if (update.priority !== undefined) {
+          changes.priority = update.priority
+        }
         await this.updateBug(bugId, changes)
         result.successful.push(update.id)
       } catch (error) {

@@ -341,5 +341,95 @@ describe('BugzillaClient', () => {
         }),
       )
     })
+
+    it('should send whiteboard when provided', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, whiteboard: '[bzkanban-sprint] [other-tag]' }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ whiteboard: '[bzkanban-sprint] [other-tag]' }),
+        }),
+      )
+    })
+
+    it('should send cf_fx_points when provided', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, cf_fx_points: 5 }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ cf_fx_points: 5 }),
+        }),
+      )
+    })
+
+    it('should send cf_fx_points as string when provided as string', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, cf_fx_points: '?' }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ cf_fx_points: '?' }),
+        }),
+      )
+    })
+
+    it('should send priority when provided', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, priority: 'P1' }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ priority: 'P1' }),
+        }),
+      )
+    })
+
+    it('should send multiple new fields together', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, whiteboard: '[sprint]', cf_fx_points: 3, priority: 'P2' }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ whiteboard: '[sprint]', cf_fx_points: 3, priority: 'P2' }),
+        }),
+      )
+    })
   })
 })
