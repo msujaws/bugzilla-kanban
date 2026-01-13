@@ -16,9 +16,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Get the path segments after /api/bugzilla/
+  // Try from query first, fallback to parsing URL directly
+  let bugzillaPath = ''
+
   const { path } = req.query
-  const pathSegments = Array.isArray(path) ? path : [path]
-  const bugzillaPath = pathSegments.join('/')
+  if (path) {
+    const pathSegments = Array.isArray(path) ? path : [path]
+    bugzillaPath = pathSegments.filter(Boolean).join('/')
+  }
+
+  // Fallback: extract path from URL if query param is empty
+  if (!bugzillaPath && req.url) {
+    const match = req.url.match(/\/api\/bugzilla\/([^?]*)/)
+    if (match?.[1]) {
+      bugzillaPath = match[1]
+    }
+  }
+
+  console.log('Path from query:', path)
+  console.log('Extracted bugzillaPath:', bugzillaPath)
 
   // Build the Bugzilla URL
   const url = new URL(`${BUGZILLA_BASE_URL}/${bugzillaPath}`)
