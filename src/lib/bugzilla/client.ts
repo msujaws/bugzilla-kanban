@@ -81,7 +81,14 @@ export class BugzillaClient {
     for (const update of updates) {
       try {
         const bugId = createBugId(update.id)
-        await this.updateBug(bugId, { status: update.status })
+        const changes: Partial<BugzillaBug> = {}
+        if (update.status) {
+          changes.status = update.status
+        }
+        if (update.assigned_to) {
+          changes.assigned_to = update.assigned_to
+        }
+        await this.updateBug(bugId, changes)
         result.successful.push(update.id)
       } catch (error) {
         result.failed.push({

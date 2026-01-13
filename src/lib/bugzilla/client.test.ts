@@ -287,5 +287,41 @@ describe('BugzillaClient', () => {
       expect(result.failed).toEqual([])
       expect(fetch).not.toHaveBeenCalled()
     })
+
+    it('should send assigned_to when updating assignee', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, assigned_to: 'newuser@mozilla.com' }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ assigned_to: 'newuser@mozilla.com' }),
+        }),
+      )
+    })
+
+    it('should send both status and assigned_to when both are provided', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, status: 'ASSIGNED', assigned_to: 'newuser@mozilla.com' }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ status: 'ASSIGNED', assigned_to: 'newuser@mozilla.com' }),
+        }),
+      )
+    })
   })
 })
