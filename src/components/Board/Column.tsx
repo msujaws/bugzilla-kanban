@@ -9,6 +9,8 @@ interface ColumnProps {
   bugs: BugzillaBug[]
   stagedBugIds: Set<number>
   isLoading?: boolean
+  selectedIndex?: number
+  isGrabbing?: boolean
 }
 
 const columnIcons: Record<KanbanColumn, string> = {
@@ -19,7 +21,14 @@ const columnIcons: Record<KanbanColumn, string> = {
   done: 'done_all',
 }
 
-export function Column({ column, bugs, stagedBugIds, isLoading = false }: ColumnProps) {
+export function Column({
+  column,
+  bugs,
+  stagedBugIds,
+  isLoading = false,
+  selectedIndex,
+  isGrabbing = false,
+}: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column,
   })
@@ -81,8 +90,14 @@ export function Column({ column, bugs, stagedBugIds, isLoading = false }: Column
       {/* Bug Cards */}
       {!isLoading && bugs.length > 0 && (
         <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
-          {bugs.map((bug) => (
-            <Card key={bug.id} bug={bug} isStaged={stagedBugIds.has(bug.id)} />
+          {bugs.map((bug, index) => (
+            <Card
+              key={bug.id}
+              bug={bug}
+              isStaged={stagedBugIds.has(bug.id)}
+              isSelected={selectedIndex === index}
+              isGrabbed={selectedIndex === index && isGrabbing}
+            />
           ))}
         </div>
       )}

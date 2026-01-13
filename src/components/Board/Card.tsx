@@ -6,6 +6,8 @@ interface CardProps {
   bug: BugzillaBug
   isStaged?: boolean
   isDragging?: boolean
+  isSelected?: boolean
+  isGrabbed?: boolean
   onClick?: (bug: BugzillaBug) => void
 }
 
@@ -27,7 +29,14 @@ const severityColors: Record<string, string> = {
   enhancement: 'text-accent-primary',
 }
 
-export function Card({ bug, isStaged = false, isDragging = false, onClick }: CardProps) {
+export function Card({
+  bug,
+  isStaged = false,
+  isDragging = false,
+  isSelected = false,
+  isGrabbed = false,
+  onClick,
+}: CardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: bug.id,
   })
@@ -53,6 +62,23 @@ export function Card({ bug, isStaged = false, isDragging = false, onClick }: Car
     }
   }
 
+  // Build className based on state priority: isDragging > isGrabbed > isSelected > isStaged
+  const getStateClasses = () => {
+    if (isDragging) {
+      return 'scale-105 opacity-90 shadow-2xl ring-2 ring-accent-primary'
+    }
+    if (isGrabbed) {
+      return 'scale-105 shadow-2xl ring-2 ring-accent-warning animate-pulse'
+    }
+    if (isSelected) {
+      return 'ring-2 ring-accent-primary shadow-xl'
+    }
+    if (isStaged) {
+      return 'ring-2 ring-accent-primary/50'
+    }
+    return 'hover:shadow-xl'
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -66,11 +92,7 @@ export function Card({ bug, isStaged = false, isDragging = false, onClick }: Car
       onKeyDown={handleKeyDown}
       className={`cursor-grab rounded-lg bg-bg-secondary p-4 shadow-lg transition-all active:cursor-grabbing ${
         onClick ? 'cursor-pointer' : ''
-      } ${isStaged ? 'ring-2 ring-accent-primary' : ''} ${
-        isDragging
-          ? 'scale-105 opacity-90 shadow-2xl ring-2 ring-accent-primary'
-          : 'hover:shadow-xl'
-      }`}
+      } ${getStateClasses()}`}
     >
       {/* Header with drag handle and bug ID */}
       <div className="mb-2 flex items-center gap-2">

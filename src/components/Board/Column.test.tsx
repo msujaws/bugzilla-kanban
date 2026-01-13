@@ -37,10 +37,24 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }))
 
-// Mock Card component
+// Mock Card component with selection props
 vi.mock('./Card', () => ({
-  Card: ({ bug }: { bug: BugzillaBug }) => (
-    <div data-testid={`card-${bug.id.toString()}`}>Card: {bug.summary}</div>
+  Card: ({
+    bug,
+    isSelected,
+    isGrabbed,
+  }: {
+    bug: BugzillaBug
+    isSelected?: boolean
+    isGrabbed?: boolean
+  }) => (
+    <div
+      data-testid={`card-${bug.id.toString()}`}
+      data-selected={isSelected}
+      data-grabbed={isGrabbed}
+    >
+      Card: {bug.summary}
+    </div>
   ),
 }))
 
@@ -259,6 +273,61 @@ describe('Column', () => {
       render(<Column {...defaultProps} isLoading={true} />)
 
       expect(screen.queryByTestId('card-12345')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('keyboard selection', () => {
+    it('should not pass selection props by default', () => {
+      render(<Column {...defaultProps} />)
+
+      const card1 = screen.getByTestId('card-12345')
+      const card2 = screen.getByTestId('card-12346')
+      expect(card1).toHaveAttribute('data-selected', 'false')
+      expect(card1).toHaveAttribute('data-grabbed', 'false')
+      expect(card2).toHaveAttribute('data-selected', 'false')
+      expect(card2).toHaveAttribute('data-grabbed', 'false')
+    })
+
+    it('should pass isSelected=true to card at selectedIndex', () => {
+      render(<Column {...defaultProps} selectedIndex={0} />)
+
+      const card1 = screen.getByTestId('card-12345')
+      const card2 = screen.getByTestId('card-12346')
+      expect(card1).toHaveAttribute('data-selected', 'true')
+      expect(card2).toHaveAttribute('data-selected', 'false')
+    })
+
+    it('should pass isSelected=true to second card when selectedIndex=1', () => {
+      render(<Column {...defaultProps} selectedIndex={1} />)
+
+      const card1 = screen.getByTestId('card-12345')
+      const card2 = screen.getByTestId('card-12346')
+      expect(card1).toHaveAttribute('data-selected', 'false')
+      expect(card2).toHaveAttribute('data-selected', 'true')
+    })
+
+    it('should pass isGrabbed=true when both selectedIndex and isGrabbing are set', () => {
+      render(<Column {...defaultProps} selectedIndex={0} isGrabbing={true} />)
+
+      const card1 = screen.getByTestId('card-12345')
+      const card2 = screen.getByTestId('card-12346')
+      expect(card1).toHaveAttribute('data-grabbed', 'true')
+      expect(card2).toHaveAttribute('data-grabbed', 'false')
+    })
+
+    it('should not pass isGrabbed when isGrabbing is true but no selectedIndex', () => {
+      render(<Column {...defaultProps} isGrabbing={true} />)
+
+      const card1 = screen.getByTestId('card-12345')
+      expect(card1).toHaveAttribute('data-grabbed', 'false')
+    })
+
+    it('should pass both isSelected and isGrabbed to selected card when grabbing', () => {
+      render(<Column {...defaultProps} selectedIndex={1} isGrabbing={true} />)
+
+      const card2 = screen.getByTestId('card-12346')
+      expect(card2).toHaveAttribute('data-selected', 'true')
+      expect(card2).toHaveAttribute('data-grabbed', 'true')
     })
   })
 })

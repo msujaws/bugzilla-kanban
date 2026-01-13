@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Board } from './Board'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 
@@ -273,6 +274,313 @@ describe('Board', () => {
 
       const main = screen.getByRole('main')
       expect(main).toHaveAttribute('aria-busy', 'true')
+    })
+  })
+
+  describe('keyboard navigation', () => {
+    // Create multiple bugs in same column for up/down navigation
+    const multipleBacklogBugs: BugzillaBug[] = [
+      {
+        id: 10,
+        summary: 'First backlog bug',
+        status: 'NEW',
+        assigned_to: 'dev1@example.com',
+        priority: 'P1',
+        severity: 'major',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+      {
+        id: 11,
+        summary: 'Second backlog bug',
+        status: 'NEW',
+        assigned_to: 'dev2@example.com',
+        priority: 'P2',
+        severity: 'normal',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-14T09:00:00Z',
+      },
+      {
+        id: 12,
+        summary: 'Third backlog bug',
+        status: 'NEW',
+        assigned_to: 'dev3@example.com',
+        priority: 'P3',
+        severity: 'minor',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-13T08:00:00Z',
+      },
+      {
+        id: 20,
+        summary: 'First todo bug',
+        status: 'ASSIGNED',
+        assigned_to: 'dev4@example.com',
+        priority: 'P2',
+        severity: 'normal',
+        component: 'UI',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-12T07:00:00Z',
+      },
+    ]
+
+    describe('arrow key navigation', () => {
+      it('should select first bug in first non-empty column on initial arrow key press', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+
+        // Should select first bug in backlog (first column with bugs)
+        const firstCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        expect(firstCard?.className).toContain('ring-2')
+      })
+
+      it('should move selection down within column on ArrowDown', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Initial selection
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Move down
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+
+        const secondCard = screen.getByText('Second backlog bug').closest('[role="article"]')
+        expect(secondCard?.className).toContain('ring-2')
+      })
+
+      it('should move selection up within column on ArrowUp', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select first, then second
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Move back up
+        fireEvent.keyDown(document, { key: 'ArrowUp' })
+
+        const firstCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        expect(firstCard?.className).toContain('ring-2')
+      })
+
+      it('should move selection to next column on ArrowRight', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select first bug in backlog
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Move to todo column
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+        const todoCard = screen.getByText('First todo bug').closest('[role="article"]')
+        expect(todoCard?.className).toContain('ring-2')
+      })
+
+      it('should move selection to previous column on ArrowLeft', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select first bug in backlog, move right to todo, then back left
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+        fireEvent.keyDown(document, { key: 'ArrowLeft' })
+
+        const backlogCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        expect(backlogCard?.className).toContain('ring-2')
+      })
+
+      it('should not move selection past first column on ArrowLeft', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select first bug in backlog
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Try to move left (should stay in backlog)
+        fireEvent.keyDown(document, { key: 'ArrowLeft' })
+
+        const backlogCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        expect(backlogCard?.className).toContain('ring-2')
+      })
+
+      it('should not move selection past last column on ArrowRight', () => {
+        const bugsInDone: BugzillaBug[] = [
+          {
+            id: 50,
+            summary: 'Done bug',
+            status: 'VERIFIED',
+            assigned_to: 'dev@example.com',
+            priority: 'P1',
+            severity: 'normal',
+            component: 'Core',
+            whiteboard: '[kanban]',
+            last_change_time: '2024-01-15T10:00:00Z',
+          },
+        ]
+        render(<Board {...defaultProps} bugs={bugsInDone} />)
+
+        // Select bug in done column
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Try to move right (should stay in done)
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+        const doneCard = screen.getByText('Done bug').closest('[role="article"]')
+        expect(doneCard?.className).toContain('ring-2')
+      })
+
+      it('should clamp index when moving to column with fewer bugs', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select third bug in backlog (index 2)
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Move to todo (which only has 1 bug, so should clamp to index 0)
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+        const todoCard = screen.getByText('First todo bug').closest('[role="article"]')
+        expect(todoCard?.className).toContain('ring-2')
+      })
+    })
+
+    describe('escape key', () => {
+      it('should clear selection on Escape', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select a bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Clear selection
+        fireEvent.keyDown(document, { key: 'Escape' })
+
+        // No cards should have selection ring
+        const cards = screen.getAllByRole('article')
+        for (const card of cards) {
+          expect(card.className).not.toContain('ring-accent-primary')
+        }
+      })
+    })
+
+    describe('grab and move with Shift', () => {
+      it('should enter grab mode when Shift is pressed with selection', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select a bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Hold shift
+        fireEvent.keyDown(document, { key: 'Shift' })
+
+        const selectedCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        expect(selectedCard?.className).toContain('ring-accent-warning')
+        expect(selectedCard?.className).toContain('animate-pulse')
+      })
+
+      it('should exit grab mode and stage move when Shift is released', () => {
+        const onBugMove = vi.fn()
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} onBugMove={onBugMove} />)
+
+        // Select first backlog bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Hold shift
+        fireEvent.keyDown(document, { key: 'Shift' })
+        // Move to todo column
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+        // Release shift
+        fireEvent.keyUp(document, { key: 'Shift' })
+
+        // Should call onBugMove to stage the change
+        expect(onBugMove).toHaveBeenCalledWith(10, 'backlog', 'todo')
+      })
+
+      it('should not stage move if column did not change', () => {
+        const onBugMove = vi.fn()
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} onBugMove={onBugMove} />)
+
+        // Select first backlog bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Hold shift (no movement)
+        fireEvent.keyDown(document, { key: 'Shift' })
+        // Release shift without moving
+        fireEvent.keyUp(document, { key: 'Shift' })
+
+        // Should not call onBugMove
+        expect(onBugMove).not.toHaveBeenCalled()
+      })
+
+      it('should move grabbed bug to new column on ArrowRight while grabbing', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select first backlog bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Hold shift
+        fireEvent.keyDown(document, { key: 'Shift' })
+        // Move to todo column
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+        // The bug should now appear selected in the todo column visually
+        // (grab mode shows warning ring)
+        const firstCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        expect(firstCard?.className).toContain('ring-accent-warning')
+      })
+
+      it('should not allow movement past first column while grabbing', () => {
+        const onBugMove = vi.fn()
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} onBugMove={onBugMove} />)
+
+        // Select first backlog bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Hold shift
+        fireEvent.keyDown(document, { key: 'Shift' })
+        // Try to move left (already at first column)
+        fireEvent.keyDown(document, { key: 'ArrowLeft' })
+        // Release shift
+        fireEvent.keyUp(document, { key: 'Shift' })
+
+        // Should not stage any move
+        expect(onBugMove).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('Shift+Enter to apply changes', () => {
+      it('should call onApplyChanges when Shift+Enter is pressed', () => {
+        const onApplyChanges = vi.fn()
+        render(
+          <Board {...defaultProps} bugs={multipleBacklogBugs} onApplyChanges={onApplyChanges} />,
+        )
+
+        // Press Shift+Enter
+        fireEvent.keyDown(document, { key: 'Enter', shiftKey: true })
+
+        expect(onApplyChanges).toHaveBeenCalled()
+      })
+
+      it('should not call onApplyChanges on Enter without Shift', () => {
+        const onApplyChanges = vi.fn()
+        render(
+          <Board {...defaultProps} bugs={multipleBacklogBugs} onApplyChanges={onApplyChanges} />,
+        )
+
+        // Press Enter without shift
+        fireEvent.keyDown(document, { key: 'Enter', shiftKey: false })
+
+        expect(onApplyChanges).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('disabled states', () => {
+      it('should not respond to keyboard when loading', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} isLoading={true} />)
+
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+
+        // Should not select anything (no ring class on any card)
+        // When loading, cards are not rendered, so this just confirms no errors
+        expect(screen.queryByText('First backlog bug')).not.toBeInTheDocument()
+      })
+
+      it('should not respond to keyboard when no bugs', () => {
+        render(<Board {...defaultProps} bugs={[]} />)
+
+        // Should not throw error when pressing keys with no bugs
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        fireEvent.keyDown(document, { key: 'Shift' })
+
+        expect(screen.getAllByText(/no bugs here/i).length).toBe(5)
+      })
     })
   })
 })

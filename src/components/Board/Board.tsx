@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -19,13 +19,30 @@ interface BoardProps {
   stagedChanges: Map<number, { from: string; to: string }>
   onBugMove: (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn) => void
   isLoading?: boolean
+  onApplyChanges?: () => void
+}
+
+interface SelectedPosition {
+  columnIndex: number
+  bugIndex: number
 }
 
 const statusMapper = new StatusMapper()
 const columns = statusMapper.getAvailableColumns()
 
-export function Board({ bugs, stagedChanges, onBugMove, isLoading = false }: BoardProps) {
+export function Board({
+  bugs,
+  stagedChanges,
+  onBugMove,
+  isLoading = false,
+  onApplyChanges,
+}: BoardProps) {
   const [activeBug, setActiveBug] = useState<BugzillaBug | null>(null)
+  const [selectedPosition, setSelectedPosition] = useState<SelectedPosition | null>(null)
+  const [isGrabbing, setIsGrabbing] = useState(false)
+  const [grabStartColumn, setGrabStartColumn] = useState<number | null>(null)
+  const [grabbedBugId, setGrabbedBugId] = useState<number | null>(null)
+  const [targetColumnIndex, setTargetColumnIndex] = useState<number | null>(null)
 
   // Configure sensors for drag detection
   const sensors = useSensors(
@@ -68,6 +85,212 @@ export function Board({ bugs, stagedChanges, onBugMove, isLoading = false }: Boa
     }
     return ids
   }, [stagedChanges])
+
+  // Find first non-empty column
+  const findFirstNonEmptyColumn = useCallback((): number => {
+    for (const [i, column] of columns.entries()) {
+      if ((bugsByColumn.get(column)?.length ?? 0) > 0) {
+        return i
+      }
+    }
+    return -1
+  }, [bugsByColumn])
+
+  // Find next non-empty column in direction
+  const findNextNonEmptyColumn = useCallback(
+    (currentIndex: number, direction: 1 | -1): number => {
+      let nextIndex = currentIndex + direction
+      while (nextIndex >= 0 && nextIndex < columns.length) {
+        const column = columns[nextIndex]
+        if (column && (bugsByColumn.get(column)?.length ?? 0) > 0) {
+          return nextIndex
+        }
+        nextIndex += direction
+      }
+      return currentIndex // Stay at current if no non-empty column found
+    },
+    [bugsByColumn],
+  )
+
+  // Get selected bug based on position
+  const getSelectedBug = useCallback((): BugzillaBug | null => {
+    if (!selectedPosition) return null
+    const column = columns[selectedPosition.columnIndex]
+    if (!column) return null
+    const columnBugs = bugsByColumn.get(column) ?? []
+    return columnBugs[selectedPosition.bugIndex] ?? null
+  }, [selectedPosition, bugsByColumn])
+
+  // Keyboard event handlers
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      // Don't handle keyboard when loading or no bugs
+      if (isLoading || bugs.length === 0) return
+
+      // Handle Shift+Enter for applying changes
+      if (event.key === 'Enter' && event.shiftKey) {
+        onApplyChanges?.()
+        return
+      }
+
+      // Handle Escape to clear selection
+      if (event.key === 'Escape') {
+        setSelectedPosition(null)
+        setIsGrabbing(false)
+        setGrabStartColumn(null)
+        return
+      }
+
+      // Handle Shift key for grab mode
+      if (event.key === 'Shift' && selectedPosition) {
+        const bug = getSelectedBug()
+        if (bug) {
+          setIsGrabbing(true)
+          setGrabStartColumn(selectedPosition.columnIndex)
+          setGrabbedBugId(bug.id)
+          setTargetColumnIndex(selectedPosition.columnIndex)
+        }
+        return
+      }
+
+      // Handle arrow keys
+      if (event.key.startsWith('Arrow')) {
+        event.preventDefault()
+
+        // Initialize selection if none exists
+        if (!selectedPosition) {
+          const firstColumn = findFirstNonEmptyColumn()
+          if (firstColumn >= 0) {
+            setSelectedPosition({ columnIndex: firstColumn, bugIndex: 0 })
+          }
+          return
+        }
+
+        const column = columns[selectedPosition.columnIndex]
+        if (!column) return
+        const currentColumnBugs = bugsByColumn.get(column) ?? []
+
+        switch (event.key) {
+          case 'ArrowUp': {
+            if (!isGrabbing && selectedPosition.bugIndex > 0) {
+              setSelectedPosition({
+                ...selectedPosition,
+                bugIndex: selectedPosition.bugIndex - 1,
+              })
+            }
+            break
+          }
+          case 'ArrowDown': {
+            if (!isGrabbing && selectedPosition.bugIndex < currentColumnBugs.length - 1) {
+              setSelectedPosition({
+                ...selectedPosition,
+                bugIndex: selectedPosition.bugIndex + 1,
+              })
+            }
+            break
+          }
+          case 'ArrowLeft': {
+            if (isGrabbing && targetColumnIndex !== null) {
+              // During grab mode, just track target column
+              if (targetColumnIndex > 0) {
+                setTargetColumnIndex(targetColumnIndex - 1)
+              }
+            } else {
+              const prevColumn = findNextNonEmptyColumn(selectedPosition.columnIndex, -1)
+              if (prevColumn !== selectedPosition.columnIndex) {
+                const prevColumnKey = columns[prevColumn]
+                if (prevColumnKey) {
+                  const prevColumnBugs = bugsByColumn.get(prevColumnKey) ?? []
+                  const clampedIndex = Math.min(
+                    selectedPosition.bugIndex,
+                    prevColumnBugs.length - 1,
+                  )
+                  setSelectedPosition({
+                    columnIndex: prevColumn,
+                    bugIndex: Math.max(0, clampedIndex),
+                  })
+                }
+              }
+            }
+            break
+          }
+          case 'ArrowRight': {
+            if (isGrabbing && targetColumnIndex !== null) {
+              // During grab mode, just track target column
+              if (targetColumnIndex < columns.length - 1) {
+                setTargetColumnIndex(targetColumnIndex + 1)
+              }
+            } else {
+              const nextColumn = findNextNonEmptyColumn(selectedPosition.columnIndex, 1)
+              if (nextColumn !== selectedPosition.columnIndex) {
+                const nextColumnKey = columns[nextColumn]
+                if (nextColumnKey) {
+                  const nextColumnBugs = bugsByColumn.get(nextColumnKey) ?? []
+                  const clampedIndex = Math.min(
+                    selectedPosition.bugIndex,
+                    nextColumnBugs.length - 1,
+                  )
+                  setSelectedPosition({
+                    columnIndex: nextColumn,
+                    bugIndex: Math.max(0, clampedIndex),
+                  })
+                }
+              }
+            }
+            break
+          }
+        }
+      }
+    },
+    [
+      isLoading,
+      bugs.length,
+      selectedPosition,
+      bugsByColumn,
+      findFirstNonEmptyColumn,
+      findNextNonEmptyColumn,
+      isGrabbing,
+      onApplyChanges,
+      getSelectedBug,
+      targetColumnIndex,
+    ],
+  )
+
+  const handleKeyUp = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Shift' && isGrabbing) {
+        setIsGrabbing(false)
+
+        // Stage the move if column changed
+        if (
+          grabbedBugId !== null &&
+          grabStartColumn !== null &&
+          targetColumnIndex !== null &&
+          targetColumnIndex !== grabStartColumn
+        ) {
+          const fromColumn = columns[grabStartColumn]
+          const toColumn = columns[targetColumnIndex]
+          if (fromColumn && toColumn) {
+            onBugMove(grabbedBugId, fromColumn, toColumn)
+          }
+        }
+        setGrabStartColumn(null)
+        setGrabbedBugId(null)
+        setTargetColumnIndex(null)
+      }
+    },
+    [isGrabbing, grabStartColumn, grabbedBugId, targetColumnIndex, onBugMove],
+  )
+
+  // Set up keyboard event listeners
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keyup', handleKeyUp)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [handleKeyDown, handleKeyUp])
 
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
@@ -119,13 +342,19 @@ export function Board({ bugs, stagedChanges, onBugMove, isLoading = false }: Boa
       >
         <div className="overflow-x-auto">
           <div className="flex gap-6 pb-4">
-            {columns.map((column) => (
+            {columns.map((column, columnIndex) => (
               <Column
                 key={column}
                 column={column}
                 bugs={isLoading ? [] : (bugsByColumn.get(column) ?? [])}
                 stagedBugIds={stagedBugIds}
                 isLoading={isLoading}
+                selectedIndex={
+                  selectedPosition?.columnIndex === columnIndex
+                    ? selectedPosition.bugIndex
+                    : undefined
+                }
+                isGrabbing={selectedPosition?.columnIndex === columnIndex && isGrabbing}
               />
             ))}
           </div>

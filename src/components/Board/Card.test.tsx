@@ -293,4 +293,69 @@ describe('Card', () => {
       expect(assignee.className).toContain('truncate')
     })
   })
+
+  describe('keyboard selection', () => {
+    it('should not show selection styles by default', () => {
+      const { container } = render(<Card bug={mockBug} />)
+
+      const card = container.firstChild as HTMLElement
+      // Should not have ring classes (selection indicator) by default
+      expect(card.className).not.toContain('ring-2')
+    })
+
+    it('should show selection ring when isSelected is true', () => {
+      const { container } = render(<Card bug={mockBug} isSelected={true} />)
+
+      const card = container.firstChild as HTMLElement
+      expect(card.className).toContain('ring-2')
+      expect(card.className).toContain('ring-accent-primary')
+    })
+
+    it('should show enhanced shadow when isSelected is true', () => {
+      const { container } = render(<Card bug={mockBug} isSelected={true} />)
+
+      const card = container.firstChild as HTMLElement
+      expect(card.className).toContain('shadow-xl')
+    })
+
+    it('should show grabbed state with warning ring when isGrabbed is true', () => {
+      const { container } = render(<Card bug={mockBug} isGrabbed={true} />)
+
+      const card = container.firstChild as HTMLElement
+      expect(card.className).toContain('ring-2')
+      expect(card.className).toContain('ring-accent-warning')
+    })
+
+    it('should show pulse animation when isGrabbed is true', () => {
+      const { container } = render(<Card bug={mockBug} isGrabbed={true} />)
+
+      const card = container.firstChild as HTMLElement
+      expect(card.className).toContain('animate-pulse')
+    })
+
+    it('should show scale effect when isGrabbed is true', () => {
+      const { container } = render(<Card bug={mockBug} isGrabbed={true} />)
+
+      const card = container.firstChild as HTMLElement
+      expect(card.className).toContain('scale-105')
+    })
+
+    it('should prioritize grabbed state over selected state', () => {
+      const { container } = render(<Card bug={mockBug} isSelected={true} isGrabbed={true} />)
+
+      const card = container.firstChild as HTMLElement
+      // Should show grabbed styling (warning) not selected styling (primary)
+      expect(card.className).toContain('ring-accent-warning')
+      expect(card.className).not.toContain('ring-accent-primary')
+    })
+
+    it('should prioritize selected state over staged state', () => {
+      const { container } = render(<Card bug={mockBug} isStaged={true} isSelected={true} />)
+
+      const card = container.firstChild as HTMLElement
+      // Selected should have full ring, staged should be dimmer
+      expect(card.className).toContain('ring-accent-primary')
+      expect(card.className).toContain('shadow-xl')
+    })
+  })
 })

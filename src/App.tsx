@@ -205,6 +205,15 @@ function App() {
                 FAQ
               </button>
             </div>
+            {/* Keyboard hints */}
+            <div className="mt-1 flex items-center gap-2 text-xs text-text-tertiary">
+              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Arrows</kbd>
+              <span>to select,</span>
+              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Shift</kbd>
+              <span>to grab/drop,</span>
+              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Shift+Enter</kbd>
+              <span>to apply</span>
+            </div>
           </div>
           <ApiKeyStatus onOpenModal={handleOpenModal} />
         </div>
@@ -238,6 +247,7 @@ function App() {
           stagedChanges={changes}
           onBugMove={handleBugMove}
           isLoading={isLoadingBugs}
+          onApplyChanges={handleApplyChanges}
         />
       </main>
 

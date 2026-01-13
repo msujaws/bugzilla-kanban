@@ -73,6 +73,42 @@ describe('App', () => {
 
       expect(screen.getByText(/connected/i)).toBeInTheDocument()
     })
+
+    describe('keyboard hints', () => {
+      it('should display keyboard hints in header', () => {
+        render(<App />)
+
+        expect(screen.getByText(/arrows/i)).toBeInTheDocument()
+        // There are multiple Shift elements (Shift and Shift+Enter)
+        expect(screen.getAllByText(/shift/i).length).toBeGreaterThanOrEqual(1)
+      })
+
+      it('should show kbd elements for keyboard shortcuts', () => {
+        const { container } = render(<App />)
+
+        const kbdElements = container.querySelectorAll('kbd')
+        expect(kbdElements.length).toBeGreaterThanOrEqual(3) // Arrows, Shift, Shift+Enter
+      })
+
+      it('should explain arrow navigation', () => {
+        render(<App />)
+
+        expect(screen.getByText(/select/i)).toBeInTheDocument()
+      })
+
+      it('should explain grab/drop with Shift', () => {
+        render(<App />)
+
+        expect(screen.getByText(/grab/i)).toBeInTheDocument()
+      })
+
+      it('should explain Shift+Enter for apply', () => {
+        render(<App />)
+
+        // Multiple elements contain "apply" (keyboard hint and button)
+        expect(screen.getByText('to apply')).toBeInTheDocument()
+      })
+    })
   })
 
   it('should render ToastContainer', () => {
