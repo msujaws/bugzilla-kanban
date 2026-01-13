@@ -28,14 +28,24 @@ type Brand<T, TBrand extends string> = T & { readonly [brand]: TBrand }
  */
 export type ApiKey = Brand<string, 'ApiKey'>
 
+// Bugzilla API keys are alphanumeric with possible underscores/dashes
+const API_KEY_PATTERN = /^[\w-]+$/
+const API_KEY_MIN_LENGTH = 10
+
 /**
  * Create a branded ApiKey from a string.
- * Validates that the key is non-empty.
+ * Validates that the key is non-empty and matches expected format.
  */
 export function createApiKey(key: string): ApiKey {
   const trimmed = key.trim()
   if (trimmed.length === 0) {
     throw new Error('API key cannot be empty')
+  }
+  if (trimmed.length < API_KEY_MIN_LENGTH) {
+    throw new Error(`API key must be at least ${String(API_KEY_MIN_LENGTH)} characters`)
+  }
+  if (!API_KEY_PATTERN.test(trimmed)) {
+    throw new Error('API key contains invalid characters')
   }
   return trimmed as ApiKey
 }

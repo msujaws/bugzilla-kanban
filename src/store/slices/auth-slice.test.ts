@@ -110,7 +110,7 @@ describe('AuthSlice', () => {
       mockGetBugs.mockRejectedValueOnce(new Error('Unauthorized'))
 
       const { setApiKey } = useStore.getState()
-      await setApiKey('invalid-key')
+      await setApiKey('invalid-key-12345')
 
       const { isValid, validationError } = useStore.getState()
       expect(isValid).toBe(false)
@@ -122,14 +122,14 @@ describe('AuthSlice', () => {
 
       // First attempt with error
       mockGetBugs.mockRejectedValueOnce(new Error('Error 1'))
-      await setApiKey('bad-key')
+      await setApiKey('bad-key-12345')
 
       const { validationError: error1 } = useStore.getState()
       expect(error1).toBe('Error 1')
 
       // Second attempt succeeds
       mockGetBugs.mockResolvedValueOnce([])
-      await setApiKey('good-key')
+      await setApiKey('good-key-12345')
 
       const { validationError: error2, isValid } = useStore.getState()
       expect(error2).toBeNull()
@@ -161,7 +161,7 @@ describe('AuthSlice', () => {
     it('should clear validation error', async () => {
       const { setApiKey, clearApiKey } = useStore.getState()
       mockGetBugs.mockRejectedValueOnce(new Error('Error'))
-      await setApiKey('bad-key')
+      await setApiKey('bad-key-12345')
 
       clearApiKey()
 
@@ -182,17 +182,17 @@ describe('AuthSlice', () => {
 
   describe('loadApiKey', () => {
     it('should load API key from storage', async () => {
-      mockGetApiKey.mockResolvedValueOnce('stored-key-456')
+      mockGetApiKey.mockResolvedValueOnce('stored-key-12345')
 
       const { loadApiKey } = useStore.getState()
       await loadApiKey()
 
       const { apiKey } = useStore.getState()
-      expect(apiKey).toBe('stored-key-456')
+      expect(apiKey).toBe('stored-key-12345')
     })
 
     it('should validate loaded API key', async () => {
-      mockGetApiKey.mockResolvedValueOnce('stored-key-456')
+      mockGetApiKey.mockResolvedValueOnce('stored-key-12345')
 
       const { loadApiKey } = useStore.getState()
       await loadApiKey()
@@ -230,7 +230,7 @@ describe('AuthSlice', () => {
   describe('validateApiKey', () => {
     it('should validate current API key', async () => {
       const { setApiKey, validateApiKey } = useStore.getState()
-      await setApiKey('test-key')
+      await setApiKey('test-key-12345')
 
       // Clear validation state
       useStore.setState({ isValid: false, validationError: 'Previous error' })
@@ -254,7 +254,7 @@ describe('AuthSlice', () => {
 
     it('should handle validation errors', async () => {
       const { setApiKey, validateApiKey } = useStore.getState()
-      await setApiKey('test-key')
+      await setApiKey('test-key-12345')
 
       // Mock rejection for the next getBugs call
       mockGetBugs.mockRejectedValueOnce(new Error('Invalid key'))

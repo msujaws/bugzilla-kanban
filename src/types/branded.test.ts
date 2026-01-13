@@ -20,8 +20,8 @@ describe('Branded Types', () => {
       })
 
       it('should trim whitespace', () => {
-        const key = createApiKey('  my-key  ')
-        expect(key).toBe('my-key')
+        const key = createApiKey('  my-api-key-123  ')
+        expect(key).toBe('my-api-key-123')
       })
 
       it('should throw for empty string', () => {
@@ -35,8 +35,8 @@ describe('Branded Types', () => {
 
     describe('tryCreateApiKey', () => {
       it('should return ApiKey for valid input', () => {
-        const key = tryCreateApiKey('valid-key')
-        expect(key).toBe('valid-key')
+        const key = tryCreateApiKey('valid-api-key-123')
+        expect(key).toBe('valid-api-key-123')
       })
 
       it('should return undefined for empty string', () => {
@@ -57,9 +57,9 @@ describe('Branded Types', () => {
 
     describe('type safety', () => {
       it('should be assignable to string', () => {
-        const key: ApiKey = createApiKey('test')
+        const key: ApiKey = createApiKey('test-api-key-123')
         const str: string = key
-        expect(str).toBe('test')
+        expect(str).toBe('test-api-key-123')
       })
     })
   })
