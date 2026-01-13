@@ -1,9 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Board } from './Board'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
+
+// Set system time to match test data dates (so done bugs are within 2 weeks)
+beforeAll(() => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2024-01-15T12:00:00Z'))
+})
+
+afterAll(() => {
+  vi.useRealTimers()
+})
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({

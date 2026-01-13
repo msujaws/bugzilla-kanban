@@ -14,6 +14,7 @@ import { Card } from './Card'
 import { StatusMapper, type KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import { assignBugToColumn } from '@/lib/bugzilla/column-assignment'
 import { sortBugs } from '@/lib/bugzilla/sort-bugs'
+import { filterRecentBugs } from '@/lib/bugzilla/date-filter'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
 import { useBoardAssignees } from '@/hooks/use-board-assignees'
@@ -88,6 +89,10 @@ export function Board({
       columnBugs.push(bug)
       grouped.set(column, columnBugs)
     }
+
+    // Filter done column to only show bugs from the past 2 weeks
+    const doneBugs = grouped.get('done') ?? []
+    grouped.set('done', filterRecentBugs(doneBugs))
 
     // Sort bugs within each column by the configured sort order
     for (const column of columns) {
