@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core'
 import { Column } from './Column'
 import { Card } from './Card'
+import { BacklogSection } from './BacklogSection'
 import { StatusMapper, type KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import { assignBugToColumn } from '@/lib/bugzilla/column-assignment'
 import { sortBugs } from '@/lib/bugzilla/sort-bugs'
@@ -39,7 +40,8 @@ interface SelectedPosition {
 }
 
 const statusMapper = new StatusMapper()
-const columns = statusMapper.getAvailableColumns()
+// Board columns exclude backlog (backlog is rendered separately below the board)
+const columns = statusMapper.getAvailableColumns().filter((col) => col !== 'backlog')
 
 export function Board({
   bugs,
@@ -69,12 +71,15 @@ export function Board({
     }),
   )
 
+  // All available columns including backlog (for bug distribution)
+  const allColumns = statusMapper.getAvailableColumns()
+
   // Group bugs by column based on their status (with staged changes applied)
   const bugsByColumn = useMemo(() => {
     const grouped = new Map<KanbanColumn, BugzillaBug[]>()
 
-    // Initialize all columns with empty arrays
-    for (const column of columns) {
+    // Initialize all columns with empty arrays (including backlog)
+    for (const column of allColumns) {
       grouped.set(column, [])
     }
 
@@ -95,13 +100,13 @@ export function Board({
     grouped.set('done', filterRecentBugs(doneBugs))
 
     // Sort bugs within each column by the configured sort order
-    for (const column of columns) {
+    for (const column of allColumns) {
       const columnBugs = grouped.get(column) ?? []
       grouped.set(column, sortBugs(columnBugs, sortOrder))
     }
 
     return grouped
-  }, [bugs, stagedChanges, sortOrder])
+  }, [bugs, stagedChanges, sortOrder, allColumns])
 
   // Get all staged bug IDs for highlighting
   const stagedBugIds = useMemo(() => {
@@ -427,9 +432,10 @@ export function Board({
 
     // Check if there's already a staged status change for this bug
     const stagedChange = stagedChanges.get(bugId)
+    // Use assignBugToColumn for consistent column assignment (handles sprint tags)
     const currentColumn = stagedChange?.status
       ? (stagedChange.status.to as KanbanColumn)
-      : statusMapper.statusToColumn(bug.status)
+      : assignBugToColumn(bug)
 
     // Only trigger move if dropping on a different column
     if (currentColumn !== targetColumn) {
@@ -475,7 +481,8 @@ export function Board({
           </div>
         )}
 
-        <div className="overflow-x-auto">
+        {/* Board container with height constraint */}
+        <div className="max-h-[600px] overflow-y-auto overflow-x-auto">
           <div className="flex gap-6 pb-4">
             {columns.map((column, columnIndex) => (
               <Column
@@ -499,6 +506,15 @@ export function Board({
             ))}
           </div>
         </div>
+
+        {/* Backlog section below the board */}
+        <BacklogSection
+          bugs={isLoading ? [] : (bugsByColumn.get('backlog') ?? [])}
+          stagedChanges={stagedChanges}
+          allAssignees={allAssignees}
+          onAssigneeChange={onAssigneeChange}
+          isLoading={isLoading}
+        />
       </main>
 
       {/* Drag overlay - shows the card being dragged */}

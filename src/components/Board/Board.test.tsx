@@ -63,7 +63,7 @@ vi.mock('@/lib/bugzilla/status-mapper', () => ({
       }
       return mapping[status] ?? 'backlog'
     }),
-    getAvailableColumns: vi.fn(() => ['backlog', 'todo', 'in-progress', 'done']),
+    getAvailableColumns: vi.fn(() => ['backlog', 'todo', 'in-progress', 'in-testing', 'done']),
   })),
 }))
 
@@ -138,28 +138,51 @@ describe('Board', () => {
   })
 
   describe('rendering', () => {
-    it('should render all four columns', () => {
+    it('should render four board columns (excluding backlog)', () => {
       render(<Board {...defaultProps} />)
 
-      expect(screen.getByText('Backlog')).toBeInTheDocument()
       expect(screen.getByText('Todo')).toBeInTheDocument()
       expect(screen.getByText('In Progress')).toBeInTheDocument()
+      expect(screen.getByText('In Testing')).toBeInTheDocument()
       expect(screen.getByText('Done')).toBeInTheDocument()
+    })
+
+    it('should render BacklogSection below the board', () => {
+      render(<Board {...defaultProps} />)
+
+      // BacklogSection should render with Backlog header
+      expect(screen.getByRole('region', { name: /backlog section/i })).toBeInTheDocument()
+      expect(screen.getByText('Backlog')).toBeInTheDocument()
     })
 
     it('should distribute bugs to correct columns', () => {
       render(<Board {...defaultProps} />)
 
-      // Backlog, Todo, In Progress have 1 each; Done has 2 (RESOLVED + VERIFIED)
-      const singleBugBadges = screen.getAllByText('1')
-      expect(singleBugBadges.length).toBe(3)
-      expect(screen.getByText('2')).toBeInTheDocument() // Done column
+      // Todo: 1 (NEW with sprint tag), In Progress: 1 (ASSIGNED), Done: 2 (RESOLVED + VERIFIED)
+      // Backlog: 1 (NEW without sprint tag)
+      expect(screen.getByText('Bug in backlog')).toBeInTheDocument()
+      expect(screen.getByText('Bug in todo')).toBeInTheDocument()
+      expect(screen.getByText('Bug in progress')).toBeInTheDocument()
     })
 
     it('should have horizontal scrolling container', () => {
       const { container } = render(<Board {...defaultProps} />)
 
       const scrollContainer = container.querySelector('.overflow-x-auto')
+      expect(scrollContainer).toBeInTheDocument()
+    })
+
+    it('should have max height constraint on board container', () => {
+      const { container } = render(<Board {...defaultProps} />)
+
+      const boardContainer = container.querySelector('.max-h-\\[600px\\]')
+      expect(boardContainer).toBeInTheDocument()
+    })
+
+    it('should have overflow-y-auto on board container', () => {
+      const { container } = render(<Board {...defaultProps} />)
+
+      const scrollContainer = container.querySelector('.overflow-y-auto')
       expect(scrollContainer).toBeInTheDocument()
     })
   })
@@ -334,11 +357,12 @@ describe('Board', () => {
   })
 
   describe('loading state', () => {
-    it('should show loading state for all columns when loading', () => {
+    it('should show loading state for all columns and backlog when loading', () => {
       render(<Board {...defaultProps} isLoading={true} />)
 
+      // 4 board columns + 1 backlog section = 5 loading indicators
       const loadingElements = screen.getAllByText(/loading/i)
-      expect(loadingElements.length).toBe(4)
+      expect(loadingElements.length).toBe(5)
     })
 
     it('should not show bugs when loading', () => {
@@ -352,8 +376,9 @@ describe('Board', () => {
     it('should show empty state when no bugs', () => {
       render(<Board {...defaultProps} bugs={[]} />)
 
+      // 4 board columns + 1 backlog section = 5 empty messages
       const emptyMessages = screen.getAllByText(/no bugs here/i)
-      expect(emptyMessages.length).toBe(4)
+      expect(emptyMessages.length).toBe(5)
     })
   })
 
@@ -420,44 +445,45 @@ describe('Board', () => {
   })
 
   describe('keyboard navigation', () => {
-    // Create multiple bugs in same column for up/down navigation
-    const multipleBacklogBugs: BugzillaBug[] = [
+    // Create multiple bugs in todo column for up/down navigation
+    // Note: Board only has 4 columns (todo, in-progress, in-testing, done) - backlog is separate
+    const multipleTodoBugs: BugzillaBug[] = [
       {
         id: 10,
-        summary: 'First backlog bug',
+        summary: 'First todo bug',
         status: 'NEW',
         assigned_to: 'dev1@example.com',
         priority: 'P1',
         severity: 'major',
         component: 'Core',
-        whiteboard: '[kanban]',
+        whiteboard: '[kanban] [bzkanban-sprint]', // Sprint tag puts it in todo
         last_change_time: '2024-01-15T10:00:00Z',
       },
       {
         id: 11,
-        summary: 'Second backlog bug',
+        summary: 'Second todo bug',
         status: 'NEW',
         assigned_to: 'dev2@example.com',
         priority: 'P2',
         severity: 'normal',
         component: 'Core',
-        whiteboard: '[kanban]',
+        whiteboard: '[kanban] [bzkanban-sprint]',
         last_change_time: '2024-01-14T09:00:00Z',
       },
       {
         id: 12,
-        summary: 'Third backlog bug',
+        summary: 'Third todo bug',
         status: 'NEW',
         assigned_to: 'dev3@example.com',
         priority: 'P3',
         severity: 'minor',
         component: 'Core',
-        whiteboard: '[kanban]',
+        whiteboard: '[kanban] [bzkanban-sprint]',
         last_change_time: '2024-01-13T08:00:00Z',
       },
       {
         id: 20,
-        summary: 'First todo bug',
+        summary: 'First in-progress bug',
         status: 'ASSIGNED',
         assigned_to: 'dev4@example.com',
         priority: 'P2',
@@ -470,29 +496,29 @@ describe('Board', () => {
 
     describe('arrow key navigation', () => {
       it('should select first bug in first non-empty column on initial arrow key press', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
         fireEvent.keyDown(document, { key: 'ArrowDown' })
 
-        // Should select first bug in backlog (first column with bugs)
-        const firstCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        // Should select first bug in todo (first board column with bugs)
+        const firstCard = screen.getByText('First todo bug').closest('[role="article"]')
         expect(firstCard?.className).toContain('ring-2')
       })
 
       it('should move selection down within column on ArrowDown', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
         // Initial selection
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         // Move down
         fireEvent.keyDown(document, { key: 'ArrowDown' })
 
-        const secondCard = screen.getByText('Second backlog bug').closest('[role="article"]')
+        const secondCard = screen.getByText('Second todo bug').closest('[role="article"]')
         expect(secondCard?.className).toContain('ring-2')
       })
 
       it('should move selection up within column on ArrowUp', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
         // Select first, then second
         fireEvent.keyDown(document, { key: 'ArrowDown' })
@@ -500,44 +526,44 @@ describe('Board', () => {
         // Move back up
         fireEvent.keyDown(document, { key: 'ArrowUp' })
 
-        const firstCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        const firstCard = screen.getByText('First todo bug').closest('[role="article"]')
         expect(firstCard?.className).toContain('ring-2')
       })
 
       it('should move selection to next column on ArrowRight', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
-        // Select first bug in backlog
+        // Select first bug in todo
         fireEvent.keyDown(document, { key: 'ArrowDown' })
-        // Move to todo column
+        // Move to in-progress column
         fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+        const inProgressCard = screen.getByText('First in-progress bug').closest('[role="article"]')
+        expect(inProgressCard?.className).toContain('ring-2')
+      })
+
+      it('should move selection to previous column on ArrowLeft', () => {
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
+
+        // Select first bug in todo, move right to in-progress, then back left
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+        fireEvent.keyDown(document, { key: 'ArrowLeft' })
 
         const todoCard = screen.getByText('First todo bug').closest('[role="article"]')
         expect(todoCard?.className).toContain('ring-2')
       })
 
-      it('should move selection to previous column on ArrowLeft', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
-
-        // Select first bug in backlog, move right to todo, then back left
-        fireEvent.keyDown(document, { key: 'ArrowDown' })
-        fireEvent.keyDown(document, { key: 'ArrowRight' })
-        fireEvent.keyDown(document, { key: 'ArrowLeft' })
-
-        const backlogCard = screen.getByText('First backlog bug').closest('[role="article"]')
-        expect(backlogCard?.className).toContain('ring-2')
-      })
-
       it('should not move selection past first column on ArrowLeft', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
-        // Select first bug in backlog
+        // Select first bug in todo
         fireEvent.keyDown(document, { key: 'ArrowDown' })
-        // Try to move left (should stay in backlog)
+        // Try to move left (should stay in todo)
         fireEvent.keyDown(document, { key: 'ArrowLeft' })
 
-        const backlogCard = screen.getByText('First backlog bug').closest('[role="article"]')
-        expect(backlogCard?.className).toContain('ring-2')
+        const todoCard = screen.getByText('First todo bug').closest('[role="article"]')
+        expect(todoCard?.className).toContain('ring-2')
       })
 
       it('should not move selection past last column on ArrowRight', () => {
@@ -566,23 +592,23 @@ describe('Board', () => {
       })
 
       it('should clamp index when moving to column with fewer bugs', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
-        // Select third bug in backlog (index 2)
+        // Select third bug in todo (index 2)
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         fireEvent.keyDown(document, { key: 'ArrowDown' })
-        // Move to todo (which only has 1 bug, so should clamp to index 0)
+        // Move to in-progress (which only has 1 bug, so should clamp to index 0)
         fireEvent.keyDown(document, { key: 'ArrowRight' })
 
-        const todoCard = screen.getByText('First todo bug').closest('[role="article"]')
-        expect(todoCard?.className).toContain('ring-2')
+        const inProgressCard = screen.getByText('First in-progress bug').closest('[role="article"]')
+        expect(inProgressCard?.className).toContain('ring-2')
       })
     })
 
     describe('escape key', () => {
       it('should clear selection on Escape', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
         // Select a bug
         fireEvent.keyDown(document, { key: 'ArrowDown' })
@@ -599,40 +625,40 @@ describe('Board', () => {
 
     describe('grab and move with Shift', () => {
       it('should enter grab mode when Shift is pressed with selection', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
         // Select a bug
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         // Hold shift
         fireEvent.keyDown(document, { key: 'Shift' })
 
-        const selectedCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        const selectedCard = screen.getByText('First todo bug').closest('[role="article"]')
         expect(selectedCard?.className).toContain('ring-accent-warning')
         expect(selectedCard?.className).toContain('animate-pulse')
       })
 
       it('should exit grab mode and stage move when Shift is released', () => {
         const onBugMove = vi.fn()
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} onBugMove={onBugMove} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} onBugMove={onBugMove} />)
 
-        // Select first backlog bug
+        // Select first todo bug
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         // Hold shift
         fireEvent.keyDown(document, { key: 'Shift' })
-        // Move to todo column
+        // Move to in-progress column
         fireEvent.keyDown(document, { key: 'ArrowRight' })
         // Release shift
         fireEvent.keyUp(document, { key: 'Shift' })
 
         // Should call onBugMove to stage the change
-        expect(onBugMove).toHaveBeenCalledWith(10, 'backlog', 'todo')
+        expect(onBugMove).toHaveBeenCalledWith(10, 'todo', 'in-progress')
       })
 
       it('should not stage move if column did not change', () => {
         const onBugMove = vi.fn()
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} onBugMove={onBugMove} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} onBugMove={onBugMove} />)
 
-        // Select first backlog bug
+        // Select first todo bug
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         // Hold shift (no movement)
         fireEvent.keyDown(document, { key: 'Shift' })
@@ -644,26 +670,26 @@ describe('Board', () => {
       })
 
       it('should move grabbed bug to new column on ArrowRight while grabbing', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
-        // Select first backlog bug
+        // Select first todo bug
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         // Hold shift
         fireEvent.keyDown(document, { key: 'Shift' })
-        // Move to todo column
+        // Move to in-progress column
         fireEvent.keyDown(document, { key: 'ArrowRight' })
 
-        // The bug should now appear selected in the todo column visually
+        // The bug should now appear selected in the in-progress column visually
         // (grab mode shows warning ring)
-        const firstCard = screen.getByText('First backlog bug').closest('[role="article"]')
+        const firstCard = screen.getByText('First todo bug').closest('[role="article"]')
         expect(firstCard?.className).toContain('ring-accent-warning')
       })
 
       it('should not allow movement past first column while grabbing', () => {
         const onBugMove = vi.fn()
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} onBugMove={onBugMove} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} onBugMove={onBugMove} />)
 
-        // Select first backlog bug
+        // Select first todo bug
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         // Hold shift
         fireEvent.keyDown(document, { key: 'Shift' })
@@ -680,9 +706,7 @@ describe('Board', () => {
     describe('Shift+Enter to apply changes', () => {
       it('should call onApplyChanges when Shift+Enter is pressed', () => {
         const onApplyChanges = vi.fn()
-        render(
-          <Board {...defaultProps} bugs={multipleBacklogBugs} onApplyChanges={onApplyChanges} />,
-        )
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} onApplyChanges={onApplyChanges} />)
 
         // Press Shift+Enter
         fireEvent.keyDown(document, { key: 'Enter', shiftKey: true })
@@ -692,9 +716,7 @@ describe('Board', () => {
 
       it('should not call onApplyChanges on Enter without Shift', () => {
         const onApplyChanges = vi.fn()
-        render(
-          <Board {...defaultProps} bugs={multipleBacklogBugs} onApplyChanges={onApplyChanges} />,
-        )
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} onApplyChanges={onApplyChanges} />)
 
         // Press Enter without shift
         fireEvent.keyDown(document, { key: 'Enter', shiftKey: false })
@@ -705,13 +727,13 @@ describe('Board', () => {
 
     describe('disabled states', () => {
       it('should not respond to keyboard when loading', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} isLoading={true} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} isLoading={true} />)
 
         fireEvent.keyDown(document, { key: 'ArrowDown' })
 
         // Should not select anything (no ring class on any card)
         // When loading, cards are not rendered, so this just confirms no errors
-        expect(screen.queryByText('First backlog bug')).not.toBeInTheDocument()
+        expect(screen.queryByText('First todo bug')).not.toBeInTheDocument()
       })
 
       it('should not respond to keyboard when no bugs', () => {
@@ -721,16 +743,17 @@ describe('Board', () => {
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         fireEvent.keyDown(document, { key: 'Shift' })
 
-        expect(screen.getAllByText(/no bugs here/i).length).toBe(4)
+        // 4 board columns + 1 backlog section = 5 empty messages
+        expect(screen.getAllByText(/no bugs here/i).length).toBe(5)
       })
     })
 
     describe('Escape confirmation to clear staged changes', () => {
       it('should show confirmation message on first Escape when there are staged changes', () => {
         const stagedChanges = new Map<number, StagedChange>([
-          [10, { status: { from: 'backlog', to: 'todo' } }],
+          [10, { status: { from: 'todo', to: 'in-progress' } }],
         ])
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} stagedChanges={stagedChanges} />)
 
         fireEvent.keyDown(document, { key: 'Escape' })
 
@@ -741,10 +764,10 @@ describe('Board', () => {
 
       it('should show count in confirmation message', () => {
         const stagedChanges = new Map<number, StagedChange>([
-          [10, { status: { from: 'backlog', to: 'todo' } }],
-          [11, { status: { from: 'backlog', to: 'in-progress' } }],
+          [10, { status: { from: 'todo', to: 'in-progress' } }],
+          [11, { status: { from: 'todo', to: 'done' } }],
         ])
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} stagedChanges={stagedChanges} />)
 
         fireEvent.keyDown(document, { key: 'Escape' })
 
@@ -754,12 +777,12 @@ describe('Board', () => {
       it('should call onClearChanges when Enter is pressed after confirmation', () => {
         const onClearChanges = vi.fn()
         const stagedChanges = new Map<number, StagedChange>([
-          [10, { status: { from: 'backlog', to: 'todo' } }],
+          [10, { status: { from: 'todo', to: 'in-progress' } }],
         ])
         render(
           <Board
             {...defaultProps}
-            bugs={multipleBacklogBugs}
+            bugs={multipleTodoBugs}
             stagedChanges={stagedChanges}
             onClearChanges={onClearChanges}
           />,
@@ -775,9 +798,9 @@ describe('Board', () => {
 
       it('should hide confirmation when Escape is pressed again', () => {
         const stagedChanges = new Map<number, StagedChange>([
-          [10, { status: { from: 'backlog', to: 'todo' } }],
+          [10, { status: { from: 'todo', to: 'in-progress' } }],
         ])
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} stagedChanges={stagedChanges} />)
 
         // First Escape shows confirmation
         fireEvent.keyDown(document, { key: 'Escape' })
@@ -791,12 +814,12 @@ describe('Board', () => {
       it('should not call onClearChanges when cancelled', () => {
         const onClearChanges = vi.fn()
         const stagedChanges = new Map<number, StagedChange>([
-          [10, { status: { from: 'backlog', to: 'todo' } }],
+          [10, { status: { from: 'todo', to: 'in-progress' } }],
         ])
         render(
           <Board
             {...defaultProps}
-            bugs={multipleBacklogBugs}
+            bugs={multipleTodoBugs}
             stagedChanges={stagedChanges}
             onClearChanges={onClearChanges}
           />,
@@ -811,7 +834,7 @@ describe('Board', () => {
       })
 
       it('should not show confirmation when no staged changes', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
         fireEvent.keyDown(document, { key: 'Escape' })
 
@@ -822,12 +845,12 @@ describe('Board', () => {
       it('should hide confirmation after clearing', () => {
         const onClearChanges = vi.fn()
         const stagedChanges = new Map<number, StagedChange>([
-          [10, { status: { from: 'backlog', to: 'todo' } }],
+          [10, { status: { from: 'todo', to: 'in-progress' } }],
         ])
         render(
           <Board
             {...defaultProps}
-            bugs={multipleBacklogBugs}
+            bugs={multipleTodoBugs}
             stagedChanges={stagedChanges}
             onClearChanges={onClearChanges}
           />,
@@ -845,12 +868,12 @@ describe('Board', () => {
       it('should be idempotent - multiple Escapes just toggle confirmation', () => {
         const onClearChanges = vi.fn()
         const stagedChanges = new Map<number, StagedChange>([
-          [10, { status: { from: 'backlog', to: 'todo' } }],
+          [10, { status: { from: 'todo', to: 'in-progress' } }],
         ])
         render(
           <Board
             {...defaultProps}
-            bugs={multipleBacklogBugs}
+            bugs={multipleTodoBugs}
             stagedChanges={stagedChanges}
             onClearChanges={onClearChanges}
           />,
@@ -868,22 +891,22 @@ describe('Board', () => {
 
     describe('target column visual feedback during grab', () => {
       it('should highlight target column when grabbing and moving right', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
-        // Select first backlog bug
+        // Select first todo bug
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         // Hold shift to grab
         fireEvent.keyDown(document, { key: 'Shift' })
-        // Move right to todo column
+        // Move right to in-progress column
         fireEvent.keyDown(document, { key: 'ArrowRight' })
 
-        // Todo column should have drop target indicator
-        const todoColumn = screen.getByRole('region', { name: /todo column/i })
-        expect(todoColumn.className).toContain('ring')
+        // In Progress column should have drop target indicator
+        const inProgressColumn = screen.getByRole('region', { name: /in progress column/i })
+        expect(inProgressColumn.className).toContain('ring')
       })
 
       it('should remove highlight when grab is cancelled', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
         // Select, grab, move right
         fireEvent.keyDown(document, { key: 'ArrowDown' })
@@ -902,7 +925,7 @@ describe('Board', () => {
       })
 
       it('should show indicator text on target column', () => {
-        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+        render(<Board {...defaultProps} bugs={multipleTodoBugs} />)
 
         // Select, grab, move right
         fireEvent.keyDown(document, { key: 'ArrowDown' })
@@ -914,107 +937,8 @@ describe('Board', () => {
       })
     })
 
-    describe('unassigned bug move validation', () => {
-      const nobodyBug: BugzillaBug = {
-        id: 99,
-        summary: 'Unassigned bug',
-        status: 'NEW',
-        assigned_to: 'nobody@mozilla.org',
-        priority: 'P2',
-        severity: 'normal',
-        component: 'Core',
-        whiteboard: '[kanban]',
-        last_change_time: '2024-01-15T10:00:00Z',
-        creation_time: '2024-01-01T00:00:00Z',
-      }
-
-      it('should call onInvalidMove when trying to move unassigned bug out of backlog', () => {
-        const onBugMove = vi.fn()
-        const onInvalidMove = vi.fn()
-        render(
-          <Board
-            {...defaultProps}
-            bugs={[nobodyBug]}
-            onBugMove={onBugMove}
-            onInvalidMove={onInvalidMove}
-          />,
-        )
-
-        // Select the bug
-        fireEvent.keyDown(document, { key: 'ArrowDown' })
-        // Grab it
-        fireEvent.keyDown(document, { key: 'Shift' })
-        // Move right to todo
-        fireEvent.keyDown(document, { key: 'ArrowRight' })
-        // Release to drop
-        fireEvent.keyUp(document, { key: 'Shift' })
-
-        expect(onBugMove).not.toHaveBeenCalled()
-        expect(onInvalidMove).toHaveBeenCalledWith(99, expect.stringContaining('assign'))
-      })
-
-      it('should allow moving unassigned bug if assignee is staged to change', () => {
-        const onBugMove = vi.fn()
-        const onInvalidMove = vi.fn()
-        const stagedChanges = new Map<number, StagedChange>([
-          [99, { assignee: { from: 'nobody@mozilla.org', to: 'dev@mozilla.com' } }],
-        ])
-        render(
-          <Board
-            {...defaultProps}
-            bugs={[nobodyBug]}
-            stagedChanges={stagedChanges}
-            onBugMove={onBugMove}
-            onInvalidMove={onInvalidMove}
-          />,
-        )
-
-        // Select the bug
-        fireEvent.keyDown(document, { key: 'ArrowDown' })
-        // Grab it
-        fireEvent.keyDown(document, { key: 'Shift' })
-        // Move right to todo
-        fireEvent.keyDown(document, { key: 'ArrowRight' })
-        // Release to drop
-        fireEvent.keyUp(document, { key: 'Shift' })
-
-        expect(onBugMove).toHaveBeenCalledWith(99, 'backlog', 'todo')
-        expect(onInvalidMove).not.toHaveBeenCalled()
-      })
-
-      it('should still block move if staged assignee is also nobody', () => {
-        const onBugMove = vi.fn()
-        const onInvalidMove = vi.fn()
-        const stagedChanges = new Map<number, StagedChange>([
-          [99, { assignee: { from: 'dev@mozilla.com', to: 'nobody@mozilla.org' } }],
-        ])
-        // Bug originally had a real assignee, but staged to nobody
-        const bugWithStagedNobody: BugzillaBug = {
-          ...nobodyBug,
-          assigned_to: 'dev@mozilla.com',
-        }
-        render(
-          <Board
-            {...defaultProps}
-            bugs={[bugWithStagedNobody]}
-            stagedChanges={stagedChanges}
-            onBugMove={onBugMove}
-            onInvalidMove={onInvalidMove}
-          />,
-        )
-
-        // Select the bug
-        fireEvent.keyDown(document, { key: 'ArrowDown' })
-        // Grab it
-        fireEvent.keyDown(document, { key: 'Shift' })
-        // Move right to todo
-        fireEvent.keyDown(document, { key: 'ArrowRight' })
-        // Release to drop
-        fireEvent.keyUp(document, { key: 'Shift' })
-
-        expect(onBugMove).not.toHaveBeenCalled()
-        expect(onInvalidMove).toHaveBeenCalled()
-      })
-    })
+    // Note: Unassigned bug move validation is now tested in BacklogSection tests
+    // since backlog is separate from the board and keyboard navigation only works
+    // within the 4 board columns (todo, in-progress, in-testing, done)
   })
 })
