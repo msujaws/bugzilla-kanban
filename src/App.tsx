@@ -29,6 +29,7 @@ function App() {
   const isApplying = useStore((state) => state.isApplying)
   const stageChange = useStore((state) => state.stageChange)
   const applyChanges = useStore((state) => state.applyChanges)
+  const clearAllChanges = useStore((state) => state.clearAllChanges)
   const getChangeCount = useStore((state) => state.getChangeCount)
 
   // Notifications state
@@ -98,6 +99,12 @@ function App() {
     },
     [stageChange],
   )
+
+  // Handle clear staged changes
+  const handleClearChanges = useCallback(() => {
+    clearAllChanges()
+    addToast('info', 'Staged changes cleared 🧹')
+  }, [clearAllChanges, addToast])
 
   // Handle apply changes
   const handleApplyChanges = useCallback(() => {
@@ -207,6 +214,7 @@ function App() {
             </div>
             {/* Keyboard hints */}
             <div className="mt-1 flex items-center gap-2 text-xs text-text-tertiary">
+              <span>Drag & Drop with mouse, or use</span>
               <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Arrows</kbd>
               <span>to select,</span>
               <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Shift</kbd>
@@ -248,6 +256,7 @@ function App() {
           onBugMove={handleBugMove}
           isLoading={isLoadingBugs}
           onApplyChanges={handleApplyChanges}
+          onClearChanges={handleClearChanges}
         />
       </main>
 
@@ -256,6 +265,7 @@ function App() {
         changeCount={getChangeCount()}
         isApplying={isApplying}
         onApply={handleApplyChanges}
+        onClear={handleClearChanges}
       />
 
       {/* Toast notifications */}

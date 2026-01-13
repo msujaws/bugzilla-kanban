@@ -20,6 +20,7 @@ interface BoardProps {
   onBugMove: (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn) => void
   isLoading?: boolean
   onApplyChanges?: () => void
+  onClearChanges?: () => void
 }
 
 interface SelectedPosition {
@@ -36,6 +37,7 @@ export function Board({
   onBugMove,
   isLoading = false,
   onApplyChanges,
+  onClearChanges,
 }: BoardProps) {
   const [activeBug, setActiveBug] = useState<BugzillaBug | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<SelectedPosition | null>(null)
@@ -43,6 +45,7 @@ export function Board({
   const [grabStartColumn, setGrabStartColumn] = useState<number | null>(null)
   const [grabbedBugId, setGrabbedBugId] = useState<number | null>(null)
   const [targetColumnIndex, setTargetColumnIndex] = useState<number | null>(null)
+  const [showClearConfirmation, setShowClearConfirmation] = useState(false)
 
   // Configure sensors for drag detection
   const sensors = useSensors(
@@ -127,14 +130,34 @@ export function Board({
       // Don't handle keyboard when loading or no bugs
       if (isLoading || bugs.length === 0) return
 
-      // Handle Shift+Enter for applying changes
-      if (event.key === 'Enter' && event.shiftKey) {
-        onApplyChanges?.()
+      // Handle Enter for confirmation or Shift+Enter for applying changes
+      if (event.key === 'Enter') {
+        if (showClearConfirmation) {
+          // Confirm clear
+          onClearChanges?.()
+          setShowClearConfirmation(false)
+          return
+        }
+        if (event.shiftKey) {
+          onApplyChanges?.()
+          return
+        }
         return
       }
 
-      // Handle Escape to clear selection
+      // Handle Escape - either cancel confirmation or show confirmation if staged changes exist
       if (event.key === 'Escape') {
+        if (showClearConfirmation) {
+          // Cancel confirmation
+          setShowClearConfirmation(false)
+          return
+        }
+        // If there are staged changes, show confirmation instead of clearing selection
+        if (stagedChanges.size > 0) {
+          setShowClearConfirmation(true)
+          return
+        }
+        // Otherwise just clear selection
         setSelectedPosition(null)
         setIsGrabbing(false)
         setGrabStartColumn(null)
@@ -251,8 +274,11 @@ export function Board({
       findNextNonEmptyColumn,
       isGrabbing,
       onApplyChanges,
+      onClearChanges,
       getSelectedBug,
       targetColumnIndex,
+      showClearConfirmation,
+      stagedChanges.size,
     ],
   )
 
@@ -340,6 +366,25 @@ export function Board({
         aria-busy={isLoading}
         className="min-h-screen bg-bg-primary p-6"
       >
+        {/* Clear confirmation banner */}
+        {showClearConfirmation && (
+          <div className="mb-4 flex items-center justify-center gap-3 rounded-lg bg-accent-warning/20 px-4 py-3 text-accent-warning">
+            <span className="material-icons">warning</span>
+            <span>
+              Press{' '}
+              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono text-text-primary">
+                Enter
+              </kbd>{' '}
+              to clear {stagedChanges.size} staged {stagedChanges.size === 1 ? 'change' : 'changes'}
+              , or{' '}
+              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono text-text-primary">
+                Escape
+              </kbd>{' '}
+              to cancel
+            </span>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <div className="flex gap-6 pb-4">
             {columns.map((column, columnIndex) => (
@@ -355,6 +400,7 @@ export function Board({
                     : undefined
                 }
                 isGrabbing={selectedPosition?.columnIndex === columnIndex && isGrabbing}
+                isDropTarget={isGrabbing && targetColumnIndex === columnIndex}
               />
             ))}
           </div>

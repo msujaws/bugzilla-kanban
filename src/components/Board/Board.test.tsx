@@ -582,5 +582,182 @@ describe('Board', () => {
         expect(screen.getAllByText(/no bugs here/i).length).toBe(5)
       })
     })
+
+    describe('Escape confirmation to clear staged changes', () => {
+      it('should show confirmation message on first Escape when there are staged changes', () => {
+        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
+
+        fireEvent.keyDown(document, { key: 'Escape' })
+
+        // Text is split across elements, so check for the warning icon and key elements
+        expect(screen.getByText('warning')).toBeInTheDocument()
+        expect(screen.getByText('Enter')).toBeInTheDocument()
+      })
+
+      it('should show count in confirmation message', () => {
+        const stagedChanges = new Map([
+          [10, { from: 'backlog', to: 'todo' }],
+          [11, { from: 'backlog', to: 'in-progress' }],
+        ])
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
+
+        fireEvent.keyDown(document, { key: 'Escape' })
+
+        expect(screen.getByText(/2 staged/i)).toBeInTheDocument()
+      })
+
+      it('should call onClearChanges when Enter is pressed after confirmation', () => {
+        const onClearChanges = vi.fn()
+        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        render(
+          <Board
+            {...defaultProps}
+            bugs={multipleBacklogBugs}
+            stagedChanges={stagedChanges}
+            onClearChanges={onClearChanges}
+          />,
+        )
+
+        // First Escape shows confirmation
+        fireEvent.keyDown(document, { key: 'Escape' })
+        // Enter confirms
+        fireEvent.keyDown(document, { key: 'Enter' })
+
+        expect(onClearChanges).toHaveBeenCalled()
+      })
+
+      it('should hide confirmation when Escape is pressed again', () => {
+        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
+
+        // First Escape shows confirmation
+        fireEvent.keyDown(document, { key: 'Escape' })
+        expect(screen.getByText('warning')).toBeInTheDocument()
+
+        // Second Escape cancels
+        fireEvent.keyDown(document, { key: 'Escape' })
+        expect(screen.queryByText('warning')).not.toBeInTheDocument()
+      })
+
+      it('should not call onClearChanges when cancelled', () => {
+        const onClearChanges = vi.fn()
+        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        render(
+          <Board
+            {...defaultProps}
+            bugs={multipleBacklogBugs}
+            stagedChanges={stagedChanges}
+            onClearChanges={onClearChanges}
+          />,
+        )
+
+        // First Escape shows confirmation
+        fireEvent.keyDown(document, { key: 'Escape' })
+        // Second Escape cancels
+        fireEvent.keyDown(document, { key: 'Escape' })
+
+        expect(onClearChanges).not.toHaveBeenCalled()
+      })
+
+      it('should not show confirmation when no staged changes', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        fireEvent.keyDown(document, { key: 'Escape' })
+
+        // Warning icon from confirmation banner should not appear
+        expect(screen.queryByText('warning')).not.toBeInTheDocument()
+      })
+
+      it('should hide confirmation after clearing', () => {
+        const onClearChanges = vi.fn()
+        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        render(
+          <Board
+            {...defaultProps}
+            bugs={multipleBacklogBugs}
+            stagedChanges={stagedChanges}
+            onClearChanges={onClearChanges}
+          />,
+        )
+
+        // First Escape shows confirmation
+        fireEvent.keyDown(document, { key: 'Escape' })
+        // Enter confirms
+        fireEvent.keyDown(document, { key: 'Enter' })
+
+        // Warning icon from confirmation banner should be hidden
+        expect(screen.queryByText('warning')).not.toBeInTheDocument()
+      })
+
+      it('should be idempotent - multiple Escapes just toggle confirmation', () => {
+        const onClearChanges = vi.fn()
+        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        render(
+          <Board
+            {...defaultProps}
+            bugs={multipleBacklogBugs}
+            stagedChanges={stagedChanges}
+            onClearChanges={onClearChanges}
+          />,
+        )
+
+        // Multiple Escape presses should toggle, not accumulate
+        fireEvent.keyDown(document, { key: 'Escape' }) // Show
+        fireEvent.keyDown(document, { key: 'Escape' }) // Hide
+        fireEvent.keyDown(document, { key: 'Escape' }) // Show again
+
+        expect(screen.getByText('warning')).toBeInTheDocument()
+        expect(onClearChanges).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('target column visual feedback during grab', () => {
+      it('should highlight target column when grabbing and moving right', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select first backlog bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Hold shift to grab
+        fireEvent.keyDown(document, { key: 'Shift' })
+        // Move right to todo column
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+        // Todo column should have drop target indicator
+        const todoColumn = screen.getByRole('region', { name: /todo column/i })
+        expect(todoColumn.className).toContain('ring')
+      })
+
+      it('should remove highlight when grab is cancelled', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select, grab, move right
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        fireEvent.keyDown(document, { key: 'Shift' })
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+        // Release shift
+        fireEvent.keyUp(document, { key: 'Shift' })
+
+        // No column should have drop target ring anymore
+        const columns = screen.getAllByRole('region')
+        for (const column of columns) {
+          // Should not have the dashed ring style
+          expect(column.className).not.toContain('ring-dashed')
+        }
+      })
+
+      it('should show indicator text on target column', () => {
+        render(<Board {...defaultProps} bugs={multipleBacklogBugs} />)
+
+        // Select, grab, move right
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        fireEvent.keyDown(document, { key: 'Shift' })
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+
+        // Should show drop indicator
+        expect(screen.getByText(/drop here/i)).toBeInTheDocument()
+      })
+    })
   })
 })

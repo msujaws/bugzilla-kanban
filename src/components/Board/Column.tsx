@@ -11,6 +11,7 @@ interface ColumnProps {
   isLoading?: boolean
   selectedIndex?: number
   isGrabbing?: boolean
+  isDropTarget?: boolean
 }
 
 const columnIcons: Record<KanbanColumn, string> = {
@@ -28,6 +29,7 @@ export function Column({
   isLoading = false,
   selectedIndex,
   isGrabbing = false,
+  isDropTarget = false,
 }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column,
@@ -38,15 +40,25 @@ export function Column({
   const stagedCount = bugs.filter((bug) => stagedBugIds.has(bug.id)).length
   const countId = `${column}-count`
 
+  // Determine column styling based on state
+  const getColumnClassName = () => {
+    const base = 'flex min-h-[500px] w-72 flex-shrink-0 flex-col rounded-lg p-4 transition-colors'
+    if (isOver) {
+      return `${base} bg-accent-primary/20 ring-2 ring-accent-primary`
+    }
+    if (isDropTarget) {
+      return `${base} bg-accent-warning/10 ring-2 ring-dashed ring-accent-warning`
+    }
+    return `${base} bg-bg-secondary/50`
+  }
+
   return (
     <div
       ref={setNodeRef}
       role="region"
       aria-label={`${columnName} column`}
       aria-describedby={countId}
-      className={`flex min-h-[500px] w-72 flex-shrink-0 flex-col rounded-lg p-4 transition-colors ${
-        isOver ? 'bg-accent-primary/20 ring-2 ring-accent-primary' : 'bg-bg-secondary/50'
-      }`}
+      className={getColumnClassName()}
     >
       {/* Column Header */}
       <div className="mb-4 flex items-center justify-between">
@@ -68,6 +80,14 @@ export function Column({
           </span>
         </div>
       </div>
+
+      {/* Drop target indicator */}
+      {isDropTarget && (
+        <div className="mb-3 flex items-center justify-center gap-2 rounded bg-accent-warning/20 px-3 py-2 text-sm text-accent-warning">
+          <span className="material-icons text-base">keyboard_arrow_down</span>
+          <span>Drop here</span>
+        </div>
+      )}
 
       {/* Loading State */}
       {isLoading && (
