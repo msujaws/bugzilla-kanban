@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+dist-ssr
+coverage
+
+# Config files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Test outputs
+playwright-report
+test-results
+
+# Misc
+.DS_Store
