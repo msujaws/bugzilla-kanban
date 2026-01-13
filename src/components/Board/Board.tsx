@@ -104,6 +104,17 @@ export function Board({
     return ids
   }, [stagedChanges])
 
+  // Get staged assignees map (bugId -> new assignee email)
+  const stagedAssignees = useMemo(() => {
+    const assignees = new Map<number, string>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.assignee) {
+        assignees.set(bugId, change.assignee.to)
+      }
+    }
+    return assignees
+  }, [stagedChanges])
+
   // Get all assignees from bugs on the board
   const allAssignees = useBoardAssignees(bugs)
 
@@ -412,6 +423,7 @@ export function Board({
                 bugs={isLoading ? [] : (bugsByColumn.get(column) ?? [])}
                 stagedBugIds={stagedBugIds}
                 stagedAssigneeBugIds={stagedAssigneeBugIds}
+                stagedAssignees={stagedAssignees}
                 allAssignees={allAssignees}
                 onAssigneeChange={onAssigneeChange}
                 isLoading={isLoading}

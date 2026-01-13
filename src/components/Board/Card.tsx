@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
@@ -12,6 +12,7 @@ interface CardProps {
   isSelected?: boolean
   isGrabbed?: boolean
   isAssigneeStaged?: boolean
+  stagedAssignee?: string
   onClick?: (bug: BugzillaBug) => void
   allAssignees?: Assignee[]
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
@@ -42,18 +43,29 @@ export function Card({
   isSelected = false,
   isGrabbed = false,
   isAssigneeStaged = false,
+  stagedAssignee,
   onClick,
   allAssignees,
   onAssigneeChange,
 }: CardProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false)
+  const [anchorPosition, setAnchorPosition] = useState<{ x: number; y: number } | undefined>()
+  const assigneeButtonRef = useRef<HTMLButtonElement>(null)
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: bug.id,
   })
 
+  const openPicker = useCallback(() => {
+    if (assigneeButtonRef.current) {
+      const rect = assigneeButtonRef.current.getBoundingClientRect()
+      setAnchorPosition({ x: rect.left, y: rect.bottom + 4 })
+    }
+    setIsPickerOpen(true)
+  }, [])
+
   const handleAssigneeButtonClick = (event: React.MouseEvent) => {
     event.stopPropagation()
-    setIsPickerOpen(true)
+    openPicker()
   }
 
   const handleAssigneeSelect = (email: string) => {
@@ -62,6 +74,9 @@ export function Card({
     }
     setIsPickerOpen(false)
   }
+
+  // Display staged assignee if available, otherwise original
+  const displayedAssignee = isAssigneeStaged && stagedAssignee ? stagedAssignee : bug.assigned_to
 
   const priorityColor = priorityColors[bug.priority] ?? 'bg-priority-p5'
   const severityColor = severityColors[bug.severity] ?? 'text-text-tertiary'
@@ -81,6 +96,11 @@ export function Card({
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (onClick && event.key === 'Enter') {
       onClick(bug)
+    }
+    // Space key opens assignee picker when card is selected
+    if (event.key === ' ' && isSelected && allAssignees && onAssigneeChange) {
+      event.preventDefault()
+      openPicker()
     }
   }
 
@@ -109,7 +129,7 @@ export function Card({
       {...attributes}
       role="article"
       aria-label={`Bug #${bug.id.toString()}: ${bug.summary}`}
-      tabIndex={onClick ? 0 : undefined}
+      tabIndex={onClick || (allAssignees && onAssigneeChange) ? 0 : undefined}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={`cursor-grab rounded-lg bg-bg-secondary p-4 shadow-lg transition-all active:cursor-grabbing ${
@@ -153,20 +173,22 @@ export function Card({
 
       {/* Assignee */}
       <div className="flex items-center gap-2 text-xs text-text-tertiary">
-        <span className="material-icons text-sm">person</span>
-        <span className="min-w-0 flex-1 truncate">{bug.assigned_to}</span>
-        {allAssignees && onAssigneeChange && (
+        {allAssignees && onAssigneeChange ? (
           <button
+            ref={assigneeButtonRef}
             type="button"
             aria-label="Change assignee"
             onClick={handleAssigneeButtonClick}
-            className={`rounded p-0.5 transition-colors hover:bg-bg-tertiary hover:text-text-primary ${
+            className={`flex items-center rounded p-0.5 transition-colors hover:bg-bg-tertiary hover:text-text-primary ${
               isAssigneeStaged ? 'ring-2 ring-accent-primary/50' : ''
             }`}
           >
-            <span className="material-icons text-base">account_circle</span>
+            <span className="material-icons text-sm">person</span>
           </button>
+        ) : (
+          <span className="material-icons text-sm">person</span>
         )}
+        <span className="min-w-0 flex-1 truncate">{displayedAssignee}</span>
       </div>
 
       {/* Assignee Picker */}
@@ -179,6 +201,7 @@ export function Card({
           onSelect={handleAssigneeSelect}
           assignees={allAssignees}
           currentAssignee={bug.assigned_to}
+          anchorPosition={anchorPosition}
         />
       )}
     </div>

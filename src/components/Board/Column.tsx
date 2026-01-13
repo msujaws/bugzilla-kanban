@@ -10,6 +10,7 @@ interface ColumnProps {
   bugs: BugzillaBug[]
   stagedBugIds: Set<number>
   stagedAssigneeBugIds?: Set<number>
+  stagedAssignees?: Map<number, string>
   allAssignees?: Assignee[]
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   isLoading?: boolean
@@ -31,6 +32,7 @@ export function Column({
   bugs,
   stagedBugIds,
   stagedAssigneeBugIds,
+  stagedAssignees,
   allAssignees,
   onAssigneeChange,
   isLoading = false,
@@ -123,6 +125,7 @@ export function Column({
               bug={bug}
               isStaged={stagedBugIds.has(bug.id)}
               isAssigneeStaged={stagedAssigneeBugIds?.has(bug.id)}
+              stagedAssignee={stagedAssignees?.get(bug.id)}
               isSelected={selectedIndex === index}
               isGrabbed={selectedIndex === index && isGrabbing}
               allAssignees={allAssignees}

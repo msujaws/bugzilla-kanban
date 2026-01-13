@@ -2,12 +2,18 @@ import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Assignee } from '@/hooks/use-board-assignees'
 
+interface AnchorPosition {
+  x: number
+  y: number
+}
+
 interface AssigneePickerProps {
   isOpen: boolean
   onClose: () => void
   onSelect: (email: string) => void
   assignees: Assignee[]
   currentAssignee: string
+  anchorPosition?: AnchorPosition
 }
 
 export function AssigneePicker({
@@ -16,6 +22,7 @@ export function AssigneePicker({
   onSelect,
   assignees,
   currentAssignee,
+  anchorPosition,
 }: AssigneePickerProps) {
   // Handle Escape key
   useEffect(() => {
@@ -55,7 +62,17 @@ export function AssigneePicker({
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="absolute left-4 right-4 top-16 z-50 max-h-64 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary sm:left-auto sm:right-4 sm:w-72"
+            className={`absolute z-50 max-h-64 w-72 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary ${
+              anchorPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
+            }`}
+            style={
+              anchorPosition
+                ? {
+                    left: `${anchorPosition.x.toString()}px`,
+                    top: `${anchorPosition.y.toString()}px`,
+                  }
+                : undefined
+            }
             onClick={(e) => {
               e.stopPropagation()
             }}

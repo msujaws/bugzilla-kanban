@@ -158,4 +158,22 @@ describe('AssigneePicker', () => {
       expect(screen.getByRole('listbox')).toHaveAttribute('aria-label', 'Select assignee')
     })
   })
+
+  describe('positioning', () => {
+    it('should position dropdown at anchor coordinates when provided', () => {
+      const anchor = { x: 100, y: 200 }
+      render(<AssigneePicker {...defaultProps} anchorPosition={anchor} />)
+
+      const dropdown = screen.getByRole('listbox').parentElement
+      expect(dropdown).toHaveStyle({ left: '100px', top: '200px' })
+    })
+
+    it('should use default positioning when anchor not provided', () => {
+      render(<AssigneePicker {...defaultProps} />)
+
+      const dropdown = screen.getByRole('listbox').parentElement
+      // Should not have explicit left/top coordinates
+      expect(dropdown?.style.left).toBeFalsy()
+    })
+  })
 })

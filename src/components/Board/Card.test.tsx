@@ -369,19 +369,24 @@ describe('Card', () => {
   })
 
   describe('assignee picker', () => {
-    it('should render account_circle button when allAssignees is provided', () => {
+    it('should make person icon clickable when allAssignees is provided', () => {
       render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
 
       expect(screen.getByLabelText('Change assignee')).toBeInTheDocument()
+      // Should be person icon, not account_circle
+      expect(screen.getByText('person')).toBeInTheDocument()
+      expect(screen.queryByText('account_circle')).not.toBeInTheDocument()
     })
 
-    it('should not render assignee button when allAssignees is not provided', () => {
+    it('should not make person icon clickable when allAssignees is not provided', () => {
       render(<Card bug={mockBug} />)
 
+      // Person icon should still be there but not as a button
+      expect(screen.getByText('person')).toBeInTheDocument()
       expect(screen.queryByLabelText('Change assignee')).not.toBeInTheDocument()
     })
 
-    it('should open picker when button is clicked', async () => {
+    it('should open picker when person icon is clicked', async () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
 
@@ -440,9 +445,67 @@ describe('Card', () => {
         />,
       )
 
-      // The account_circle button should have a visual indicator
+      // The person icon button should have a visual indicator
       const button = screen.getByLabelText('Change assignee')
       expect(button.className).toContain('ring')
+    })
+
+    it('should open picker when Space key is pressed on selected card', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={mockBug}
+          allAssignees={mockAssignees}
+          onAssigneeChange={vi.fn()}
+          isSelected={true}
+        />,
+      )
+
+      const card = screen.getByRole('article')
+      card.focus()
+      await user.keyboard(' ')
+
+      expect(screen.getByRole('listbox')).toBeInTheDocument()
+    })
+
+    it('should not open picker when Space key is pressed on non-selected card', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={mockBug}
+          allAssignees={mockAssignees}
+          onAssigneeChange={vi.fn()}
+          isSelected={false}
+        />,
+      )
+
+      const card = screen.getByRole('article')
+      card.focus()
+      await user.keyboard(' ')
+
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    })
+
+    it('should display staged assignee when isAssigneeStaged is true', () => {
+      render(
+        <Card
+          bug={mockBug}
+          allAssignees={mockAssignees}
+          onAssigneeChange={vi.fn()}
+          isAssigneeStaged={true}
+          stagedAssignee="alice@example.com"
+        />,
+      )
+
+      // Should show staged assignee, not original
+      expect(screen.getByText('alice@example.com')).toBeInTheDocument()
+      expect(screen.queryByText('developer@example.com')).not.toBeInTheDocument()
+    })
+
+    it('should display original assignee when not staged', () => {
+      render(<Card bug={mockBug} />)
+
+      expect(screen.getByText('developer@example.com')).toBeInTheDocument()
     })
   })
 })
