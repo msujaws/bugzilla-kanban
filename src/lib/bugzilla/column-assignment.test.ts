@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { hasQeVerifyFlag, assignBugToColumn } from './column-assignment'
+import { SPRINT_TAG } from './sprint-tag'
 import type { BugzillaBug } from './types'
 
 const createBug = (overrides: Partial<BugzillaBug>): BugzillaBug => ({
@@ -120,19 +121,40 @@ describe('assignBugToColumn', () => {
     expect(assignBugToColumn(bug)).toBe('done')
   })
 
-  it('should assign NEW status to backlog', () => {
-    const bug = createBug({ status: 'NEW' })
+  // Sprint tag logic tests
+  it('should assign NEW status without sprint tag to backlog', () => {
+    const bug = createBug({ status: 'NEW', whiteboard: '' })
     expect(assignBugToColumn(bug)).toBe('backlog')
   })
 
-  it('should assign UNCONFIRMED status to backlog', () => {
-    const bug = createBug({ status: 'UNCONFIRMED' })
+  it('should assign UNCONFIRMED status without sprint tag to backlog', () => {
+    const bug = createBug({ status: 'UNCONFIRMED', whiteboard: '[other-tag]' })
     expect(assignBugToColumn(bug)).toBe('backlog')
   })
 
-  it('should assign ASSIGNED status to todo', () => {
-    const bug = createBug({ status: 'ASSIGNED' })
+  it('should assign NEW status with sprint tag to todo', () => {
+    const bug = createBug({ status: 'NEW', whiteboard: SPRINT_TAG })
     expect(assignBugToColumn(bug)).toBe('todo')
+  })
+
+  it('should assign UNCONFIRMED status with sprint tag to todo', () => {
+    const bug = createBug({ status: 'UNCONFIRMED', whiteboard: `[other] ${SPRINT_TAG}` })
+    expect(assignBugToColumn(bug)).toBe('todo')
+  })
+
+  it('should assign NEW with sprint tag among other tags to todo', () => {
+    const bug = createBug({ status: 'NEW', whiteboard: `[tag1] ${SPRINT_TAG} [tag2]` })
+    expect(assignBugToColumn(bug)).toBe('todo')
+  })
+
+  it('should assign ASSIGNED status to in-progress (regardless of whiteboard)', () => {
+    const bug = createBug({ status: 'ASSIGNED', whiteboard: '' })
+    expect(assignBugToColumn(bug)).toBe('in-progress')
+  })
+
+  it('should assign ASSIGNED with sprint tag to in-progress', () => {
+    const bug = createBug({ status: 'ASSIGNED', whiteboard: SPRINT_TAG })
+    expect(assignBugToColumn(bug)).toBe('in-progress')
   })
 
   it('should assign IN_PROGRESS status to in-progress', () => {
