@@ -81,7 +81,7 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
     set({ isApplying: true, applyError: null })
 
     try {
-      const client = new BugzillaClient(BUGZILLA_BASE_URL, apiKey)
+      const client = new BugzillaClient(apiKey, BUGZILLA_BASE_URL)
 
       // Convert staged changes to bug updates
       const updates: BugUpdate[] = []

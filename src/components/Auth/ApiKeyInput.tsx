@@ -95,6 +95,14 @@ export function ApiKeyInput({ isOpen, onClose }: ApiKeyInputProps) {
           <span className="font-mono text-accent-primary">Preferences → API Keys</span>.
         </p>
 
+        <div className="mb-4 flex items-start gap-2 rounded border border-accent-primary/30 bg-accent-primary/10 p-3 text-sm text-accent-primary">
+          <span className="material-icons text-base">lock</span>
+          <p>
+            <strong>Your key stays private.</strong> It&apos;s stored locally in your browser and
+            sent directly to Bugzilla — never to our servers.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="api-key-input" className="mb-2 block text-text-primary">

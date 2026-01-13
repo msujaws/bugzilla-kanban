@@ -44,7 +44,7 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
     set({ isLoading: true, error: null, apiKey })
 
     try {
-      const client = new BugzillaClient(BUGZILLA_BASE_URL, apiKey)
+      const client = new BugzillaClient(apiKey, BUGZILLA_BASE_URL)
       const { filters } = get()
 
       const bugFilters: BugFilters = {}

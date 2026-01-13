@@ -39,7 +39,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
       await storage.saveApiKey(apiKey)
 
       // Validate by making a simple API call
-      const client = new BugzillaClient(BUGZILLA_BASE_URL, apiKey)
+      const client = new BugzillaClient(apiKey, BUGZILLA_BASE_URL)
       await client.getBugs({ status: ['NEW'] }) // Just test with one status
 
       set({ isValid: true, isValidating: false, validationError: null })
@@ -73,7 +73,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
       set({ apiKey, isValidating: true, validationError: null })
 
       // Validate the loaded key
-      const client = new BugzillaClient(BUGZILLA_BASE_URL, apiKey)
+      const client = new BugzillaClient(apiKey, BUGZILLA_BASE_URL)
       await client.getBugs({ status: ['NEW'] })
 
       set({ isValid: true, isValidating: false, validationError: null })
@@ -100,7 +100,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
     set({ isValidating: true, validationError: null })
 
     try {
-      const client = new BugzillaClient(BUGZILLA_BASE_URL, apiKey)
+      const client = new BugzillaClient(apiKey, BUGZILLA_BASE_URL)
       await client.getBugs({ status: ['NEW'] })
 
       set({ isValid: true, isValidating: false, validationError: null })
