@@ -10,7 +10,7 @@ describe('ApiKeyStorage', () => {
     // Mock localStorage
     localStorageMock = {}
 
-    global.localStorage = {
+    vi.stubGlobal('localStorage', {
       // eslint-disable-next-line unicorn/no-null
       getItem: vi.fn((key: string) => localStorageMock[key] ?? null), // null is correct for localStorage API
       setItem: vi.fn((key: string, value: string) => {
@@ -25,20 +25,17 @@ describe('ApiKeyStorage', () => {
       }),
       length: 0,
       key: vi.fn(),
-    }
+    })
 
     // Mock navigator.userAgent for consistent encryption key derivation
-    Object.defineProperty(global, 'navigator', {
-      value: { userAgent: mockUserAgent },
-      writable: true,
-      configurable: true,
-    })
+    vi.stubGlobal('navigator', { userAgent: mockUserAgent })
 
     storage = new ApiKeyStorage()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   describe('saveApiKey', () => {
