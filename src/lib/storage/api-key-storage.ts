@@ -43,16 +43,6 @@ export class ApiKeyStorage {
   private async deriveCryptoKey(): Promise<CryptoKey> {
     // Use user agent as key material (stable across sessions), or override for testing
     const keySource = this.keyMaterialOverride ?? navigator.userAgent
-    // Debug logging - TODO: remove after debugging CI issue
-    /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-    console.log(
-      '[ApiKeyStorage.deriveCryptoKey] keySource length:',
-      keySource?.length,
-      'using override:',
-      !!this.keyMaterialOverride,
-    )
-    console.log('[ApiKeyStorage.deriveCryptoKey] crypto.subtle available:', !!crypto?.subtle)
-    /* eslint-enable @typescript-eslint/no-unnecessary-condition */
     const keyMaterial = this.encoder.encode(keySource + 'bugzilla-kanban-salt')
 
     // Import as raw key material
@@ -63,10 +53,9 @@ export class ApiKeyStorage {
       false,
       ['deriveBits', 'deriveKey'],
     )
-    console.log('[ApiKeyStorage.deriveCryptoKey] importKey succeeded')
 
     // Derive actual encryption key
-    const derivedKey = await crypto.subtle.deriveKey(
+    return crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
         salt: this.encoder.encode('bugzilla-kanban'),
@@ -78,8 +67,6 @@ export class ApiKeyStorage {
       false,
       ['encrypt', 'decrypt'],
     )
-    console.log('[ApiKeyStorage.deriveCryptoKey] deriveKey succeeded')
-    return derivedKey
   }
 
   /**
@@ -153,16 +140,8 @@ export class ApiKeyStorage {
    * Save API key to localStorage (encrypted)
    */
   async saveApiKey(apiKey: string): Promise<void> {
-    console.log('[ApiKeyStorage.saveApiKey] saving key of length:', apiKey.length)
     const encrypted = await this.encrypt(apiKey)
-    console.log(
-      '[ApiKeyStorage.saveApiKey] encrypted, iv length:',
-      encrypted.iv.length,
-      'data length:',
-      encrypted.encryptedData.length,
-    )
     this.storage.setItem(STORAGE_KEY, JSON.stringify(encrypted))
-    console.log('[ApiKeyStorage.saveApiKey] saved to storage')
   }
 
   /**
@@ -171,27 +150,15 @@ export class ApiKeyStorage {
   async getApiKey(): Promise<string | undefined> {
     const stored = this.storage.getItem(STORAGE_KEY)
 
-    // Debug logging for CI
-    console.log('[ApiKeyStorage.getApiKey] stored value:', stored ? 'exists' : 'null')
-
     if (!stored) {
       return undefined
     }
 
     try {
       const encrypted = JSON.parse(stored) as EncryptedData
-      /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-      console.log(
-        '[ApiKeyStorage.getApiKey] parsed encrypted data, iv length:',
-        encrypted.iv?.length,
-      )
-      const result = await this.decrypt(encrypted)
-      console.log('[ApiKeyStorage.getApiKey] decrypt succeeded, result length:', result?.length)
-      /* eslint-enable @typescript-eslint/no-unnecessary-condition */
-      return result
-    } catch (error) {
+      return await this.decrypt(encrypted)
+    } catch {
       // Invalid or corrupted data
-      console.error('[ApiKeyStorage.getApiKey] decrypt FAILED:', error)
       return undefined
     }
   }

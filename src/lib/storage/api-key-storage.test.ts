@@ -1,14 +1,5 @@
-import { describe, it, expect, beforeEach, beforeAll } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { ApiKeyStorage, type Storage } from './api-key-storage'
-
-// Debug logging for CI - TODO: remove after debugging
-const DEBUG = true
-const log = (...args: unknown[]) => {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- DEBUG may change
-  if (DEBUG) {
-    console.log('[ApiKeyStorage Test]', ...args)
-  }
-}
 
 describe('ApiKeyStorage', () => {
   let storage: ApiKeyStorage
@@ -16,38 +7,18 @@ describe('ApiKeyStorage', () => {
   let mockStorage: Storage
   const testKeyMaterial = 'test-key-material-for-encryption'
 
-  beforeAll(() => {
-    // Log environment info - eslint disabled for debug logging
-    /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-    log('=== Environment Info ===')
-    log('crypto available:', typeof crypto !== 'undefined')
-    log('crypto.subtle available:', typeof crypto?.subtle !== 'undefined')
-    log('globalThis.crypto available:', typeof globalThis.crypto !== 'undefined')
-    log('globalThis.crypto.subtle available:', typeof globalThis.crypto?.subtle !== 'undefined')
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
-      log('crypto.subtle methods:', Object.keys(crypto.subtle))
-    }
-    log('========================')
-    /* eslint-enable @typescript-eslint/no-unnecessary-condition */
-  })
-
   beforeEach(() => {
     // Create in-memory storage mock (no global stubbing needed)
     mockStorageData = {}
     mockStorage = {
       getItem: (key: string) => {
-        const value = mockStorageData[key]
         // eslint-disable-next-line unicorn/no-null -- localStorage API returns null
-        const result = value ?? null
-        log(`mockStorage.getItem('${key}'):`, value ? `${value.slice(0, 50)}...` : 'null')
-        return result
+        return mockStorageData[key] ?? null
       },
       setItem: (key: string, value: string) => {
-        log(`mockStorage.setItem('${key}'):`, value.slice(0, 50) + '...')
         mockStorageData[key] = value
       },
       removeItem: (key: string) => {
-        log(`mockStorage.removeItem('${key}')`)
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete mockStorageData[key]
       },
@@ -58,7 +29,6 @@ describe('ApiKeyStorage', () => {
       keyMaterial: testKeyMaterial,
       storage: mockStorage,
     })
-    log('Created new ApiKeyStorage instance with keyMaterial:', testKeyMaterial)
   })
 
   describe('saveApiKey', () => {
@@ -96,30 +66,10 @@ describe('ApiKeyStorage', () => {
     it('should retrieve and decrypt saved API key', async () => {
       const apiKey = 'test-api-key-456'
 
-      log('--- Test: should retrieve and decrypt saved API key ---')
-      log('Input apiKey:', apiKey)
+      await storage.saveApiKey(apiKey)
+      const retrieved = await storage.getApiKey()
 
-      try {
-        log('Calling saveApiKey...')
-        await storage.saveApiKey(apiKey)
-        log('saveApiKey completed, mockStorageData:', JSON.stringify(mockStorageData))
-      } catch (error) {
-        log('saveApiKey FAILED with error:', error)
-        throw error
-      }
-
-      try {
-        log('Calling getApiKey...')
-        const retrieved = await storage.getApiKey()
-        log('getApiKey returned:', retrieved)
-        log('Expected:', apiKey)
-        log('Match:', retrieved === apiKey)
-
-        expect(retrieved).toBe(apiKey)
-      } catch (error) {
-        log('getApiKey FAILED with error:', error)
-        throw error
-      }
+      expect(retrieved).toBe(apiKey)
     })
 
     it('should return undefined when no API key is stored', async () => {
@@ -195,34 +145,10 @@ describe('ApiKeyStorage', () => {
     it('should successfully decrypt after multiple save/retrieve cycles', async () => {
       const keys = ['key1', 'key2', 'key3']
 
-      log('--- Test: should successfully decrypt after multiple save/retrieve cycles ---')
-
       for (const key of keys) {
-        log(`\nCycle for key: '${key}'`)
-        try {
-          log('Calling saveApiKey...')
-          await storage.saveApiKey(key)
-          log(
-            'saveApiKey completed, stored value:',
-            mockStorageData['bugzilla_api_key']?.slice(0, 50),
-          )
-        } catch (error) {
-          log('saveApiKey FAILED:', error)
-          throw error
-        }
-
-        try {
-          log('Calling getApiKey...')
-          const retrieved = await storage.getApiKey()
-          log('getApiKey returned:', retrieved)
-          log('Expected:', key)
-          log('Match:', retrieved === key)
-
-          expect(retrieved).toBe(key)
-        } catch (error) {
-          log('getApiKey FAILED:', error)
-          throw error
-        }
+        await storage.saveApiKey(key)
+        const retrieved = await storage.getApiKey()
+        expect(retrieved).toBe(key)
       }
     })
   })
