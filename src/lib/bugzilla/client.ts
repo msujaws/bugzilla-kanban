@@ -27,6 +27,27 @@ export class BugzillaClient {
     // Build query string manually to support relative URLs
     const params = new URLSearchParams()
 
+    // Request additional fields beyond defaults
+    const includeFields = [
+      'id',
+      'summary',
+      'status',
+      'resolution',
+      'assigned_to',
+      'assigned_to_detail',
+      'priority',
+      'severity',
+      'component',
+      'whiteboard',
+      'last_change_time',
+      'creation_time',
+      'groups',
+      'flags',
+      'keywords',
+      'cf_fx_points',
+    ]
+    params.append('include_fields', includeFields.join(','))
+
     if (filters.whiteboardTag) {
       params.append('whiteboard', filters.whiteboardTag)
     }

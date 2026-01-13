@@ -2,6 +2,13 @@
  * Bugzilla API types based on bugzilla.mozilla.org REST API
  */
 
+export interface BugzillaFlag {
+  name: string
+  status: string
+  setter?: string
+  requestee?: string
+}
+
 export interface BugzillaBug {
   id: number
   summary: string
@@ -21,6 +28,12 @@ export interface BugzillaBug {
   creation_time: string
   /** Security groups the bug belongs to. Non-empty means bug is restricted/confidential. */
   groups?: string[]
+  /** Bug flags (e.g., qe-verify, needinfo) */
+  flags?: BugzillaFlag[]
+  /** Bug keywords (e.g., meta) */
+  keywords?: string[]
+  /** Story points (Firefox custom field) */
+  cf_fx_points?: number | string
 }
 
 export interface BugzillaSearchResponse {
