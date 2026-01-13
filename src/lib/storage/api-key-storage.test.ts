@@ -4,6 +4,7 @@ import { ApiKeyStorage } from './api-key-storage'
 describe('ApiKeyStorage', () => {
   let storage: ApiKeyStorage
   let localStorageMock: Record<string, string>
+  const mockUserAgent = 'Mozilla/5.0 (Test) TestBrowser/1.0'
 
   beforeEach(() => {
     // Mock localStorage
@@ -25,6 +26,13 @@ describe('ApiKeyStorage', () => {
       length: 0,
       key: vi.fn(),
     }
+
+    // Mock navigator.userAgent for consistent encryption key derivation
+    Object.defineProperty(global, 'navigator', {
+      value: { userAgent: mockUserAgent },
+      writable: true,
+      configurable: true,
+    })
 
     storage = new ApiKeyStorage()
   })
