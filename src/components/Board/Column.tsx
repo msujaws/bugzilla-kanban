@@ -2,12 +2,16 @@ import { useDroppable } from '@dnd-kit/core'
 import { Card } from './Card'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { KanbanColumn } from '@/lib/bugzilla/status-mapper'
+import type { Assignee } from '@/hooks/use-board-assignees'
 import { COLUMN_NAMES } from '@/types'
 
 interface ColumnProps {
   column: KanbanColumn
   bugs: BugzillaBug[]
   stagedBugIds: Set<number>
+  stagedAssigneeBugIds?: Set<number>
+  allAssignees?: Assignee[]
+  onAssigneeChange?: (bugId: number, newAssignee: string) => void
   isLoading?: boolean
   selectedIndex?: number
   isGrabbing?: boolean
@@ -26,6 +30,9 @@ export function Column({
   column,
   bugs,
   stagedBugIds,
+  stagedAssigneeBugIds,
+  allAssignees,
+  onAssigneeChange,
   isLoading = false,
   selectedIndex,
   isGrabbing = false,
@@ -115,8 +122,11 @@ export function Column({
               key={bug.id}
               bug={bug}
               isStaged={stagedBugIds.has(bug.id)}
+              isAssigneeStaged={stagedAssigneeBugIds?.has(bug.id)}
               isSelected={selectedIndex === index}
               isGrabbed={selectedIndex === index && isGrabbing}
+              allAssignees={allAssignees}
+              onAssigneeChange={onAssigneeChange}
             />
           ))}
         </div>

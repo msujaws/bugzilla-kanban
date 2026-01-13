@@ -14,11 +14,13 @@ import { Card } from './Card'
 import { StatusMapper, type KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
+import { useBoardAssignees } from '@/hooks/use-board-assignees'
 
 interface BoardProps {
   bugs: BugzillaBug[]
   stagedChanges: Map<number, StagedChange>
   onBugMove: (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn) => void
+  onAssigneeChange?: (bugId: number, newAssignee: string) => void
   isLoading?: boolean
   onApplyChanges?: () => void
   onClearChanges?: () => void
@@ -36,6 +38,7 @@ export function Board({
   bugs,
   stagedChanges,
   onBugMove,
+  onAssigneeChange,
   isLoading = false,
   onApplyChanges,
   onClearChanges,
@@ -89,6 +92,20 @@ export function Board({
     }
     return ids
   }, [stagedChanges])
+
+  // Get bug IDs with staged assignee changes
+  const stagedAssigneeBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.assignee) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get all assignees from bugs on the board
+  const allAssignees = useBoardAssignees(bugs)
 
   // Find first non-empty column
   const findFirstNonEmptyColumn = useCallback((): number => {
@@ -394,6 +411,9 @@ export function Board({
                 column={column}
                 bugs={isLoading ? [] : (bugsByColumn.get(column) ?? [])}
                 stagedBugIds={stagedBugIds}
+                stagedAssigneeBugIds={stagedAssigneeBugIds}
+                allAssignees={allAssignees}
+                onAssigneeChange={onAssigneeChange}
                 isLoading={isLoading}
                 selectedIndex={
                   selectedPosition?.columnIndex === columnIndex

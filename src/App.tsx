@@ -34,6 +34,7 @@ function App() {
   const changes = useStore((state) => state.changes)
   const isApplying = useStore((state) => state.isApplying)
   const stageChange = useStore((state) => state.stageChange)
+  const stageAssigneeChange = useStore((state) => state.stageAssigneeChange)
   const applyChanges = useStore((state) => state.applyChanges)
   const clearAllChanges = useStore((state) => state.clearAllChanges)
   const getChangeCount = useStore((state) => state.getChangeCount)
@@ -104,6 +105,17 @@ function App() {
       stageChange(bugId, fromColumn, toColumn)
     },
     [stageChange],
+  )
+
+  // Handle assignee change
+  const handleAssigneeChange = useCallback(
+    (bugId: number, newAssignee: string) => {
+      const bug = bugs.find((b) => b.id === bugId)
+      if (bug) {
+        stageAssigneeChange(bugId, bug.assigned_to, newAssignee)
+      }
+    },
+    [bugs, stageAssigneeChange],
   )
 
   // Handle clear staged changes
@@ -260,6 +272,7 @@ function App() {
           bugs={bugs}
           stagedChanges={changes}
           onBugMove={handleBugMove}
+          onAssigneeChange={handleAssigneeChange}
           isLoading={isLoadingBugs}
           onApplyChanges={handleApplyChanges}
           onClearChanges={handleClearChanges}
