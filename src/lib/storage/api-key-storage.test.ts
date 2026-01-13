@@ -28,7 +28,16 @@ describe('ApiKeyStorage', () => {
     })
 
     // Mock navigator.userAgent for consistent encryption key derivation
-    vi.stubGlobal('navigator', { userAgent: mockUserAgent })
+    // Use Object.create to preserve the navigator prototype chain for jsdom in CI
+    const navigatorMock = Object.create(
+      Object.getPrototypeOf(globalThis.navigator),
+      Object.getOwnPropertyDescriptors(globalThis.navigator),
+    )
+    Object.defineProperty(navigatorMock, 'userAgent', {
+      value: mockUserAgent,
+      configurable: true,
+    })
+    vi.stubGlobal('navigator', navigatorMock)
 
     storage = new ApiKeyStorage()
   })
