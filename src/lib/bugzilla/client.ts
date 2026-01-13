@@ -41,6 +41,10 @@ export class BugzillaClient {
       }
     }
 
+    if (filters.limit !== undefined) {
+      params.append('limit', filters.limit.toString())
+    }
+
     const queryString = params.toString()
     const url = `${this.baseUrl}/bug${queryString ? `?${queryString}` : ''}`
 

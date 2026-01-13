@@ -34,6 +34,7 @@ export interface BugFilters {
   whiteboardTag?: string
   component?: string
   status?: string[]
+  limit?: number
 }
 
 export interface BugUpdate {
