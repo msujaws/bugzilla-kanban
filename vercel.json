@@ -2,6 +2,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/bugzilla/:path*",
+      "destination": "/api/bugzilla"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
