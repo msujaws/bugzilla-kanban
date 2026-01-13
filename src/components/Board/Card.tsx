@@ -292,16 +292,21 @@ export function Card({
             type="button"
             aria-label="Change assignee"
             onClick={handleAssigneeButtonClick}
-            className={`flex items-center rounded p-0.5 transition-colors hover:bg-bg-tertiary hover:text-text-primary ${
+            className={`flex min-w-0 flex-1 items-center gap-2 rounded p-0.5 transition-colors hover:bg-bg-tertiary hover:text-text-primary ${
               isAssigneeStaged ? 'ring-2 ring-accent-staged' : ''
             }`}
           >
             <span className="material-icons text-sm">person</span>
+            <span className="min-w-0 flex-1 truncate text-left">
+              {formatAssignee(displayedAssignee)}
+            </span>
           </button>
         ) : (
-          <span className="material-icons text-sm">person</span>
+          <>
+            <span className="material-icons text-sm">person</span>
+            <span className="min-w-0 flex-1 truncate">{formatAssignee(displayedAssignee)}</span>
+          </>
         )}
-        <span className="min-w-0 flex-1 truncate">{formatAssignee(displayedAssignee)}</span>
       </div>
 
       {/* Assignee Picker */}

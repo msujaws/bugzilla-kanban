@@ -8,6 +8,7 @@ import { ApplyChangesButton } from './components/Board/ApplyChangesButton'
 import { FAQModal } from './components/FAQ/FaqModal'
 import { useStore } from './store'
 import { useUrlFilters } from './hooks/use-url-filters'
+import { addSprintTag, removeSprintTag } from './lib/bugzilla/sprint-tag'
 
 function App() {
   // Local UI state
@@ -40,6 +41,7 @@ function App() {
   const isApplying = useStore((state) => state.isApplying)
   const stageChange = useStore((state) => state.stageChange)
   const stageAssigneeChange = useStore((state) => state.stageAssigneeChange)
+  const stageWhiteboardChange = useStore((state) => state.stageWhiteboardChange)
   const stagePointsChange = useStore((state) => state.stagePointsChange)
   const stagePriorityChange = useStore((state) => state.stagePriorityChange)
   const applyChanges = useStore((state) => state.applyChanges)
@@ -150,8 +152,30 @@ function App() {
   const handleBugMove = useCallback(
     (bugId: number, fromColumn: string, toColumn: string) => {
       stageChange(bugId, fromColumn, toColumn)
+
+      // Handle sprint tag for backlog <-> todo moves
+      const bug = bugs.find((b) => b.id === bugId)
+      if (bug) {
+        const currentWhiteboard = bug.whiteboard
+
+        // Moving from backlog to todo: add sprint tag
+        if (fromColumn === 'backlog' && toColumn === 'todo') {
+          const newWhiteboard = addSprintTag(currentWhiteboard)
+          if (newWhiteboard !== currentWhiteboard) {
+            stageWhiteboardChange(bugId, currentWhiteboard, newWhiteboard)
+          }
+        }
+
+        // Moving from todo to backlog: remove sprint tag
+        if (fromColumn === 'todo' && toColumn === 'backlog') {
+          const newWhiteboard = removeSprintTag(currentWhiteboard)
+          if (newWhiteboard !== currentWhiteboard) {
+            stageWhiteboardChange(bugId, currentWhiteboard, newWhiteboard)
+          }
+        }
+      }
     },
-    [stageChange],
+    [stageChange, bugs, stageWhiteboardChange],
   )
 
   // Handle assignee change
