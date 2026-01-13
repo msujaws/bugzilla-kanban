@@ -190,12 +190,12 @@ export function Board({
   // Get all assignees from bugs on the board
   const allAssignees = useBoardAssignees(bugs)
 
-  // Check if a bug can be moved out of backlog
+  // Check if a bug can be moved to a column
   // Returns error message if invalid, undefined if valid
   const validateMove = useCallback(
     (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn): string | undefined => {
-      // Only validate moves OUT of backlog
-      if (fromColumn === 'backlog' && toColumn !== 'backlog') {
+      // Only validate moves OUT of backlog (except to todo, which allows unassigned bugs)
+      if (fromColumn === 'backlog' && toColumn !== 'backlog' && toColumn !== 'todo') {
         const bug = bugs.find((b) => b.id === bugId)
         if (!bug) return undefined
 
@@ -204,7 +204,7 @@ export function Board({
         const effectiveAssignee = stagedChange?.assignee?.to ?? bug.assigned_to
 
         if (effectiveAssignee === NOBODY_EMAIL) {
-          return 'Cannot move unassigned bug out of backlog. Please assign someone first.'
+          return 'Cannot move unassigned bug to this column. Please assign someone first.'
         }
       }
       return undefined
