@@ -4,9 +4,10 @@ import { useStore } from '@/store'
 interface ApiKeyInputProps {
   isOpen: boolean
   onClose: () => void
+  onOpenFAQ?: () => void
 }
 
-export function ApiKeyInput({ isOpen, onClose }: ApiKeyInputProps) {
+export function ApiKeyInput({ isOpen, onClose, onOpenFAQ }: ApiKeyInputProps) {
   const [apiKey, setApiKey] = useState('')
 
   const inputReference = useRef<HTMLInputElement>(null)
@@ -102,6 +103,19 @@ export function ApiKeyInput({ isOpen, onClose }: ApiKeyInputProps) {
             sent directly to Bugzilla — never to our servers.
           </p>
         </div>
+
+        {onOpenFAQ && (
+          <p className="mb-4 text-center text-sm text-text-secondary">
+            Have questions?{' '}
+            <button
+              type="button"
+              onClick={onOpenFAQ}
+              className="text-accent-primary hover:underline"
+            >
+              Check out our FAQ
+            </button>
+          </p>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
