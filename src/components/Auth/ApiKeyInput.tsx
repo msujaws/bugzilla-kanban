@@ -99,8 +99,9 @@ export function ApiKeyInput({ isOpen, onClose, onOpenFAQ }: ApiKeyInputProps) {
         <div className="mb-4 flex items-start gap-2 rounded border border-accent-primary/30 bg-accent-primary/10 p-3 text-sm text-accent-primary">
           <span className="material-icons text-base">lock</span>
           <p>
-            <strong>Your key stays private.</strong> It&apos;s stored locally in your browser and
-            sent directly to Bugzilla — never to our servers.
+            <strong>Your key stays private.</strong> It&apos;s encrypted locally in your browser.
+            Requests are proxied to Bugzilla via our open-source server — we don&apos;t log or store
+            your key.
           </p>
         </div>
 

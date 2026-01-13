@@ -64,7 +64,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       fetchOptions.body = JSON.stringify(req.body)
     }
 
-    console.log(`Proxying ${req.method ?? 'GET'} ${url.toString()}`)
     const response = await fetch(url.toString(), fetchOptions)
 
     // Get response as text first to handle non-JSON responses

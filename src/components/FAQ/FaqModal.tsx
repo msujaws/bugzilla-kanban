@@ -20,12 +20,12 @@ const faqs = [
   {
     question: 'Is my API key secure?',
     answer:
-      "Yes! Your API key is stored locally in your browser using encryption. It's never sent to our servers — only directly to Bugzilla.",
+      'Your API key is encrypted and stored locally in your browser. API requests pass through our open-source CORS proxy to reach Bugzilla (required due to browser security restrictions). We do not log or store your key. You can review the proxy code on GitHub.',
   },
   {
     question: 'What do the columns mean?',
     answer:
-      'Columns map to Bugzilla statuses: Backlog (NEW, UNCONFIRMED), Todo (ASSIGNED), In Progress (IN_PROGRESS), In Review (RESOLVED), Done (VERIFIED, CLOSED).',
+      'Columns map to Bugzilla statuses: Backlog (NEW, UNCONFIRMED), Todo (NEW with sprint tag), In Progress (ASSIGNED), In Testing (RESOLVED with qe-verify+ flag), Done (RESOLVED, VERIFIED, CLOSED).',
   },
   {
     question: 'How do I move a bug?',
@@ -40,7 +40,7 @@ const faqs = [
   {
     question: 'Can I undo a staged change?',
     answer:
-      "Staged changes are only applied when you click 'Apply Changes'. Before that, you can refresh the page to clear all staged changes.",
+      "Staged changes are only applied when you click 'Apply Changes'. Before that, click the 'Clear' button on the staged changes panel to discard them, or refresh the page.",
   },
   {
     question: 'Why do I need to enter a filter?',
