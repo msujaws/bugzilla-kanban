@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { create } from 'zustand'
 import { createStagedSlice } from './staged-slice'
 import type { StagedSlice } from './staged-slice'
+import { createApiKey } from '@/types/branded'
+
+const testApiKey = createApiKey('test-api-key')
 
 // Mock BugzillaClient
 const mockBatchUpdateBugs = vi.fn()
@@ -152,7 +155,7 @@ describe('StagedSlice', () => {
       stageChange(123, 'backlog', 'todo')
 
       // Start apply but don't await
-      const promise = applyChanges('test-api-key')
+      const promise = applyChanges(testApiKey)
 
       const { isApplying } = useStore.getState()
       expect(isApplying).toBe(true)
@@ -164,7 +167,7 @@ describe('StagedSlice', () => {
       const { stageChange, applyChanges } = useStore.getState()
 
       stageChange(123, 'backlog', 'todo')
-      await applyChanges('test-api-key')
+      await applyChanges(testApiKey)
 
       const { isApplying } = useStore.getState()
       expect(isApplying).toBe(false)
@@ -181,7 +184,7 @@ describe('StagedSlice', () => {
       stageChange(123, 'backlog', 'todo')
       stageChange(456, 'todo', 'in-progress')
 
-      await applyChanges('test-api-key')
+      await applyChanges(testApiKey)
 
       expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
         { id: 123, status: 'ASSIGNED' },
@@ -198,7 +201,7 @@ describe('StagedSlice', () => {
       const { stageChange, applyChanges } = useStore.getState()
 
       stageChange(123, 'backlog', 'todo')
-      await applyChanges('test-api-key')
+      await applyChanges(testApiKey)
 
       const { changes } = useStore.getState()
       expect(changes.size).toBe(0)
@@ -215,7 +218,7 @@ describe('StagedSlice', () => {
       stageChange(123, 'backlog', 'todo')
       stageChange(456, 'todo', 'in-progress')
 
-      await applyChanges('test-api-key')
+      await applyChanges(testApiKey)
 
       const { changes } = useStore.getState()
       expect(changes.has(123)).toBe(false)
@@ -231,7 +234,7 @@ describe('StagedSlice', () => {
       const { stageChange, applyChanges } = useStore.getState()
 
       stageChange(123, 'backlog', 'todo')
-      await applyChanges('test-api-key')
+      await applyChanges(testApiKey)
 
       const { applyError } = useStore.getState()
       expect(applyError).toContain('failed')
@@ -248,7 +251,7 @@ describe('StagedSlice', () => {
       stageChange(123, 'backlog', 'todo')
       stageChange(456, 'todo', 'in-progress')
 
-      const result = await applyChanges('test-api-key')
+      const result = await applyChanges(testApiKey)
 
       expect(result.successCount).toBe(1)
       expect(result.failCount).toBe(1)
@@ -257,7 +260,7 @@ describe('StagedSlice', () => {
     it('should not call API when no changes staged', async () => {
       const { applyChanges } = useStore.getState()
 
-      await applyChanges('test-api-key')
+      await applyChanges(testApiKey)
 
       expect(mockBatchUpdateBugs).not.toHaveBeenCalled()
     })
@@ -268,7 +271,7 @@ describe('StagedSlice', () => {
       const { stageChange, applyChanges } = useStore.getState()
 
       stageChange(123, 'backlog', 'todo')
-      await applyChanges('test-api-key')
+      await applyChanges(testApiKey)
 
       const { applyError, changes } = useStore.getState()
       expect(applyError).toBe('Network error')

@@ -1,3 +1,5 @@
+import type { ApiKey, BugzillaBaseUrl, BugId } from '@/types/branded'
+import { DEFAULT_BUGZILLA_URL, createBugId } from '@/types/branded'
 import type {
   BugzillaBug,
   BugzillaSearchResponse,
@@ -8,13 +10,12 @@ import type {
 } from './types'
 
 const DEFAULT_TIMEOUT = 30_000 // 30 seconds
-const BASE_URL = 'https://bugzilla.mozilla.org/rest'
 
 export class BugzillaClient {
-  private apiKey: string
-  private baseUrl: string
+  private apiKey: ApiKey
+  private baseUrl: BugzillaBaseUrl
 
-  constructor(apiKey: string, baseUrl: string = BASE_URL) {
+  constructor(apiKey: ApiKey, baseUrl: BugzillaBaseUrl = DEFAULT_BUGZILLA_URL) {
     this.apiKey = apiKey
     this.baseUrl = baseUrl
   }
@@ -47,7 +48,7 @@ export class BugzillaClient {
   /**
    * Update a single bug
    */
-  async updateBug(bugId: number, changes: Partial<BugzillaBug>): Promise<void> {
+  async updateBug(bugId: BugId, changes: Partial<BugzillaBug>): Promise<void> {
     const url = `${this.baseUrl}/bug/${bugId.toString()}`
 
     await this.request(url, {
@@ -72,7 +73,8 @@ export class BugzillaClient {
     // Process updates sequentially to avoid rate limiting
     for (const update of updates) {
       try {
-        await this.updateBug(update.id, { status: update.status })
+        const bugId = createBugId(update.id)
+        await this.updateBug(bugId, { status: update.status })
         result.successful.push(update.id)
       } catch (error) {
         result.failed.push({

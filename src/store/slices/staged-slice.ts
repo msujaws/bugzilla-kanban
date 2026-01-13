@@ -5,8 +5,9 @@ import type { StateCreator } from 'zustand'
 import { BugzillaClient } from '@/lib/bugzilla/client'
 import { StatusMapper } from '@/lib/bugzilla/status-mapper'
 import type { BugUpdate } from '@/lib/bugzilla/types'
+import type { ApiKey } from '@/types/branded'
+import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
 
-const BUGZILLA_BASE_URL = 'https://bugzilla.mozilla.org/rest'
 const statusMapper = new StatusMapper()
 
 export interface StagedChange {
@@ -29,7 +30,7 @@ export interface StagedSlice {
   stageChange: (bugId: number, fromColumn: string, toColumn: string) => void
   unstageChange: (bugId: number) => void
   clearAllChanges: () => void
-  applyChanges: (apiKey: string) => Promise<ApplyResult>
+  applyChanges: (apiKey: ApiKey) => Promise<ApplyResult>
   getChangeCount: () => number
   hasChanges: () => boolean
 }
@@ -71,7 +72,7 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
   },
 
   // Apply all staged changes to Bugzilla
-  applyChanges: async (apiKey: string): Promise<ApplyResult> => {
+  applyChanges: async (apiKey: ApiKey): Promise<ApplyResult> => {
     const { changes } = get()
 
     if (changes.size === 0) {
@@ -81,7 +82,7 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
     set({ isApplying: true, applyError: null })
 
     try {
-      const client = new BugzillaClient(apiKey, BUGZILLA_BASE_URL)
+      const client = new BugzillaClient(apiKey, DEFAULT_BUGZILLA_URL)
 
       // Convert staged changes to bug updates
       const updates: BugUpdate[] = []

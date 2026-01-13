@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { createBugsSlice } from './bugs-slice'
 import type { BugsSlice } from './bugs-slice'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
+import { createApiKey } from '@/types/branded'
 
 // Mock BugzillaClient
 const mockGetBugs = vi.fn()
@@ -38,6 +39,8 @@ const mockBugs: BugzillaBug[] = [
   },
 ]
 
+const testApiKey = createApiKey('test-api-key')
+
 describe('BugsSlice', () => {
   let useStore: ReturnType<typeof create<BugsSlice>>
 
@@ -63,16 +66,13 @@ describe('BugsSlice', () => {
 
     it('should have error null initially', () => {
       const { error } = useStore.getState()
-
       expect(error).toBeNull()
     })
 
     it('should have empty filters initially', () => {
       const { filters } = useStore.getState()
-
-      expect(filters.whiteboardTag).toBeNull()
-
-      expect(filters.component).toBeNull()
+      expect(filters.whiteboardTag).toBe('')
+      expect(filters.component).toBe('')
     })
   })
 
@@ -81,7 +81,7 @@ describe('BugsSlice', () => {
       const { fetchBugs } = useStore.getState()
 
       // Start fetch but don't await
-      const promise = fetchBugs('test-api-key')
+      const promise = fetchBugs(testApiKey)
 
       const { isLoading } = useStore.getState()
       expect(isLoading).toBe(true)
@@ -92,7 +92,7 @@ describe('BugsSlice', () => {
     it('should set isLoading to false after fetching', async () => {
       const { fetchBugs } = useStore.getState()
 
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
 
       const { isLoading } = useStore.getState()
       expect(isLoading).toBe(false)
@@ -101,7 +101,7 @@ describe('BugsSlice', () => {
     it('should store fetched bugs', async () => {
       const { fetchBugs } = useStore.getState()
 
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
 
       const { bugs } = useStore.getState()
       expect(bugs).toEqual(mockBugs)
@@ -112,10 +112,9 @@ describe('BugsSlice', () => {
       useStore.setState({ error: 'Previous error' })
 
       const { fetchBugs } = useStore.getState()
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
 
       const { error } = useStore.getState()
-
       expect(error).toBeNull()
     })
 
@@ -123,7 +122,7 @@ describe('BugsSlice', () => {
       mockGetBugs.mockRejectedValueOnce(new Error('Network error'))
 
       const { fetchBugs } = useStore.getState()
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
 
       const { error, bugs } = useStore.getState()
       expect(error).toBe('Network error')
@@ -136,7 +135,7 @@ describe('BugsSlice', () => {
       })
 
       const { fetchBugs } = useStore.getState()
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
 
       expect(mockGetBugs).toHaveBeenCalledWith({
         whiteboardTag: '[kanban]',
@@ -150,7 +149,7 @@ describe('BugsSlice', () => {
       const { fetchBugs, refreshBugs } = useStore.getState()
 
       // Initial fetch
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
       expect(mockGetBugs).toHaveBeenCalledTimes(1)
 
       // Refresh
@@ -161,7 +160,7 @@ describe('BugsSlice', () => {
     it('should use stored API key for refresh', async () => {
       const { fetchBugs, refreshBugs } = useStore.getState()
 
-      await fetchBugs('my-api-key')
+      await fetchBugs(createApiKey('my-api-key'))
       mockGetBugs.mockClear()
 
       await refreshBugs()
@@ -211,14 +210,11 @@ describe('BugsSlice', () => {
       const { setFilters } = useStore.getState()
 
       setFilters({ whiteboardTag: '[kanban]', component: 'Core' })
-      // eslint-disable-next-line unicorn/no-null
-      setFilters({ whiteboardTag: null, component: null })
+      setFilters({ whiteboardTag: '', component: '' })
 
       const { filters } = useStore.getState()
-
-      expect(filters.whiteboardTag).toBeNull()
-
-      expect(filters.component).toBeNull()
+      expect(filters.whiteboardTag).toBe('')
+      expect(filters.component).toBe('')
     })
   })
 
@@ -226,7 +222,7 @@ describe('BugsSlice', () => {
     it('should clear all bugs', async () => {
       const { fetchBugs, clearBugs } = useStore.getState()
 
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
       expect(useStore.getState().bugs.length).toBe(2)
 
       clearBugs()
@@ -247,7 +243,7 @@ describe('BugsSlice', () => {
     it('should return bug by ID', async () => {
       const { fetchBugs, getBugById } = useStore.getState()
 
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
 
       const bug = getBugById(1)
       expect(bug).toEqual(mockBugs[0])
@@ -256,7 +252,7 @@ describe('BugsSlice', () => {
     it('should return undefined for non-existent bug', async () => {
       const { fetchBugs, getBugById } = useStore.getState()
 
-      await fetchBugs('test-api-key')
+      await fetchBugs(testApiKey)
 
       const bug = getBugById(999)
       expect(bug).toBeUndefined()

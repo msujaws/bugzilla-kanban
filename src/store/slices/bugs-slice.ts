@@ -4,12 +4,12 @@
 import type { StateCreator } from 'zustand'
 import { BugzillaClient } from '@/lib/bugzilla/client'
 import type { BugzillaBug, BugFilters } from '@/lib/bugzilla/types'
-
-const BUGZILLA_BASE_URL = 'https://bugzilla.mozilla.org/rest'
+import type { ApiKey } from '@/types/branded'
+import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
 
 export interface BugsFilters {
-  whiteboardTag: string | null
-  component: string | null
+  whiteboardTag: string
+  component: string
 }
 
 export interface BugsSlice {
@@ -18,10 +18,10 @@ export interface BugsSlice {
   isLoading: boolean
   error: string | null
   filters: BugsFilters
-  apiKey: string | null
+  lastApiKey: ApiKey | null
 
   // Actions
-  fetchBugs: (apiKey: string) => Promise<void>
+  fetchBugs: (apiKey: ApiKey) => Promise<void>
   refreshBugs: () => Promise<void>
   setFilters: (filters: Partial<BugsFilters>) => void
   clearBugs: () => void
@@ -34,17 +34,17 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
   isLoading: false,
   error: null,
   filters: {
-    whiteboardTag: null,
-    component: null,
+    whiteboardTag: '',
+    component: '',
   },
-  apiKey: null,
+  lastApiKey: null,
 
   // Fetch bugs from Bugzilla API
-  fetchBugs: async (apiKey: string) => {
-    set({ isLoading: true, error: null, apiKey })
+  fetchBugs: async (apiKey: ApiKey) => {
+    set({ isLoading: true, error: null, lastApiKey: apiKey })
 
     try {
-      const client = new BugzillaClient(apiKey, BUGZILLA_BASE_URL)
+      const client = new BugzillaClient(apiKey, DEFAULT_BUGZILLA_URL)
       const { filters } = get()
 
       const bugFilters: BugFilters = {}
@@ -65,13 +65,13 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
 
   // Refresh bugs with current filters and stored API key
   refreshBugs: async () => {
-    const { apiKey, fetchBugs } = get()
+    const { lastApiKey, fetchBugs } = get()
 
-    if (!apiKey) {
+    if (!lastApiKey) {
       return
     }
 
-    await fetchBugs(apiKey)
+    await fetchBugs(lastApiKey)
   },
 
   // Update filters

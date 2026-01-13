@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { BugzillaClient } from './client'
 import type { BugzillaBug } from './types'
+import { createApiKey, createBugId } from '@/types/branded'
 
 describe('BugzillaClient', () => {
   let client: BugzillaClient
-  const mockApiKey = 'test-api-key-123'
+  const mockApiKey = createApiKey('test-api-key-123')
   const baseUrl = 'https://bugzilla.mozilla.org/rest'
 
   beforeEach(() => {
@@ -196,7 +197,8 @@ describe('BugzillaClient', () => {
         json: () => Promise.resolve({ bugs: [{ id: 123_456, changes: {} }] }),
       })
 
-      await client.updateBug(123_456, { status: 'ASSIGNED' })
+      const bugId = createBugId(123_456)
+      await client.updateBug(bugId, { status: 'ASSIGNED' })
 
       expect(fetch).toHaveBeenCalledWith(
         `${baseUrl}/bug/123456`,
@@ -223,7 +225,8 @@ describe('BugzillaClient', () => {
           }),
       })
 
-      await expect(client.updateBug(123_456, { status: 'INVALID' })).rejects.toThrow()
+      const bugId = createBugId(123_456)
+      await expect(client.updateBug(bugId, { status: 'INVALID' })).rejects.toThrow()
     })
   })
 
