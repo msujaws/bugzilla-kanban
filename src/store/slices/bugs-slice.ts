@@ -4,6 +4,7 @@
 import type { StateCreator } from 'zustand'
 import { BugzillaClient } from '@/lib/bugzilla/client'
 import type { BugzillaBug, BugFilters } from '@/lib/bugzilla/types'
+import { filterMetaBugs } from '@/lib/bugzilla/meta-filter'
 import type { ApiKey } from '@/types/branded'
 import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
 
@@ -18,6 +19,7 @@ function isPublicBug(bug: BugzillaBug): boolean {
 export interface BugsFilters {
   whiteboardTag: string
   component: string
+  excludeMetaBugs: boolean
 }
 
 export interface BugsSlice {
@@ -44,6 +46,7 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
   filters: {
     whiteboardTag: '',
     component: '',
+    excludeMetaBugs: false,
   },
   lastApiKey: null,
 
@@ -65,7 +68,9 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
 
       const allBugs = await client.getBugs(bugFilters)
       // Filter out security and confidential bugs (those with non-empty groups)
-      const bugs = allBugs.filter(isPublicBug)
+      const publicBugs = allBugs.filter(isPublicBug)
+      // Filter out meta bugs if enabled
+      const bugs = filterMetaBugs(publicBugs, filters.excludeMetaBugs)
       set({ bugs, isLoading: false, error: null })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

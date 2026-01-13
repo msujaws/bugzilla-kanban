@@ -7,8 +7,10 @@ describe('FilterBar', () => {
   const defaultProps = {
     whiteboardTag: '',
     component: '',
+    excludeMetaBugs: false,
     onWhiteboardTagChange: vi.fn(),
     onComponentChange: vi.fn(),
+    onExcludeMetaBugsChange: vi.fn(),
     onApplyFilters: vi.fn(),
     isLoading: false,
   }

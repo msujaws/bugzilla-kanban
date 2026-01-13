@@ -88,6 +88,13 @@ function App() {
     [setFilters],
   )
 
+  const handleExcludeMetaBugsChange = useCallback(
+    (value: boolean) => {
+      setFilters({ excludeMetaBugs: value })
+    },
+    [setFilters],
+  )
+
   // Handle apply filters (fetch bugs)
   const handleApplyFilters = useCallback(() => {
     if (!apiKey) {
@@ -262,8 +269,10 @@ function App() {
           <FilterBar
             whiteboardTag={filters.whiteboardTag}
             component={filters.component}
+            excludeMetaBugs={filters.excludeMetaBugs}
             onWhiteboardTagChange={handleWhiteboardTagChange}
             onComponentChange={handleComponentChange}
+            onExcludeMetaBugsChange={handleExcludeMetaBugsChange}
             onApplyFilters={handleApplyFilters}
             isLoading={isLoadingBugs}
           />
