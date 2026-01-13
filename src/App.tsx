@@ -90,14 +90,6 @@ function App() {
     void fetchBugs(apiKey)
   }, [hasUrlFilters, apiKey, fetchBugs])
 
-  // Sync filters to URL when they change (after initialization)
-  useEffect(() => {
-    if (!hasInitializedFilters.current) {
-      return
-    }
-    updateUrl(filters)
-  }, [filters, updateUrl])
-
   // Handle close modal
   const handleCloseModal = useCallback(() => {
     setShowApiKeyModal(false)
@@ -142,16 +134,18 @@ function App() {
     [setFilters],
   )
 
-  // Handle apply filters (fetch bugs)
+  // Handle apply filters (fetch bugs and update URL)
   const handleApplyFilters = useCallback(() => {
     if (!apiKey) {
       addToast('error', 'Please enter your API key first! 🔑')
       return
     }
+    // Update URL with current filters
+    updateUrl(filters)
     fetchBugs(apiKey).catch(() => {
       // Error is handled in the store
     })
-  }, [apiKey, fetchBugs, addToast])
+  }, [apiKey, fetchBugs, addToast, updateUrl, filters])
 
   // Handle bug move (drag and drop)
   const handleBugMove = useCallback(

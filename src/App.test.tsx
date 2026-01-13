@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import App from './App'
 import { useStore } from './store'
 
@@ -259,6 +260,80 @@ describe('App', () => {
           }),
         )
       })
+    })
+  })
+
+  describe('URL sync behavior', () => {
+    let replaceStateMock: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+      replaceStateMock = vi.fn()
+      vi.spyOn(window.history, 'replaceState').mockImplementation(replaceStateMock)
+
+      useStore.setState({
+        apiKey: 'test-api-key',
+        isValid: true,
+        isValidating: false,
+      })
+    })
+
+    it('should NOT update URL when filter input changes', async () => {
+      const user = userEvent.setup()
+      render(<App />)
+
+      // Clear any calls from initialization
+      replaceStateMock.mockClear()
+
+      // Type into the whiteboard filter
+      const whiteboardInput = screen.getByLabelText(/whiteboard/i)
+      await user.clear(whiteboardInput)
+      await user.type(whiteboardInput, '[test]')
+
+      // URL should NOT have been updated
+      expect(replaceStateMock).not.toHaveBeenCalled()
+    })
+
+    it('should update URL when Apply Filter button is clicked', async () => {
+      const user = userEvent.setup()
+      const fetchBugs = vi.fn().mockResolvedValue([])
+      useStore.setState({
+        fetchBugs,
+        filters: {
+          whiteboardTag: '[test]',
+          component: '',
+          excludeMetaBugs: false,
+          sortOrder: 'priority',
+        },
+      })
+
+      render(<App />)
+
+      // Clear any calls from initialization
+      replaceStateMock.mockClear()
+
+      // Click Apply Filters button
+      const applyButton = screen.getByRole('button', { name: /apply filters/i })
+      await user.click(applyButton)
+
+      // URL should have been updated with the filter
+      expect(replaceStateMock).toHaveBeenCalled()
+      const call = replaceStateMock.mock.calls[0]
+      expect(call[2]).toContain('whiteboard=%5Btest%5D')
+    })
+
+    it('should NOT update URL when sort order changes without clicking Apply', async () => {
+      const user = userEvent.setup()
+      render(<App />)
+
+      // Clear any calls from initialization
+      replaceStateMock.mockClear()
+
+      // Change sort order by clicking the radio button
+      const lastChangedRadio = screen.getByRole('radio', { name: /last changed/i })
+      await user.click(lastChangedRadio)
+
+      // URL should NOT have been updated
+      expect(replaceStateMock).not.toHaveBeenCalled()
     })
   })
 })
