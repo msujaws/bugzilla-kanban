@@ -39,7 +39,8 @@ export interface BugFilters {
 
 export interface BugUpdate {
   id: number
-  status: string
+  status?: string
+  assigned_to?: string
 }
 
 export interface BatchUpdateResult {

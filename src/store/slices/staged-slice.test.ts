@@ -69,7 +69,7 @@ describe('StagedSlice', () => {
 
       const { changes } = useStore.getState()
       expect(changes.has(123)).toBe(true)
-      expect(changes.get(123)).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
     })
 
     it('should update existing staged change', () => {
@@ -79,7 +79,7 @@ describe('StagedSlice', () => {
       stageChange(123, 'backlog', 'in-progress')
 
       const { changes } = useStore.getState()
-      expect(changes.get(123)).toEqual({ from: 'backlog', to: 'in-progress' })
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'in-progress' })
     })
 
     it('should allow multiple bugs to be staged', () => {
@@ -307,6 +307,148 @@ describe('StagedSlice', () => {
       stageChange(123, 'backlog', 'todo')
 
       expect(hasChanges()).toBe(true)
+    })
+
+    it('should return true when only assignee changes exist', () => {
+      const { stageAssigneeChange, hasChanges } = useStore.getState()
+
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+
+      expect(hasChanges()).toBe(true)
+    })
+  })
+
+  describe('stageAssigneeChange', () => {
+    it('should add a new assignee change', () => {
+      const { stageAssigneeChange } = useStore.getState()
+
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.assignee).toEqual({
+        from: 'old@example.com',
+        to: 'new@example.com',
+      })
+    })
+
+    it('should update existing assignee change', () => {
+      const { stageAssigneeChange } = useStore.getState()
+
+      stageAssigneeChange(123, 'old@example.com', 'mid@example.com')
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.assignee).toEqual({
+        from: 'old@example.com',
+        to: 'new@example.com',
+      })
+    })
+
+    it('should remove assignee change if moving back to original', () => {
+      const { stageAssigneeChange } = useStore.getState()
+
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+      stageAssigneeChange(123, 'old@example.com', 'old@example.com')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should preserve status change when adding assignee change', () => {
+      const { stageChange, stageAssigneeChange } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.assignee).toEqual({
+        from: 'old@example.com',
+        to: 'new@example.com',
+      })
+    })
+
+    it('should preserve assignee change when adding status change', () => {
+      const { stageChange, stageAssigneeChange } = useStore.getState()
+
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+      stageChange(123, 'backlog', 'todo')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.assignee).toEqual({
+        from: 'old@example.com',
+        to: 'new@example.com',
+      })
+    })
+
+    it('should only remove assignee change when reverting assignee, keeping status', () => {
+      const { stageChange, stageAssigneeChange } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+      stageAssigneeChange(123, 'old@example.com', 'old@example.com')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.assignee).toBeUndefined()
+    })
+  })
+
+  describe('applyChanges with assignee', () => {
+    it('should include assignee in API call when only assignee changed', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageAssigneeChange, applyChanges } = useStore.getState()
+
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, assigned_to: 'new@example.com' },
+      ])
+    })
+
+    it('should include both status and assignee in API call', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageChange, stageAssigneeChange, applyChanges } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, status: 'ASSIGNED', assigned_to: 'new@example.com' },
+      ])
+    })
+  })
+
+  describe('getChangeCount with mixed changes', () => {
+    it('should count bugs with only assignee changes', () => {
+      const { stageAssigneeChange, getChangeCount } = useStore.getState()
+
+      stageAssigneeChange(1, 'a@x.com', 'b@x.com')
+      stageAssigneeChange(2, 'c@x.com', 'd@x.com')
+
+      expect(getChangeCount()).toBe(2)
+    })
+
+    it('should count bug once when it has both status and assignee changes', () => {
+      const { stageChange, stageAssigneeChange, getChangeCount } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageAssigneeChange(123, 'a@x.com', 'b@x.com')
+
+      expect(getChangeCount()).toBe(1)
     })
   })
 })

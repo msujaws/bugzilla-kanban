@@ -13,10 +13,11 @@ import { Column } from './Column'
 import { Card } from './Card'
 import { StatusMapper, type KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
+import type { StagedChange } from '@/store/slices/staged-slice'
 
 interface BoardProps {
   bugs: BugzillaBug[]
-  stagedChanges: Map<number, { from: string; to: string }>
+  stagedChanges: Map<number, StagedChange>
   onBugMove: (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn) => void
   isLoading?: boolean
   onApplyChanges?: () => void
@@ -65,12 +66,12 @@ export function Board({
       grouped.set(column, [])
     }
 
-    // Distribute bugs to their columns (considering staged changes)
+    // Distribute bugs to their columns (considering staged status changes)
     for (const bug of bugs) {
       const stagedChange = stagedChanges.get(bug.id)
-      // If bug has a staged change, show it in the target column
-      const column = stagedChange
-        ? (stagedChange.to as KanbanColumn)
+      // If bug has a staged status change, show it in the target column
+      const column = stagedChange?.status
+        ? (stagedChange.status.to as KanbanColumn)
         : statusMapper.statusToColumn(bug.status)
       const columnBugs = grouped.get(column) ?? []
       columnBugs.push(bug)
@@ -341,10 +342,10 @@ export function Board({
     const bug = bugs.find((b) => b.id === bugId)
     if (!bug) return
 
-    // Check if there's already a staged change for this bug
+    // Check if there's already a staged status change for this bug
     const stagedChange = stagedChanges.get(bugId)
-    const currentColumn = stagedChange
-      ? (stagedChange.to as KanbanColumn)
+    const currentColumn = stagedChange?.status
+      ? (stagedChange.status.to as KanbanColumn)
       : statusMapper.statusToColumn(bug.status)
 
     // Only trigger move if dropping on a different column

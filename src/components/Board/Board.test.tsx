@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Board } from './Board'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
+import type { StagedChange } from '@/store/slices/staged-slice'
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -117,7 +118,7 @@ const mockBugs: BugzillaBug[] = [
 describe('Board', () => {
   const defaultProps = {
     bugs: mockBugs,
-    stagedChanges: new Map<number, { from: string; to: string }>(),
+    stagedChanges: new Map<number, StagedChange>(),
     onBugMove: vi.fn(),
     isLoading: false,
   }
@@ -217,8 +218,8 @@ describe('Board', () => {
 
   describe('staged changes', () => {
     it('should pass staged bug IDs to columns', () => {
-      const stagedChanges = new Map<number, { from: string; to: string }>([
-        [1, { from: 'backlog', to: 'todo' }],
+      const stagedChanges = new Map<number, StagedChange>([
+        [1, { status: { from: 'backlog', to: 'todo' } }],
       ])
       render(<Board {...defaultProps} stagedChanges={stagedChanges} />)
 
@@ -227,8 +228,8 @@ describe('Board', () => {
     })
 
     it('should highlight staged bugs in destination column', () => {
-      const stagedChanges = new Map<number, { from: string; to: string }>([
-        [1, { from: 'backlog', to: 'todo' }],
+      const stagedChanges = new Map<number, StagedChange>([
+        [1, { status: { from: 'backlog', to: 'todo' } }],
       ])
       render(<Board {...defaultProps} stagedChanges={stagedChanges} />)
 
@@ -585,7 +586,9 @@ describe('Board', () => {
 
     describe('Escape confirmation to clear staged changes', () => {
       it('should show confirmation message on first Escape when there are staged changes', () => {
-        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        const stagedChanges = new Map<number, StagedChange>([
+          [10, { status: { from: 'backlog', to: 'todo' } }],
+        ])
         render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
 
         fireEvent.keyDown(document, { key: 'Escape' })
@@ -596,9 +599,9 @@ describe('Board', () => {
       })
 
       it('should show count in confirmation message', () => {
-        const stagedChanges = new Map([
-          [10, { from: 'backlog', to: 'todo' }],
-          [11, { from: 'backlog', to: 'in-progress' }],
+        const stagedChanges = new Map<number, StagedChange>([
+          [10, { status: { from: 'backlog', to: 'todo' } }],
+          [11, { status: { from: 'backlog', to: 'in-progress' } }],
         ])
         render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
 
@@ -609,7 +612,9 @@ describe('Board', () => {
 
       it('should call onClearChanges when Enter is pressed after confirmation', () => {
         const onClearChanges = vi.fn()
-        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        const stagedChanges = new Map<number, StagedChange>([
+          [10, { status: { from: 'backlog', to: 'todo' } }],
+        ])
         render(
           <Board
             {...defaultProps}
@@ -628,7 +633,9 @@ describe('Board', () => {
       })
 
       it('should hide confirmation when Escape is pressed again', () => {
-        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        const stagedChanges = new Map<number, StagedChange>([
+          [10, { status: { from: 'backlog', to: 'todo' } }],
+        ])
         render(<Board {...defaultProps} bugs={multipleBacklogBugs} stagedChanges={stagedChanges} />)
 
         // First Escape shows confirmation
@@ -642,7 +649,9 @@ describe('Board', () => {
 
       it('should not call onClearChanges when cancelled', () => {
         const onClearChanges = vi.fn()
-        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        const stagedChanges = new Map<number, StagedChange>([
+          [10, { status: { from: 'backlog', to: 'todo' } }],
+        ])
         render(
           <Board
             {...defaultProps}
@@ -671,7 +680,9 @@ describe('Board', () => {
 
       it('should hide confirmation after clearing', () => {
         const onClearChanges = vi.fn()
-        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        const stagedChanges = new Map<number, StagedChange>([
+          [10, { status: { from: 'backlog', to: 'todo' } }],
+        ])
         render(
           <Board
             {...defaultProps}
@@ -692,7 +703,9 @@ describe('Board', () => {
 
       it('should be idempotent - multiple Escapes just toggle confirmation', () => {
         const onClearChanges = vi.fn()
-        const stagedChanges = new Map([[10, { from: 'backlog', to: 'todo' }]])
+        const stagedChanges = new Map<number, StagedChange>([
+          [10, { status: { from: 'backlog', to: 'todo' } }],
+        ])
         render(
           <Board
             {...defaultProps}

@@ -11,8 +11,8 @@ import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
 const statusMapper = new StatusMapper()
 
 export interface StagedChange {
-  from: string
-  to: string
+  status?: { from: string; to: string }
+  assignee?: { from: string; to: string }
 }
 
 export interface ApplyResult {
@@ -28,6 +28,7 @@ export interface StagedSlice {
 
   // Actions
   stageChange: (bugId: number, fromColumn: string, toColumn: string) => void
+  stageAssigneeChange: (bugId: number, fromAssignee: string, toAssignee: string) => void
   unstageChange: (bugId: number) => void
   clearAllChanges: () => void
   applyChanges: (apiKey: ApiKey) => Promise<ApplyResult>
@@ -45,12 +46,50 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
   stageChange: (bugId: number, fromColumn: string, toColumn: string) => {
     set((state) => {
       const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
 
-      // If moving back to original column, remove the change
+      // If moving back to original column, remove the status change
       if (fromColumn === toColumn) {
-        newChanges.delete(bugId)
+        if (existing?.assignee) {
+          // Keep assignee change, remove status
+          newChanges.set(bugId, { assignee: existing.assignee })
+        } else {
+          // No other changes, remove the bug entry
+          newChanges.delete(bugId)
+        }
       } else {
-        newChanges.set(bugId, { from: fromColumn, to: toColumn })
+        // Add/update status change, preserve assignee if exists
+        newChanges.set(bugId, {
+          ...existing,
+          status: { from: fromColumn, to: toColumn },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
+  // Stage an assignee change for a bug
+  stageAssigneeChange: (bugId: number, fromAssignee: string, toAssignee: string) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      // If moving back to original assignee, remove the assignee change
+      if (fromAssignee === toAssignee) {
+        if (existing?.status) {
+          // Keep status change, remove assignee
+          newChanges.set(bugId, { status: existing.status })
+        } else {
+          // No other changes, remove the bug entry
+          newChanges.delete(bugId)
+        }
+      } else {
+        // Add/update assignee change, preserve status if exists
+        newChanges.set(bugId, {
+          ...existing,
+          assignee: { from: fromAssignee, to: toAssignee },
+        })
       }
 
       return { changes: newChanges }
@@ -87,8 +126,17 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
       // Convert staged changes to bug updates
       const updates: BugUpdate[] = []
       for (const [bugId, change] of changes) {
-        const status = statusMapper.columnToStatus(change.to)
-        updates.push({ id: bugId, status })
+        const update: BugUpdate = { id: bugId }
+
+        if (change.status) {
+          update.status = statusMapper.columnToStatus(change.status.to)
+        }
+
+        if (change.assignee) {
+          update.assigned_to = change.assignee.to
+        }
+
+        updates.push(update)
       }
 
       const result = await client.batchUpdateBugs(updates)
