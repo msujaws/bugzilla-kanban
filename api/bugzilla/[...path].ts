@@ -3,6 +3,18 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 const BUGZILLA_BASE_URL = 'https://bugzilla.mozilla.org/rest'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers for all responses
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-BUGZILLA-API-KEY')
+  res.setHeader('Access-Control-Max-Age', '86400')
+
+  // Handle OPTIONS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(204).end()
+    return
+  }
+
   // Get the path segments after /api/bugzilla/
   const { path } = req.query
   const pathSegments = Array.isArray(path) ? path : [path]
@@ -40,11 +52,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const response = await fetch(url.toString(), fetchOptions)
     const data: unknown = await response.json()
-
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-BUGZILLA-API-KEY')
 
     // Return response with same status code
     res.status(response.status).json(data)
