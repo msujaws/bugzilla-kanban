@@ -5,11 +5,13 @@ import { ApiKeyStatus } from './components/Auth/ApiKeyStatus'
 import { FilterBar } from './components/Filters/FilterBar'
 import { Board } from './components/Board/Board'
 import { ApplyChangesButton } from './components/Board/ApplyChangesButton'
+import { FAQModal } from './components/FAQ/FaqModal'
 import { useStore } from './store'
 
 function App() {
   // Local UI state
   const [showApiKeyModal, setShowApiKeyModal] = useState(false)
+  const [showFAQModal, setShowFAQModal] = useState(false)
 
   // Auth state
   const apiKey = useStore((state) => state.apiKey)
@@ -118,11 +120,38 @@ function App() {
       <div className="min-h-screen bg-bg-primary text-text-primary">
         <div className="container mx-auto px-4 py-8">
           <h1 className="mb-2 text-center text-4xl font-bold">Bugzilla Kanban</h1>
-          <p className="mb-8 text-center text-text-secondary">Where bugs go to chill 😎</p>
+          <p className="mb-4 text-center text-text-secondary">Where bugs go to chill 😎</p>
+          <div className="flex items-center justify-center gap-4 text-sm">
+            <a
+              href="https://github.com/msujaws/bugzilla-kanban"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-tertiary transition-colors hover:text-accent-primary"
+            >
+              created by <span className="font-bold">@jaws</span>
+            </a>
+            <span className="text-text-tertiary">•</span>
+            <button
+              onClick={() => {
+                setShowFAQModal(true)
+              }}
+              className="text-text-tertiary transition-colors hover:text-accent-primary"
+            >
+              FAQ
+            </button>
+          </div>
         </div>
 
         {/* Always show API key input when no key */}
         <ApiKeyInput isOpen={true} onClose={() => {}} />
+
+        {/* FAQ Modal */}
+        <FAQModal
+          isOpen={showFAQModal}
+          onClose={() => {
+            setShowFAQModal(false)
+          }}
+        />
 
         <ToastContainer toasts={toasts} removeToast={removeToast} />
       </div>
@@ -136,7 +165,27 @@ function App() {
         <div className="container mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Bugzilla Kanban</h1>
-            <p className="text-sm text-text-secondary">Where bugs go to chill 😎</p>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-text-secondary">Where bugs go to chill 😎</span>
+              <span className="text-text-tertiary">•</span>
+              <a
+                href="https://github.com/msujaws/bugzilla-kanban"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-tertiary transition-colors hover:text-accent-primary"
+              >
+                by <span className="font-bold">@jaws</span>
+              </a>
+              <span className="text-text-tertiary">•</span>
+              <button
+                onClick={() => {
+                  setShowFAQModal(true)
+                }}
+                className="text-text-tertiary transition-colors hover:text-accent-primary"
+              >
+                FAQ
+              </button>
+            </div>
           </div>
           <ApiKeyStatus onOpenModal={handleOpenModal} />
         </div>
@@ -185,6 +234,14 @@ function App() {
 
       {/* API Key Modal */}
       <ApiKeyInput isOpen={showApiKeyModal} onClose={handleCloseModal} />
+
+      {/* FAQ Modal */}
+      <FAQModal
+        isOpen={showFAQModal}
+        onClose={() => {
+          setShowFAQModal(false)
+        }}
+      />
     </div>
   )
 }
