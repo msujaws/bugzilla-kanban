@@ -60,7 +60,7 @@ async function setupAuthenticated(page: import('@playwright/test').Page) {
   await page.goto('/')
   const modal = page.getByRole('dialog')
   if (await modal.isVisible()) {
-    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-key')
+    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-api-key')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(modal).not.toBeVisible({ timeout: 10000 })
   }
@@ -106,7 +106,7 @@ test.describe('Filter Flow', () => {
 
     await page.goto('/')
     // Enter API key to close modal
-    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-key')
+    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-api-key')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 })
 
@@ -150,7 +150,7 @@ test.describe('Filter Flow', () => {
     })
 
     await page.goto('/')
-    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-key')
+    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-api-key')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 })
 
@@ -195,7 +195,7 @@ test.describe('Filter Flow', () => {
     })
 
     await page.goto('/')
-    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-key')
+    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-api-key')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 })
 
@@ -228,17 +228,19 @@ test.describe('Filter Flow', () => {
     })
 
     await page.goto('/')
-    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-key')
+    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-api-key')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 })
 
     // Apply a filter that returns no results
     const whiteboardInput = page.getByPlaceholder('e.g., [kanban] or bug-triage')
     await whiteboardInput.fill('nonexistent-tag')
-    await page.getByRole('button', { name: 'Apply Filters' }).click()
 
-    // Wait for response
-    await page.waitForResponse('**/api/bugzilla/**')
+    // Wait for response while clicking Apply
+    await Promise.all([
+      page.waitForResponse('**/api/bugzilla/**'),
+      page.getByRole('button', { name: 'Apply Filters' }).click(),
+    ])
 
     // All columns should be empty (show empty state message)
     const backlogColumn = page.getByRole('region', { name: 'Backlog column' })
@@ -271,7 +273,7 @@ test.describe('Filter Flow', () => {
     })
 
     await page.goto('/')
-    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-key')
+    await page.getByPlaceholder('Enter your Bugzilla API key').fill('test-api-key')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 })
 
