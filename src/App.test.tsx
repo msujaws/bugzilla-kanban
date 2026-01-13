@@ -38,7 +38,7 @@ describe('App', () => {
     it('should render the tagline', () => {
       render(<App />)
 
-      expect(screen.getByText('Where bugs go to chill 😎')).toBeInTheDocument()
+      expect(screen.getByText("Puttin' bugz in their place since '26 😎")).toBeInTheDocument()
     })
 
     it('should show API key input', () => {

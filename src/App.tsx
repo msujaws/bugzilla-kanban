@@ -164,7 +164,9 @@ function App() {
       <div className="min-h-screen bg-bg-primary text-text-primary">
         <div className="container mx-auto px-4 py-8">
           <h1 className="mb-2 text-center text-4xl font-bold">Bugzilla Kanban</h1>
-          <p className="mb-4 text-center text-text-secondary">Where bugs go to chill 😎</p>
+          <p className="mb-4 text-center text-text-secondary">
+            Puttin' bugz in their place since '26 😎
+          </p>
           <div className="flex items-center justify-center gap-4 text-sm">
             <a
               href="https://github.com/msujaws/bugzilla-kanban"
@@ -210,7 +212,7 @@ function App() {
           <div>
             <h1 className="text-2xl font-bold">Bugzilla Kanban</h1>
             <div className="flex items-center gap-3 text-sm">
-              <span className="text-text-secondary">Where bugs go to chill 😎</span>
+              <span className="text-text-secondary">Puttin' bugz in their place since '26 😎</span>
               <span className="text-text-tertiary">•</span>
               <a
                 href="https://github.com/msujaws/bugzilla-kanban"

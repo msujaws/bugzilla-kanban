@@ -1,6 +1,6 @@
 # Bugzilla Kanban
 
-> Where bugs go to chill
+> Puttin' bugz in their place since '26
 
 A visual Kanban board for Mozilla Bugzilla that lets you drag and drop bugs between status columns and batch-update them.
 
