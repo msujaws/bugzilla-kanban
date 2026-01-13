@@ -118,6 +118,14 @@ function App() {
     [bugs, stageAssigneeChange],
   )
 
+  // Handle invalid move attempt (e.g., unassigned bug out of backlog)
+  const handleInvalidMove = useCallback(
+    (_bugId: number, reason: string) => {
+      addToast('error', reason)
+    },
+    [addToast],
+  )
+
   // Handle clear staged changes
   const handleClearChanges = useCallback(() => {
     clearAllChanges()
@@ -275,6 +283,7 @@ function App() {
           stagedChanges={changes}
           onBugMove={handleBugMove}
           onAssigneeChange={handleAssigneeChange}
+          onInvalidMove={handleInvalidMove}
           isLoading={isLoadingBugs}
           onApplyChanges={handleApplyChanges}
           onClearChanges={handleClearChanges}

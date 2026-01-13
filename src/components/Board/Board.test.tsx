@@ -772,5 +772,108 @@ describe('Board', () => {
         expect(screen.getByText(/drop here/i)).toBeInTheDocument()
       })
     })
+
+    describe('unassigned bug move validation', () => {
+      const nobodyBug: BugzillaBug = {
+        id: 99,
+        summary: 'Unassigned bug',
+        status: 'NEW',
+        assigned_to: 'nobody@mozilla.org',
+        priority: 'P2',
+        severity: 'normal',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+        creation_time: '2024-01-01T00:00:00Z',
+      }
+
+      it('should call onInvalidMove when trying to move unassigned bug out of backlog', () => {
+        const onBugMove = vi.fn()
+        const onInvalidMove = vi.fn()
+        render(
+          <Board
+            {...defaultProps}
+            bugs={[nobodyBug]}
+            onBugMove={onBugMove}
+            onInvalidMove={onInvalidMove}
+          />,
+        )
+
+        // Select the bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Grab it
+        fireEvent.keyDown(document, { key: 'Shift' })
+        // Move right to todo
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+        // Release to drop
+        fireEvent.keyUp(document, { key: 'Shift' })
+
+        expect(onBugMove).not.toHaveBeenCalled()
+        expect(onInvalidMove).toHaveBeenCalledWith(99, expect.stringContaining('assign'))
+      })
+
+      it('should allow moving unassigned bug if assignee is staged to change', () => {
+        const onBugMove = vi.fn()
+        const onInvalidMove = vi.fn()
+        const stagedChanges = new Map<number, StagedChange>([
+          [99, { assignee: { from: 'nobody@mozilla.org', to: 'dev@mozilla.com' } }],
+        ])
+        render(
+          <Board
+            {...defaultProps}
+            bugs={[nobodyBug]}
+            stagedChanges={stagedChanges}
+            onBugMove={onBugMove}
+            onInvalidMove={onInvalidMove}
+          />,
+        )
+
+        // Select the bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Grab it
+        fireEvent.keyDown(document, { key: 'Shift' })
+        // Move right to todo
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+        // Release to drop
+        fireEvent.keyUp(document, { key: 'Shift' })
+
+        expect(onBugMove).toHaveBeenCalledWith(99, 'backlog', 'todo')
+        expect(onInvalidMove).not.toHaveBeenCalled()
+      })
+
+      it('should still block move if staged assignee is also nobody', () => {
+        const onBugMove = vi.fn()
+        const onInvalidMove = vi.fn()
+        const stagedChanges = new Map<number, StagedChange>([
+          [99, { assignee: { from: 'dev@mozilla.com', to: 'nobody@mozilla.org' } }],
+        ])
+        // Bug originally had a real assignee, but staged to nobody
+        const bugWithStagedNobody: BugzillaBug = {
+          ...nobodyBug,
+          assigned_to: 'dev@mozilla.com',
+        }
+        render(
+          <Board
+            {...defaultProps}
+            bugs={[bugWithStagedNobody]}
+            stagedChanges={stagedChanges}
+            onBugMove={onBugMove}
+            onInvalidMove={onInvalidMove}
+          />,
+        )
+
+        // Select the bug
+        fireEvent.keyDown(document, { key: 'ArrowDown' })
+        // Grab it
+        fireEvent.keyDown(document, { key: 'Shift' })
+        // Move right to todo
+        fireEvent.keyDown(document, { key: 'ArrowRight' })
+        // Release to drop
+        fireEvent.keyUp(document, { key: 'Shift' })
+
+        expect(onBugMove).not.toHaveBeenCalled()
+        expect(onInvalidMove).toHaveBeenCalled()
+      })
+    })
   })
 })

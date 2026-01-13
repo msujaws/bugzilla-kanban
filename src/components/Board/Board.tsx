@@ -16,11 +16,14 @@ import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
 import { useBoardAssignees } from '@/hooks/use-board-assignees'
 
+const NOBODY_EMAIL = 'nobody@mozilla.org'
+
 interface BoardProps {
   bugs: BugzillaBug[]
   stagedChanges: Map<number, StagedChange>
   onBugMove: (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn) => void
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
+  onInvalidMove?: (bugId: number, reason: string) => void
   isLoading?: boolean
   onApplyChanges?: () => void
   onClearChanges?: () => void
@@ -39,6 +42,7 @@ export function Board({
   stagedChanges,
   onBugMove,
   onAssigneeChange,
+  onInvalidMove,
   isLoading = false,
   onApplyChanges,
   onClearChanges,
@@ -117,6 +121,28 @@ export function Board({
 
   // Get all assignees from bugs on the board
   const allAssignees = useBoardAssignees(bugs)
+
+  // Check if a bug can be moved out of backlog
+  // Returns error message if invalid, undefined if valid
+  const validateMove = useCallback(
+    (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn): string | undefined => {
+      // Only validate moves OUT of backlog
+      if (fromColumn === 'backlog' && toColumn !== 'backlog') {
+        const bug = bugs.find((b) => b.id === bugId)
+        if (!bug) return undefined
+
+        // Check the effective assignee (staged or original)
+        const stagedChange = stagedChanges.get(bugId)
+        const effectiveAssignee = stagedChange?.assignee?.to ?? bug.assigned_to
+
+        if (effectiveAssignee === NOBODY_EMAIL) {
+          return 'Cannot move unassigned bug out of backlog. Please assign someone first.'
+        }
+      }
+      return undefined
+    },
+    [bugs, stagedChanges],
+  )
 
   // Find first non-empty column
   const findFirstNonEmptyColumn = useCallback((): number => {
@@ -326,7 +352,13 @@ export function Board({
           const fromColumn = columns[grabStartColumn]
           const toColumn = columns[targetColumnIndex]
           if (fromColumn && toColumn) {
-            onBugMove(grabbedBugId, fromColumn, toColumn)
+            // Validate the move
+            const error = validateMove(grabbedBugId, fromColumn, toColumn)
+            if (error) {
+              onInvalidMove?.(grabbedBugId, error)
+            } else {
+              onBugMove(grabbedBugId, fromColumn, toColumn)
+            }
           }
         }
         setGrabStartColumn(null)
@@ -334,7 +366,15 @@ export function Board({
         setTargetColumnIndex(null)
       }
     },
-    [isGrabbing, grabStartColumn, grabbedBugId, targetColumnIndex, onBugMove],
+    [
+      isGrabbing,
+      grabStartColumn,
+      grabbedBugId,
+      targetColumnIndex,
+      onBugMove,
+      validateMove,
+      onInvalidMove,
+    ],
   )
 
   // Set up keyboard event listeners
@@ -378,7 +418,13 @@ export function Board({
 
     // Only trigger move if dropping on a different column
     if (currentColumn !== targetColumn) {
-      onBugMove(bugId, currentColumn, targetColumn)
+      // Validate the move
+      const error = validateMove(bugId, currentColumn, targetColumn)
+      if (error) {
+        onInvalidMove?.(bugId, error)
+      } else {
+        onBugMove(bugId, currentColumn, targetColumn)
+      }
     }
   }
 
