@@ -40,6 +40,8 @@ function App() {
   const isApplying = useStore((state) => state.isApplying)
   const stageChange = useStore((state) => state.stageChange)
   const stageAssigneeChange = useStore((state) => state.stageAssigneeChange)
+  const stagePointsChange = useStore((state) => state.stagePointsChange)
+  const stagePriorityChange = useStore((state) => state.stagePriorityChange)
   const applyChanges = useStore((state) => state.applyChanges)
   const clearAllChanges = useStore((state) => state.clearAllChanges)
   const getChangeCount = useStore((state) => state.getChangeCount)
@@ -161,6 +163,28 @@ function App() {
       }
     },
     [bugs, stageAssigneeChange],
+  )
+
+  // Handle points change
+  const handlePointsChange = useCallback(
+    (bugId: number, newPoints: number | string | undefined) => {
+      const bug = bugs.find((b) => b.id === bugId)
+      if (bug) {
+        stagePointsChange(bugId, bug.cf_fx_points, newPoints)
+      }
+    },
+    [bugs, stagePointsChange],
+  )
+
+  // Handle priority change
+  const handlePriorityChange = useCallback(
+    (bugId: number, newPriority: string) => {
+      const bug = bugs.find((b) => b.id === bugId)
+      if (bug) {
+        stagePriorityChange(bugId, bug.priority, newPriority)
+      }
+    },
+    [bugs, stagePriorityChange],
   )
 
   // Handle invalid move attempt (e.g., unassigned bug out of backlog)
@@ -332,6 +356,8 @@ function App() {
           stagedChanges={changes}
           onBugMove={handleBugMove}
           onAssigneeChange={handleAssigneeChange}
+          onPointsChange={handlePointsChange}
+          onPriorityChange={handlePriorityChange}
           onInvalidMove={handleInvalidMove}
           isLoading={isLoadingBugs}
           onApplyChanges={handleApplyChanges}

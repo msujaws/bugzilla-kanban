@@ -10,6 +10,8 @@ interface BacklogSectionProps {
   stagedChanges: Map<number, StagedChange>
   allAssignees?: Assignee[]
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
+  onPointsChange?: (bugId: number, points: number | string | undefined) => void
+  onPriorityChange?: (bugId: number, priority: string) => void
   onBugClick?: (bug: BugzillaBug) => void
   isLoading?: boolean
   isDropTarget?: boolean
@@ -20,6 +22,8 @@ export function BacklogSection({
   stagedChanges,
   allAssignees,
   onAssigneeChange,
+  onPointsChange,
+  onPriorityChange,
   onBugClick,
   isLoading = false,
   isDropTarget = false,
@@ -56,6 +60,50 @@ export function BacklogSection({
     for (const [bugId, change] of stagedChanges) {
       if (change.assignee) {
         map.set(bugId, change.assignee.to)
+      }
+    }
+    return map
+  }, [stagedChanges])
+
+  // Get staged points bug IDs
+  const stagedPointsBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.points) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged points
+  const stagedPoints = useMemo(() => {
+    const map = new Map<number, number | string | undefined>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.points) {
+        map.set(bugId, change.points.to)
+      }
+    }
+    return map
+  }, [stagedChanges])
+
+  // Get staged priority bug IDs
+  const stagedPriorityBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.priority) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged priorities
+  const stagedPriorities = useMemo(() => {
+    const map = new Map<number, string>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.priority) {
+        map.set(bugId, change.priority.to)
       }
     }
     return map
@@ -140,8 +188,14 @@ export function BacklogSection({
                 isStaged={stagedBugIds.has(bug.id)}
                 isAssigneeStaged={stagedAssigneeBugIds.has(bug.id)}
                 stagedAssignee={stagedAssignees.get(bug.id)}
+                isPointsStaged={stagedPointsBugIds.has(bug.id)}
+                stagedPoints={stagedPoints.get(bug.id)}
+                isPriorityStaged={stagedPriorityBugIds.has(bug.id)}
+                stagedPriority={stagedPriorities.get(bug.id)}
                 allAssignees={allAssignees}
                 onAssigneeChange={onAssigneeChange}
+                onPointsChange={onPointsChange}
+                onPriorityChange={onPriorityChange}
                 onClick={onBugClick}
               />
             </div>

@@ -28,6 +28,8 @@ interface BoardProps {
   stagedChanges: Map<number, StagedChange>
   onBugMove: (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn) => void
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
+  onPointsChange?: (bugId: number, points: number | string | undefined) => void
+  onPriorityChange?: (bugId: number, priority: string) => void
   onInvalidMove?: (bugId: number, reason: string) => void
   isLoading?: boolean
   onApplyChanges?: () => void
@@ -48,6 +50,8 @@ export function Board({
   stagedChanges,
   onBugMove,
   onAssigneeChange,
+  onPointsChange,
+  onPriorityChange,
   onInvalidMove,
   isLoading = false,
   onApplyChanges,
@@ -137,6 +141,50 @@ export function Board({
       }
     }
     return assignees
+  }, [stagedChanges])
+
+  // Get bug IDs with staged points changes
+  const stagedPointsBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.points) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged points map (bugId -> new points)
+  const stagedPoints = useMemo(() => {
+    const points = new Map<number, number | string | undefined>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.points) {
+        points.set(bugId, change.points.to)
+      }
+    }
+    return points
+  }, [stagedChanges])
+
+  // Get bug IDs with staged priority changes
+  const stagedPriorityBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.priority) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged priorities map (bugId -> new priority)
+  const stagedPriorities = useMemo(() => {
+    const priorities = new Map<number, string>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.priority) {
+        priorities.set(bugId, change.priority.to)
+      }
+    }
+    return priorities
   }, [stagedChanges])
 
   // Get all assignees from bugs on the board
@@ -492,8 +540,14 @@ export function Board({
                 stagedBugIds={stagedBugIds}
                 stagedAssigneeBugIds={stagedAssigneeBugIds}
                 stagedAssignees={stagedAssignees}
+                stagedPointsBugIds={stagedPointsBugIds}
+                stagedPoints={stagedPoints}
+                stagedPriorityBugIds={stagedPriorityBugIds}
+                stagedPriorities={stagedPriorities}
                 allAssignees={allAssignees}
                 onAssigneeChange={onAssigneeChange}
+                onPointsChange={onPointsChange}
+                onPriorityChange={onPriorityChange}
                 isLoading={isLoading}
                 selectedIndex={
                   selectedPosition?.columnIndex === columnIndex
@@ -513,6 +567,8 @@ export function Board({
           stagedChanges={stagedChanges}
           allAssignees={allAssignees}
           onAssigneeChange={onAssigneeChange}
+          onPointsChange={onPointsChange}
+          onPriorityChange={onPriorityChange}
           isLoading={isLoading}
         />
       </main>

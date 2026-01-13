@@ -14,8 +14,14 @@ interface ColumnProps {
   stagedBugIds: Set<number>
   stagedAssigneeBugIds?: Set<number>
   stagedAssignees?: Map<number, string>
+  stagedPointsBugIds?: Set<number>
+  stagedPoints?: Map<number, number | string | undefined>
+  stagedPriorityBugIds?: Set<number>
+  stagedPriorities?: Map<number, string>
   allAssignees?: Assignee[]
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
+  onPointsChange?: (bugId: number, points: number | string | undefined) => void
+  onPriorityChange?: (bugId: number, priority: string) => void
   isLoading?: boolean
   selectedIndex?: number
   isGrabbing?: boolean
@@ -36,8 +42,14 @@ export function Column({
   stagedBugIds,
   stagedAssigneeBugIds,
   stagedAssignees,
+  stagedPointsBugIds,
+  stagedPoints,
+  stagedPriorityBugIds,
+  stagedPriorities,
   allAssignees,
   onAssigneeChange,
+  onPointsChange,
+  onPriorityChange,
   isLoading = false,
   selectedIndex,
   isGrabbing = false,
@@ -137,10 +149,16 @@ export function Column({
               isStaged={stagedBugIds.has(bug.id)}
               isAssigneeStaged={stagedAssigneeBugIds?.has(bug.id)}
               stagedAssignee={stagedAssignees?.get(bug.id)}
+              isPointsStaged={stagedPointsBugIds?.has(bug.id)}
+              stagedPoints={stagedPoints?.get(bug.id)}
+              isPriorityStaged={stagedPriorityBugIds?.has(bug.id)}
+              stagedPriority={stagedPriorities?.get(bug.id)}
               isSelected={selectedIndex === index}
               isGrabbed={selectedIndex === index && isGrabbing}
               allAssignees={filteredAssignees}
               onAssigneeChange={onAssigneeChange}
+              onPointsChange={onPointsChange}
+              onPriorityChange={onPriorityChange}
             />
           ))}
         </div>
