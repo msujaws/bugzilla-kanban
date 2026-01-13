@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { ToastContainer } from './components/Notifications/ToastContainer'
 import { ApiKeyInput } from './components/Auth/ApiKeyInput'
 import { ApiKeyStatus } from './components/Auth/ApiKeyStatus'
@@ -7,6 +7,7 @@ import { Board } from './components/Board/Board'
 import { ApplyChangesButton } from './components/Board/ApplyChangesButton'
 import { FAQModal } from './components/FAQ/FaqModal'
 import { useStore } from './store'
+import { useUrlFilters } from './hooks/use-url-filters'
 
 function App() {
   // Local UI state
@@ -21,6 +22,10 @@ function App() {
   useEffect(() => {
     void loadApiKey()
   }, [loadApiKey])
+
+  // URL filter persistence
+  const { initialFilters, hasUrlFilters, updateUrl } = useUrlFilters()
+  const hasInitializedFilters = useRef(false)
 
   // Bugs state
   const bugs = useStore((state) => state.bugs)
@@ -57,6 +62,32 @@ function App() {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [changes.size])
+
+  // Initialize filters from URL on mount and auto-fetch if URL has filters
+  useEffect(() => {
+    if (hasInitializedFilters.current) {
+      return
+    }
+    hasInitializedFilters.current = true
+
+    // Apply filters from URL
+    if (hasUrlFilters) {
+      setFilters(initialFilters)
+
+      // Auto-fetch if API key is available
+      if (apiKey) {
+        void fetchBugs(apiKey)
+      }
+    }
+  }, [hasUrlFilters, initialFilters, setFilters, apiKey, fetchBugs])
+
+  // Sync filters to URL when they change (after initialization)
+  useEffect(() => {
+    if (!hasInitializedFilters.current) {
+      return
+    }
+    updateUrl(filters)
+  }, [filters, updateUrl])
 
   // Handle close modal
   const handleCloseModal = useCallback(() => {
