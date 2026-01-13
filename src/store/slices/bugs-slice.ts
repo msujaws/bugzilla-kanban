@@ -5,6 +5,7 @@ import type { StateCreator } from 'zustand'
 import { BugzillaClient } from '@/lib/bugzilla/client'
 import type { BugzillaBug, BugFilters } from '@/lib/bugzilla/types'
 import { filterMetaBugs } from '@/lib/bugzilla/meta-filter'
+import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
 import type { ApiKey } from '@/types/branded'
 import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
 
@@ -20,6 +21,7 @@ export interface BugsFilters {
   whiteboardTag: string
   component: string
   excludeMetaBugs: boolean
+  sortOrder: SortOrder
 }
 
 export interface BugsSlice {
@@ -47,6 +49,7 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
     whiteboardTag: '',
     component: '',
     excludeMetaBugs: false,
+    sortOrder: 'priority',
   },
   lastApiKey: null,
 

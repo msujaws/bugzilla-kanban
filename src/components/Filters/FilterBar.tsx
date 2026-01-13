@@ -1,12 +1,15 @@
 import type { KeyboardEvent } from 'react'
+import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
 
 interface FilterBarProps {
   whiteboardTag: string
   component: string
   excludeMetaBugs: boolean
+  sortOrder: SortOrder
   onWhiteboardTagChange: (value: string) => void
   onComponentChange: (value: string) => void
   onExcludeMetaBugsChange: (value: boolean) => void
+  onSortOrderChange: (value: SortOrder) => void
   onApplyFilters: () => void
   isLoading: boolean
 }
@@ -15,13 +18,16 @@ export function FilterBar({
   whiteboardTag,
   component,
   excludeMetaBugs,
+  sortOrder,
   onWhiteboardTagChange,
   onComponentChange,
   onExcludeMetaBugsChange,
+  onSortOrderChange,
   onApplyFilters,
   isLoading,
 }: FilterBarProps) {
-  const hasFilters = whiteboardTag !== '' || component !== '' || excludeMetaBugs
+  const hasFilters =
+    whiteboardTag !== '' || component !== '' || excludeMetaBugs || sortOrder !== 'priority'
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter') {
@@ -33,6 +39,7 @@ export function FilterBar({
     onWhiteboardTagChange('')
     onComponentChange('')
     onExcludeMetaBugsChange(false)
+    onSortOrderChange('priority')
   }
 
   return (
@@ -97,6 +104,39 @@ export function FilterBar({
           />
           <label htmlFor="exclude-meta" className="text-sm text-text-secondary whitespace-nowrap">
             Exclude meta bugs
+          </label>
+        </div>
+
+        {/* Sort order */}
+        <div className="flex items-center gap-3 self-end pb-2">
+          <span className="text-sm text-text-secondary">Sort:</span>
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="radio"
+              name="sortOrder"
+              value="priority"
+              checked={sortOrder === 'priority'}
+              onChange={() => {
+                onSortOrderChange('priority')
+              }}
+              disabled={isLoading}
+              className="h-4 w-4 border-bg-tertiary bg-bg-primary text-accent-primary focus:ring-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <span className="text-sm text-text-secondary">Priority</span>
+          </label>
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="radio"
+              name="sortOrder"
+              value="lastChanged"
+              checked={sortOrder === 'lastChanged'}
+              onChange={() => {
+                onSortOrderChange('lastChanged')
+              }}
+              disabled={isLoading}
+              className="h-4 w-4 border-bg-tertiary bg-bg-primary text-accent-primary focus:ring-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <span className="text-sm text-text-secondary whitespace-nowrap">Last Changed</span>
           </label>
         </div>
 

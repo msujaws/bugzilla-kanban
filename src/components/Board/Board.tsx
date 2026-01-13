@@ -13,10 +13,11 @@ import { Column } from './Column'
 import { Card } from './Card'
 import { StatusMapper, type KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import { assignBugToColumn } from '@/lib/bugzilla/column-assignment'
-import { sortByPriority } from '@/lib/bugzilla/sort-by-priority'
+import { sortBugs } from '@/lib/bugzilla/sort-bugs'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
 import { useBoardAssignees } from '@/hooks/use-board-assignees'
+import { useStore } from '@/store'
 
 const NOBODY_EMAIL = 'nobody@mozilla.org'
 
@@ -49,6 +50,7 @@ export function Board({
   onApplyChanges,
   onClearChanges,
 }: BoardProps) {
+  const sortOrder = useStore((state) => state.filters.sortOrder)
   const [activeBug, setActiveBug] = useState<BugzillaBug | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<SelectedPosition | null>(null)
   const [isGrabbing, setIsGrabbing] = useState(false)
@@ -87,14 +89,14 @@ export function Board({
       grouped.set(column, columnBugs)
     }
 
-    // Sort bugs within each column by priority (P1 highest, P5 lowest)
+    // Sort bugs within each column by the configured sort order
     for (const column of columns) {
       const columnBugs = grouped.get(column) ?? []
-      grouped.set(column, sortByPriority(columnBugs))
+      grouped.set(column, sortBugs(columnBugs, sortOrder))
     }
 
     return grouped
-  }, [bugs, stagedChanges])
+  }, [bugs, stagedChanges, sortOrder])
 
   // Get all staged bug IDs for highlighting
   const stagedBugIds = useMemo(() => {

@@ -8,9 +8,11 @@ describe('FilterBar', () => {
     whiteboardTag: '',
     component: '',
     excludeMetaBugs: false,
+    sortOrder: 'priority' as const,
     onWhiteboardTagChange: vi.fn(),
     onComponentChange: vi.fn(),
     onExcludeMetaBugsChange: vi.fn(),
+    onSortOrderChange: vi.fn(),
     onApplyFilters: vi.fn(),
     isLoading: false,
   }
@@ -158,6 +160,7 @@ describe('FilterBar', () => {
 
       expect(defaultProps.onWhiteboardTagChange).toHaveBeenCalledWith('')
       expect(defaultProps.onComponentChange).toHaveBeenCalledWith('')
+      expect(defaultProps.onSortOrderChange).toHaveBeenCalledWith('priority')
     })
   })
 
@@ -208,6 +211,59 @@ describe('FilterBar', () => {
       await waitFor(() => {
         expect(onWhiteboardTagChange).toHaveBeenCalled()
       })
+    })
+  })
+
+  describe('sort order', () => {
+    it('should render sort order radio buttons', () => {
+      render(<FilterBar {...defaultProps} />)
+
+      expect(screen.getByLabelText(/priority/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/last changed/i)).toBeInTheDocument()
+    })
+
+    it('should have priority selected by default', () => {
+      render(<FilterBar {...defaultProps} sortOrder="priority" />)
+
+      const priorityRadio = screen.getByLabelText(/priority/i)
+      const lastChangedRadio = screen.getByLabelText(/last changed/i)
+
+      expect(priorityRadio).toBeChecked()
+      expect(lastChangedRadio).not.toBeChecked()
+    })
+
+    it('should call onSortOrderChange when last changed is selected', async () => {
+      const user = userEvent.setup()
+      const onSortOrderChange = vi.fn()
+      render(<FilterBar {...defaultProps} onSortOrderChange={onSortOrderChange} />)
+
+      const lastChangedRadio = screen.getByLabelText(/last changed/i)
+      await user.click(lastChangedRadio)
+
+      expect(onSortOrderChange).toHaveBeenCalledWith('lastChanged')
+    })
+
+    it('should call onSortOrderChange when priority is selected', async () => {
+      const user = userEvent.setup()
+      const onSortOrderChange = vi.fn()
+      render(
+        <FilterBar
+          {...defaultProps}
+          sortOrder="lastChanged"
+          onSortOrderChange={onSortOrderChange}
+        />,
+      )
+
+      const priorityRadio = screen.getByLabelText(/priority/i)
+      await user.click(priorityRadio)
+
+      expect(onSortOrderChange).toHaveBeenCalledWith('priority')
+    })
+
+    it('should show clear button when sort order is not default', () => {
+      render(<FilterBar {...defaultProps} sortOrder="lastChanged" />)
+
+      expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument()
     })
   })
 })

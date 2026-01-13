@@ -95,6 +95,13 @@ function App() {
     [setFilters],
   )
 
+  const handleSortOrderChange = useCallback(
+    (value: 'priority' | 'lastChanged') => {
+      setFilters({ sortOrder: value })
+    },
+    [setFilters],
+  )
+
   // Handle apply filters (fetch bugs)
   const handleApplyFilters = useCallback(() => {
     if (!apiKey) {
@@ -270,9 +277,11 @@ function App() {
             whiteboardTag={filters.whiteboardTag}
             component={filters.component}
             excludeMetaBugs={filters.excludeMetaBugs}
+            sortOrder={filters.sortOrder}
             onWhiteboardTagChange={handleWhiteboardTagChange}
             onComponentChange={handleComponentChange}
             onExcludeMetaBugsChange={handleExcludeMetaBugsChange}
+            onSortOrderChange={handleSortOrderChange}
             onApplyFilters={handleApplyFilters}
             isLoading={isLoadingBugs}
           />
