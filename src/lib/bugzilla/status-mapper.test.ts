@@ -17,8 +17,8 @@ describe('StatusMapper', () => {
       expect(mapper.statusToColumn('UNCONFIRMED')).toBe('backlog')
     })
 
-    it('should map ASSIGNED to todo', () => {
-      expect(mapper.statusToColumn('ASSIGNED')).toBe('todo')
+    it('should map ASSIGNED to in-progress', () => {
+      expect(mapper.statusToColumn('ASSIGNED')).toBe('in-progress')
     })
 
     it('should map IN_PROGRESS to in-progress', () => {
@@ -40,7 +40,7 @@ describe('StatusMapper', () => {
     it('should handle case-insensitive status', () => {
       expect(mapper.statusToColumn('new')).toBe('backlog')
       expect(mapper.statusToColumn('New')).toBe('backlog')
-      expect(mapper.statusToColumn('ASSIGNED')).toBe('todo')
+      expect(mapper.statusToColumn('assigned')).toBe('in-progress')
     })
 
     it('should return backlog for unknown status', () => {
@@ -53,12 +53,12 @@ describe('StatusMapper', () => {
       expect(mapper.columnToStatus('backlog')).toBe('NEW')
     })
 
-    it('should map todo to ASSIGNED', () => {
-      expect(mapper.columnToStatus('todo')).toBe('ASSIGNED')
+    it('should map todo to NEW (sprint tag handled separately)', () => {
+      expect(mapper.columnToStatus('todo')).toBe('NEW')
     })
 
-    it('should map in-progress to IN_PROGRESS', () => {
-      expect(mapper.columnToStatus('in-progress')).toBe('IN_PROGRESS')
+    it('should map in-progress to ASSIGNED', () => {
+      expect(mapper.columnToStatus('in-progress')).toBe('ASSIGNED')
     })
 
     it('should map in-testing to RESOLVED', () => {
@@ -99,16 +99,16 @@ describe('StatusMapper', () => {
       expect(statuses).toEqual(['UNCONFIRMED', 'NEW'])
     })
 
-    it('should return all statuses for todo column', () => {
+    it('should return empty array for todo column (sprint tag determines membership)', () => {
       const statuses = mapper.getStatusesForColumn('todo')
 
-      expect(statuses).toEqual(['ASSIGNED'])
+      expect(statuses).toEqual([])
     })
 
     it('should return all statuses for in-progress column', () => {
       const statuses = mapper.getStatusesForColumn('in-progress')
 
-      expect(statuses).toEqual(['IN_PROGRESS'])
+      expect(statuses).toEqual(['ASSIGNED', 'IN_PROGRESS'])
     })
 
     it('should return all statuses for done column', () => {

@@ -82,18 +82,18 @@ const mockBugs: BugzillaBug[] = [
   {
     id: 2,
     summary: 'Bug in todo',
-    status: 'ASSIGNED',
+    status: 'NEW', // NEW with sprint tag goes to todo
     assigned_to: 'dev2@example.com',
     priority: 'P1',
     severity: 'critical',
     component: 'UI',
-    whiteboard: '[kanban]',
+    whiteboard: '[kanban] [bzkanban-sprint]', // Sprint tag puts it in todo
     last_change_time: '2024-01-14T09:00:00Z',
   },
   {
     id: 3,
     summary: 'Bug in progress',
-    status: 'IN_PROGRESS',
+    status: 'ASSIGNED', // ASSIGNED goes to in-progress now
     assigned_to: 'dev3@example.com',
     priority: 'P3',
     severity: 'normal',
@@ -173,7 +173,16 @@ describe('Board', () => {
       expect(screen.getByText('Bug in backlog')).toBeInTheDocument()
     })
 
-    it('should place ASSIGNED bugs in todo', () => {
+    it('should place NEW bugs with sprint tag in todo', () => {
+      const bugs = [
+        { ...mockBugs[0], status: 'NEW', whiteboard: '[bzkanban-sprint]', summary: 'Sprint bug' },
+      ]
+      render(<Board {...defaultProps} bugs={bugs} />)
+
+      expect(screen.getByText('Sprint bug')).toBeInTheDocument()
+    })
+
+    it('should place ASSIGNED bugs in in-progress', () => {
       const bugs = [{ ...mockBugs[0], status: 'ASSIGNED', summary: 'Assigned bug' }]
       render(<Board {...defaultProps} bugs={bugs} />)
 

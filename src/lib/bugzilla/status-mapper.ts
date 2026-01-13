@@ -9,8 +9,8 @@ type StatusMapping = Record<KanbanColumn, string[]>
 
 const DEFAULT_STATUS_MAPPING: StatusMapping = {
   backlog: ['UNCONFIRMED', 'NEW'],
-  todo: ['ASSIGNED'],
-  'in-progress': ['IN_PROGRESS'],
+  todo: [], // Todo is determined by sprint tag, not status
+  'in-progress': ['ASSIGNED', 'IN_PROGRESS'],
   'in-testing': [], // Assigned by column-assignment.ts based on qe-verify+ flag
   done: ['RESOLVED', 'VERIFIED', 'CLOSED'],
 }
@@ -24,10 +24,11 @@ for (const [column, statuses] of Object.entries(DEFAULT_STATUS_MAPPING)) {
 }
 
 // Column -> default status for updates
+// Note: Todo uses NEW status; the sprint tag is handled separately
 const COLUMN_TO_STATUS: Record<KanbanColumn, string> = {
   backlog: 'NEW',
-  todo: 'ASSIGNED',
-  'in-progress': 'IN_PROGRESS',
+  todo: 'NEW', // Status stays NEW, sprint tag determines column
+  'in-progress': 'ASSIGNED',
   'in-testing': 'RESOLVED',
   done: 'RESOLVED',
 }
