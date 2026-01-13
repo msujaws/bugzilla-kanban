@@ -25,8 +25,8 @@ describe('StatusMapper', () => {
       expect(mapper.statusToColumn('IN_PROGRESS')).toBe('in-progress')
     })
 
-    it('should map RESOLVED to in-review', () => {
-      expect(mapper.statusToColumn('RESOLVED')).toBe('in-review')
+    it('should map RESOLVED to done', () => {
+      expect(mapper.statusToColumn('RESOLVED')).toBe('done')
     })
 
     it('should map VERIFIED to done', () => {
@@ -61,12 +61,12 @@ describe('StatusMapper', () => {
       expect(mapper.columnToStatus('in-progress')).toBe('IN_PROGRESS')
     })
 
-    it('should map in-review to RESOLVED', () => {
-      expect(mapper.columnToStatus('in-review')).toBe('RESOLVED')
+    it('should map in-review to IN_PROGRESS', () => {
+      expect(mapper.columnToStatus('in-review')).toBe('IN_PROGRESS')
     })
 
-    it('should map done to VERIFIED', () => {
-      expect(mapper.columnToStatus('done')).toBe('VERIFIED')
+    it('should map done to RESOLVED', () => {
+      expect(mapper.columnToStatus('done')).toBe('RESOLVED')
     })
 
     it('should throw error for unknown column', () => {
@@ -111,16 +111,16 @@ describe('StatusMapper', () => {
       expect(statuses).toEqual(['IN_PROGRESS'])
     })
 
-    it('should return all statuses for in-review column', () => {
+    it('should return empty array for in-review column (no statuses map to it)', () => {
       const statuses = mapper.getStatusesForColumn('in-review')
 
-      expect(statuses).toEqual(['RESOLVED'])
+      expect(statuses).toEqual([])
     })
 
     it('should return all statuses for done column', () => {
       const statuses = mapper.getStatusesForColumn('done')
 
-      expect(statuses).toEqual(['VERIFIED', 'CLOSED'])
+      expect(statuses).toEqual(['RESOLVED', 'VERIFIED', 'CLOSED'])
     })
 
     it('should return empty array for unknown column', () => {

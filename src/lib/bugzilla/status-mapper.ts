@@ -11,8 +11,8 @@ const DEFAULT_STATUS_MAPPING: StatusMapping = {
   backlog: ['UNCONFIRMED', 'NEW'],
   todo: ['ASSIGNED'],
   'in-progress': ['IN_PROGRESS'],
-  'in-review': ['RESOLVED'],
-  done: ['VERIFIED', 'CLOSED'],
+  'in-review': [],
+  done: ['RESOLVED', 'VERIFIED', 'CLOSED'],
 }
 
 // Reverse mapping: status -> column
@@ -28,8 +28,8 @@ const COLUMN_TO_STATUS: Record<KanbanColumn, string> = {
   backlog: 'NEW',
   todo: 'ASSIGNED',
   'in-progress': 'IN_PROGRESS',
-  'in-review': 'RESOLVED',
-  done: 'VERIFIED',
+  'in-review': 'IN_PROGRESS',
+  done: 'RESOLVED',
 }
 
 export class StatusMapper {
