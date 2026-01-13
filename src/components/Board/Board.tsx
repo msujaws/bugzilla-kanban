@@ -12,6 +12,7 @@ import {
 import { Column } from './Column'
 import { Card } from './Card'
 import { StatusMapper, type KanbanColumn } from '@/lib/bugzilla/status-mapper'
+import { sortByPriority } from '@/lib/bugzilla/sort-by-priority'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
 import { useBoardAssignees } from '@/hooks/use-board-assignees'
@@ -83,6 +84,12 @@ export function Board({
       const columnBugs = grouped.get(column) ?? []
       columnBugs.push(bug)
       grouped.set(column, columnBugs)
+    }
+
+    // Sort bugs within each column by priority (P1 highest, P5 lowest)
+    for (const column of columns) {
+      const columnBugs = grouped.get(column) ?? []
+      grouped.set(column, sortByPriority(columnBugs))
     }
 
     return grouped

@@ -192,6 +192,128 @@ describe('Board', () => {
     })
   })
 
+  describe('priority sorting within columns', () => {
+    it('should sort bugs by priority with highest (P1) at the top', () => {
+      const bugsWithVaryingPriority: BugzillaBug[] = [
+        {
+          id: 1,
+          summary: 'Low priority bug',
+          status: 'NEW',
+          assigned_to: 'dev@example.com',
+          priority: 'P5',
+          severity: 'normal',
+          component: 'Core',
+          whiteboard: '[kanban]',
+          last_change_time: '2024-01-15T10:00:00Z',
+          creation_time: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 2,
+          summary: 'High priority bug',
+          status: 'NEW',
+          assigned_to: 'dev@example.com',
+          priority: 'P1',
+          severity: 'critical',
+          component: 'Core',
+          whiteboard: '[kanban]',
+          last_change_time: '2024-01-14T10:00:00Z',
+          creation_time: '2024-01-02T00:00:00Z',
+        },
+        {
+          id: 3,
+          summary: 'Medium priority bug',
+          status: 'NEW',
+          assigned_to: 'dev@example.com',
+          priority: 'P3',
+          severity: 'normal',
+          component: 'Core',
+          whiteboard: '[kanban]',
+          last_change_time: '2024-01-13T10:00:00Z',
+          creation_time: '2024-01-03T00:00:00Z',
+        },
+      ]
+
+      render(<Board {...defaultProps} bugs={bugsWithVaryingPriority} />)
+
+      // Get all bug cards in the backlog column
+      const cards = screen.getAllByRole('article')
+
+      // Verify order: P1 (High) should be first, then P3 (Medium), then P5 (Low)
+      expect(cards[0]).toHaveTextContent('High priority bug')
+      expect(cards[1]).toHaveTextContent('Medium priority bug')
+      expect(cards[2]).toHaveTextContent('Low priority bug')
+    })
+
+    it('should maintain priority sorting across different columns', () => {
+      const mixedColumnBugs: BugzillaBug[] = [
+        // Backlog bugs (unsorted input)
+        {
+          id: 1,
+          summary: 'Backlog P3',
+          status: 'NEW',
+          assigned_to: 'dev@example.com',
+          priority: 'P3',
+          severity: 'normal',
+          component: 'Core',
+          whiteboard: '[kanban]',
+          last_change_time: '2024-01-15T10:00:00Z',
+          creation_time: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 2,
+          summary: 'Backlog P1',
+          status: 'NEW',
+          assigned_to: 'dev@example.com',
+          priority: 'P1',
+          severity: 'critical',
+          component: 'Core',
+          whiteboard: '[kanban]',
+          last_change_time: '2024-01-14T10:00:00Z',
+          creation_time: '2024-01-02T00:00:00Z',
+        },
+        // Todo bugs (unsorted input)
+        {
+          id: 3,
+          summary: 'Todo P4',
+          status: 'ASSIGNED',
+          assigned_to: 'dev@example.com',
+          priority: 'P4',
+          severity: 'minor',
+          component: 'Core',
+          whiteboard: '[kanban]',
+          last_change_time: '2024-01-13T10:00:00Z',
+          creation_time: '2024-01-03T00:00:00Z',
+        },
+        {
+          id: 4,
+          summary: 'Todo P2',
+          status: 'ASSIGNED',
+          assigned_to: 'dev@example.com',
+          priority: 'P2',
+          severity: 'major',
+          component: 'Core',
+          whiteboard: '[kanban]',
+          last_change_time: '2024-01-12T10:00:00Z',
+          creation_time: '2024-01-04T00:00:00Z',
+        },
+      ]
+
+      render(<Board {...defaultProps} bugs={mixedColumnBugs} />)
+
+      const cards = screen.getAllByRole('article')
+
+      // Backlog column should have P1 before P3
+      const backlogP1Index = cards.findIndex((c) => c.textContent.includes('Backlog P1'))
+      const backlogP3Index = cards.findIndex((c) => c.textContent.includes('Backlog P3'))
+      expect(backlogP1Index).toBeLessThan(backlogP3Index)
+
+      // Todo column should have P2 before P4
+      const todoP2Index = cards.findIndex((c) => c.textContent.includes('Todo P2'))
+      const todoP4Index = cards.findIndex((c) => c.textContent.includes('Todo P4'))
+      expect(todoP2Index).toBeLessThan(todoP4Index)
+    })
+  })
+
   describe('loading state', () => {
     it('should show loading state for all columns when loading', () => {
       render(<Board {...defaultProps} isLoading={true} />)
