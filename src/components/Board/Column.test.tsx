@@ -125,6 +125,13 @@ describe('Column', () => {
 
       expect(screen.getByText(/time to celebrate/i)).toBeInTheDocument()
     })
+
+    it('should align empty state towards top of column', () => {
+      render(<Column {...defaultProps} bugs={[]} />)
+
+      const emptyState = screen.getByText(/no bugs here/i).parentElement
+      expect(emptyState).toHaveClass('justify-start')
+    })
   })
 
   describe('column names', () => {

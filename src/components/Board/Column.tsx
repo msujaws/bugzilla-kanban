@@ -118,9 +118,9 @@ export function Column({
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State - aligned to top */}
       {!isLoading && bugs.length === 0 && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 text-text-secondary">
+        <div className="flex flex-1 flex-col items-center justify-start pt-8 gap-2 text-text-secondary">
           <span className="material-icons text-4xl">celebration</span>
           <p className="text-sm">No bugs here! 🎉</p>
           <p className="text-xs">Time to celebrate!</p>
