@@ -607,4 +607,116 @@ describe('Card', () => {
       expect(screen.getByText('3')).toBeInTheDocument()
     })
   })
+
+  describe('points picker', () => {
+    const bugWithPoints = { ...mockBug, cf_fx_points: 5 }
+
+    it('should make points badge clickable when onPointsChange is provided', () => {
+      render(<Card bug={bugWithPoints} onPointsChange={vi.fn()} />)
+
+      expect(screen.getByLabelText('Change story points')).toBeInTheDocument()
+    })
+
+    it('should not make points badge clickable when onPointsChange is not provided', () => {
+      render(<Card bug={bugWithPoints} />)
+
+      expect(screen.queryByLabelText('Change story points')).not.toBeInTheDocument()
+    })
+
+    it('should open picker when points badge is clicked', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={bugWithPoints} onPointsChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change story points'))
+
+      expect(screen.getByRole('listbox', { name: /story points/i })).toBeInTheDocument()
+    })
+
+    it('should call onPointsChange when points are selected', async () => {
+      const user = userEvent.setup()
+      const onPointsChange = vi.fn()
+      render(<Card bug={bugWithPoints} onPointsChange={onPointsChange} />)
+
+      await user.click(screen.getByLabelText('Change story points'))
+      await user.click(screen.getByText('8'))
+
+      expect(onPointsChange).toHaveBeenCalledWith(mockBug.id, 8)
+    })
+
+    it('should show isPointsStaged indicator when points are staged', () => {
+      render(<Card bug={bugWithPoints} onPointsChange={vi.fn()} isPointsStaged={true} />)
+
+      const button = screen.getByLabelText('Change story points')
+      expect(button.className).toContain('ring-accent-staged')
+    })
+
+    it('should display staged points when isPointsStaged is true', () => {
+      render(
+        <Card
+          bug={bugWithPoints}
+          onPointsChange={vi.fn()}
+          isPointsStaged={true}
+          stagedPoints={13}
+        />,
+      )
+
+      expect(screen.getByText('13')).toBeInTheDocument()
+    })
+  })
+
+  describe('priority picker', () => {
+    it('should make priority badge clickable when onPriorityChange is provided', () => {
+      render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
+
+      expect(screen.getByLabelText('Change priority')).toBeInTheDocument()
+    })
+
+    it('should not make priority badge clickable when onPriorityChange is not provided', () => {
+      render(<Card bug={mockBug} />)
+
+      expect(screen.queryByLabelText('Change priority')).not.toBeInTheDocument()
+    })
+
+    it('should open picker when priority badge is clicked', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change priority'))
+
+      expect(screen.getByRole('listbox', { name: /priority/i })).toBeInTheDocument()
+    })
+
+    it('should call onPriorityChange when priority is selected', async () => {
+      const user = userEvent.setup()
+      const onPriorityChange = vi.fn()
+      render(<Card bug={mockBug} onPriorityChange={onPriorityChange} />)
+
+      await user.click(screen.getByLabelText('Change priority'))
+      await user.click(screen.getByText('P1'))
+
+      expect(onPriorityChange).toHaveBeenCalledWith(mockBug.id, 'P1')
+    })
+
+    it('should show isPriorityStaged indicator when priority is staged', () => {
+      render(<Card bug={mockBug} onPriorityChange={vi.fn()} isPriorityStaged={true} />)
+
+      const button = screen.getByLabelText('Change priority')
+      expect(button.className).toContain('ring-accent-staged')
+    })
+
+    it('should display staged priority when isPriorityStaged is true', () => {
+      render(
+        <Card
+          bug={mockBug}
+          onPriorityChange={vi.fn()}
+          isPriorityStaged={true}
+          stagedPriority="P1"
+        />,
+      )
+
+      // Should show staged priority, not original P2
+      const priorityBadges = screen.getAllByText(/P[1-5]/)
+      expect(priorityBadges[0]).toHaveTextContent('P1')
+    })
+  })
 })
