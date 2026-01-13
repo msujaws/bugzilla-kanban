@@ -53,10 +53,20 @@ const mockAssignees: Assignee[] = [
 
 describe('Card', () => {
   describe('rendering', () => {
-    it('should render bug ID', () => {
+    it('should render bug ID as a link to Bugzilla', () => {
       render(<Card bug={mockBug} />)
 
-      expect(screen.getByText('#12345')).toBeInTheDocument()
+      const link = screen.getByRole('link', { name: /#12345/ })
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute('href', 'https://bugzilla.mozilla.org/show_bug.cgi?id=12345')
+    })
+
+    it('should open bug link in new tab', () => {
+      render(<Card bug={mockBug} />)
+
+      const link = screen.getByRole('link', { name: /#12345/ })
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
     })
 
     it('should render bug summary', () => {
@@ -222,9 +232,20 @@ describe('Card', () => {
       const onClick = vi.fn()
       render(<Card bug={mockBug} onClick={onClick} />)
 
-      await user.click(screen.getByText('#12345'))
+      // Click on the summary text (not the bug ID link which stops propagation)
+      await user.click(screen.getByText('Fix the login button not working on mobile'))
 
       expect(onClick).toHaveBeenCalledWith(mockBug)
+    })
+
+    it('should not trigger onClick when bug ID link is clicked', async () => {
+      const user = userEvent.setup()
+      const onClick = vi.fn()
+      render(<Card bug={mockBug} onClick={onClick} />)
+
+      await user.click(screen.getByRole('link', { name: /#12345/ }))
+
+      expect(onClick).not.toHaveBeenCalled()
     })
 
     it('should have cursor pointer when onClick is provided', () => {

@@ -5,6 +5,8 @@ import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import { AssigneePicker } from './AssigneePicker'
 
+const BUGZILLA_BUG_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?id='
+
 interface CardProps {
   bug: BugzillaBug
   isStaged?: boolean
@@ -139,9 +141,17 @@ export function Card({
       {/* Header with drag handle and bug ID */}
       <div className="mb-2 flex items-center gap-2">
         <span className="material-icons text-text-tertiary">drag_indicator</span>
-        <span className="font-mono text-sm font-bold text-accent-primary">
+        <a
+          href={`${BUGZILLA_BUG_URL}${bug.id.toString()}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => {
+            e.stopPropagation()
+          }}
+          className="font-mono text-sm font-bold text-accent-primary hover:underline"
+        >
           #{bug.id.toString()}
-        </span>
+        </a>
         {isStaged && (
           <span className="flex items-center gap-1 rounded bg-accent-primary/20 px-2 py-0.5 text-xs text-accent-primary">
             <span className="material-icons text-sm">pending</span>
