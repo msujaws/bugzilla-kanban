@@ -10,16 +10,29 @@ interface EncryptedData {
   encryptedData: string // Base64 encoded encrypted data
 }
 
+/**
+ * Storage interface for dependency injection (enables testing)
+ */
+export interface Storage {
+  getItem(key: string): string | null
+  setItem(key: string, value: string): void
+  removeItem(key: string): void
+}
+
 export class ApiKeyStorage {
   private encoder = new TextEncoder()
   private decoder = new TextDecoder()
   private keyMaterialOverride?: string
+  private storage: Storage
 
   /**
-   * @param keyMaterialOverride - Optional override for key derivation (for testing only)
+   * @param options - Optional configuration for testing
+   * @param options.keyMaterial - Override for key derivation
+   * @param options.storage - Override for storage backend (defaults to localStorage)
    */
-  constructor(keyMaterialOverride?: string) {
-    this.keyMaterialOverride = keyMaterialOverride
+  constructor(options?: { keyMaterial?: string; storage?: Storage }) {
+    this.keyMaterialOverride = options?.keyMaterial
+    this.storage = options?.storage ?? localStorage
   }
 
   /**
@@ -127,14 +140,14 @@ export class ApiKeyStorage {
    */
   async saveApiKey(apiKey: string): Promise<void> {
     const encrypted = await this.encrypt(apiKey)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(encrypted))
+    this.storage.setItem(STORAGE_KEY, JSON.stringify(encrypted))
   }
 
   /**
    * Retrieve API key from localStorage (decrypted)
    */
   async getApiKey(): Promise<string | undefined> {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = this.storage.getItem(STORAGE_KEY)
 
     if (!stored) {
       return undefined
@@ -153,13 +166,13 @@ export class ApiKeyStorage {
    * Remove API key from localStorage
    */
   clearApiKey(): void {
-    localStorage.removeItem(STORAGE_KEY)
+    this.storage.removeItem(STORAGE_KEY)
   }
 
   /**
    * Check if API key exists in localStorage
    */
   hasApiKey(): boolean {
-    return localStorage.getItem(STORAGE_KEY) !== null
+    return this.storage.getItem(STORAGE_KEY) !== null
   }
 }

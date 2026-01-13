@@ -1,39 +1,32 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { ApiKeyStorage } from './api-key-storage'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { ApiKeyStorage, type Storage } from './api-key-storage'
 
 describe('ApiKeyStorage', () => {
   let storage: ApiKeyStorage
-  let localStorageMock: Record<string, string>
+  let mockStorageData: Record<string, string>
+  let mockStorage: Storage
   const testKeyMaterial = 'test-key-material-for-encryption'
 
   beforeEach(() => {
-    // Mock localStorage
-    localStorageMock = {}
-
-    vi.stubGlobal('localStorage', {
+    // Create in-memory storage mock (no global stubbing needed)
+    mockStorageData = {}
+    mockStorage = {
       // eslint-disable-next-line unicorn/no-null
-      getItem: vi.fn((key: string) => localStorageMock[key] ?? null), // null is correct for localStorage API
-      setItem: vi.fn((key: string, value: string) => {
-        localStorageMock[key] = value
-      }),
-      removeItem: vi.fn((key: string) => {
+      getItem: (key: string) => mockStorageData[key] ?? null,
+      setItem: (key: string, value: string) => {
+        mockStorageData[key] = value
+      },
+      removeItem: (key: string) => {
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete localStorageMock[key]
-      }),
-      clear: vi.fn(() => {
-        localStorageMock = {}
-      }),
-      length: 0,
-      key: vi.fn(),
+        delete mockStorageData[key]
+      },
+    }
+
+    // Inject both key material and storage for deterministic testing
+    storage = new ApiKeyStorage({
+      keyMaterial: testKeyMaterial,
+      storage: mockStorage,
     })
-
-    // Use constructor parameter for consistent key derivation in tests
-    storage = new ApiKeyStorage(testKeyMaterial)
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-    vi.unstubAllGlobals()
   })
 
   describe('saveApiKey', () => {
@@ -42,9 +35,7 @@ describe('ApiKeyStorage', () => {
 
       await storage.saveApiKey(apiKey)
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(localStorage.setItem).toHaveBeenCalled()
-      const savedValue = localStorageMock['bugzilla_api_key']
+      const savedValue = mockStorageData['bugzilla_api_key']
       expect(savedValue).toBeDefined()
       expect(savedValue).not.toBe(apiKey) // Should be encrypted
     })
@@ -53,10 +44,10 @@ describe('ApiKeyStorage', () => {
       const apiKey = 'test-api-key-123'
 
       await storage.saveApiKey(apiKey)
-      const firstSave = localStorageMock['bugzilla_api_key']
+      const firstSave = mockStorageData['bugzilla_api_key']
 
       await storage.saveApiKey(apiKey)
-      const secondSave = localStorageMock['bugzilla_api_key']
+      const secondSave = mockStorageData['bugzilla_api_key']
 
       // Should have different encrypted values due to random IV
       expect(firstSave).not.toBe(secondSave)
@@ -65,8 +56,7 @@ describe('ApiKeyStorage', () => {
     it('should handle empty API key', async () => {
       await storage.saveApiKey('')
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(localStorage.setItem).toHaveBeenCalled()
+      expect(mockStorageData['bugzilla_api_key']).toBeDefined()
     })
   })
 
@@ -87,7 +77,7 @@ describe('ApiKeyStorage', () => {
     })
 
     it('should return undefined when localStorage value is invalid', async () => {
-      localStorageMock['bugzilla_api_key'] = 'invalid-encrypted-data'
+      mockStorageData['bugzilla_api_key'] = 'invalid-encrypted-data'
 
       const retrieved = await storage.getApiKey()
 
@@ -96,7 +86,7 @@ describe('ApiKeyStorage', () => {
 
     it('should handle decryption errors gracefully', async () => {
       // Set malformed encrypted data
-      localStorageMock['bugzilla_api_key'] = JSON.stringify({
+      mockStorageData['bugzilla_api_key'] = JSON.stringify({
         iv: 'invalid-iv',
         encryptedData: 'invalid-data',
       })
@@ -113,9 +103,7 @@ describe('ApiKeyStorage', () => {
 
       storage.clearApiKey()
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(localStorage.removeItem).toHaveBeenCalledWith('bugzilla_api_key')
-      expect(localStorageMock['bugzilla_api_key']).toBeUndefined()
+      expect(mockStorageData['bugzilla_api_key']).toBeUndefined()
     })
 
     it('should not throw error when no key exists', () => {
@@ -144,10 +132,10 @@ describe('ApiKeyStorage', () => {
   describe('encryption', () => {
     it('should encrypt different keys to different values', async () => {
       await storage.saveApiKey('key1')
-      const encrypted1 = localStorageMock['bugzilla_api_key']
+      const encrypted1 = mockStorageData['bugzilla_api_key']
 
       await storage.saveApiKey('key2')
-      const encrypted2 = localStorageMock['bugzilla_api_key']
+      const encrypted2 = mockStorageData['bugzilla_api_key']
 
       expect(encrypted1).not.toBe(encrypted2)
     })
