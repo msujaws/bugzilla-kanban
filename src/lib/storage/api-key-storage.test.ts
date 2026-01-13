@@ -1,16 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { ApiKeyStorage, type Storage } from './api-key-storage'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { ApiKeyStorage } from './api-key-storage'
 
 describe('ApiKeyStorage', () => {
   let storage: ApiKeyStorage
   let mockStorageData: Record<string, string>
-  let mockStorage: Storage
-  const testKeyMaterial = 'test-key-material-for-encryption'
 
   beforeEach(() => {
-    // Create in-memory storage mock (no global stubbing needed)
+    // Create in-memory storage mock
     mockStorageData = {}
-    mockStorage = {
+    const mockLocalStorage = {
       getItem: (key: string) => {
         // eslint-disable-next-line unicorn/no-null -- localStorage API returns null
         return mockStorageData[key] ?? null
@@ -24,11 +22,10 @@ describe('ApiKeyStorage', () => {
       },
     }
 
-    // Inject both key material and storage for deterministic testing
-    storage = new ApiKeyStorage({
-      keyMaterial: testKeyMaterial,
-      storage: mockStorage,
-    })
+    // Stub localStorage globally
+    vi.stubGlobal('localStorage', mockLocalStorage)
+
+    storage = new ApiKeyStorage()
   })
 
   describe('saveApiKey', () => {

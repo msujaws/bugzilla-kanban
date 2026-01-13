@@ -10,30 +10,9 @@ interface EncryptedData {
   encryptedData: string // Base64 encoded encrypted data
 }
 
-/**
- * Storage interface for dependency injection (enables testing)
- */
-export interface Storage {
-  getItem(key: string): string | null
-  setItem(key: string, value: string): void
-  removeItem(key: string): void
-}
-
 export class ApiKeyStorage {
   private encoder = new TextEncoder()
   private decoder = new TextDecoder()
-  private keyMaterialOverride?: string
-  private storage: Storage
-
-  /**
-   * @param options - Optional configuration for testing
-   * @param options.keyMaterial - Override for key derivation
-   * @param options.storage - Override for storage backend (defaults to localStorage)
-   */
-  constructor(options?: { keyMaterial?: string; storage?: Storage }) {
-    this.keyMaterialOverride = options?.keyMaterial
-    this.storage = options?.storage ?? localStorage
-  }
 
   /**
    * Derive a crypto key from the user agent string
@@ -41,9 +20,8 @@ export class ApiKeyStorage {
    * but protects against casual inspection of localStorage
    */
   private async deriveCryptoKey(): Promise<CryptoKey> {
-    // Use user agent as key material (stable across sessions), or override for testing
-    const keySource = this.keyMaterialOverride ?? navigator.userAgent
-    const keyMaterial = this.encoder.encode(keySource + 'bugzilla-kanban-salt')
+    // Use user agent as key material (stable across sessions)
+    const keyMaterial = this.encoder.encode(navigator.userAgent + 'bugzilla-kanban-salt')
 
     // Import as raw key material
     const importedKey = await crypto.subtle.importKey(
@@ -99,11 +77,15 @@ export class ApiKeyStorage {
     const key = await this.deriveCryptoKey()
 
     // Convert from base64
-    const iv = this.base64ToArrayBuffer(encrypted.iv)
-    const encryptedData = this.base64ToArrayBuffer(encrypted.encryptedData)
+    const iv = this.base64ToUint8Array(encrypted.iv)
+    const encryptedData = this.base64ToUint8Array(encrypted.encryptedData)
 
-    // Decrypt
-    const decrypted = await crypto.subtle.decrypt({ name: ALGORITHM, iv }, key, encryptedData)
+    // Decrypt (cast to BufferSource to satisfy TypeScript strict typing)
+    const decrypted = await crypto.subtle.decrypt(
+      { name: ALGORITHM, iv: iv as BufferSource },
+      key,
+      encryptedData as BufferSource,
+    )
 
     return this.decoder.decode(decrypted)
   }
@@ -123,7 +105,7 @@ export class ApiKeyStorage {
   /**
    * Convert base64 string to Uint8Array (compatible with SubtleCrypto in all environments)
    */
-  private base64ToArrayBuffer(base64: string): Uint8Array {
+  private base64ToUint8Array(base64: string): Uint8Array {
     const binary = atob(base64)
     const bytes = new Uint8Array(binary.length)
     for (let index = 0; index < binary.length; index++) {
@@ -132,7 +114,6 @@ export class ApiKeyStorage {
         bytes[index] = charCode
       }
     }
-    // Return Uint8Array directly instead of .buffer for Node.js compatibility
     return bytes
   }
 
@@ -141,14 +122,14 @@ export class ApiKeyStorage {
    */
   async saveApiKey(apiKey: string): Promise<void> {
     const encrypted = await this.encrypt(apiKey)
-    this.storage.setItem(STORAGE_KEY, JSON.stringify(encrypted))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(encrypted))
   }
 
   /**
    * Retrieve API key from localStorage (decrypted)
    */
   async getApiKey(): Promise<string | undefined> {
-    const stored = this.storage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_KEY)
 
     if (!stored) {
       return undefined
@@ -167,13 +148,13 @@ export class ApiKeyStorage {
    * Remove API key from localStorage
    */
   clearApiKey(): void {
-    this.storage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(STORAGE_KEY)
   }
 
   /**
    * Check if API key exists in localStorage
    */
   hasApiKey(): boolean {
-    return this.storage.getItem(STORAGE_KEY) !== null
+    return localStorage.getItem(STORAGE_KEY) !== null
   }
 }
