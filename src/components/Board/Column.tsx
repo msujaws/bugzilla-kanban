@@ -1,4 +1,4 @@
-import { Reorder, AnimatePresence } from 'framer-motion'
+import { useDroppable } from '@dnd-kit/core'
 import { Card } from './Card'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { KanbanColumn } from '@/lib/bugzilla/status-mapper'
@@ -8,7 +8,6 @@ interface ColumnProps {
   column: KanbanColumn
   bugs: BugzillaBug[]
   stagedBugIds: Set<number>
-  onBugMove: (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn) => void
   isLoading?: boolean
 }
 
@@ -20,19 +19,11 @@ const columnIcons: Record<KanbanColumn, string> = {
   done: 'done_all',
 }
 
-// Handle reorder within column (for visual feedback, doesn't change status)
-function handleReorder(newOrder: BugzillaBug[]) {
-  // For now, just visual reordering - actual status changes happen on drop to different column
-  console.log('Reordered within column:', newOrder)
-}
+export function Column({ column, bugs, stagedBugIds, isLoading = false }: ColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: column,
+  })
 
-export function Column({
-  column,
-  bugs,
-  stagedBugIds,
-  onBugMove: _onBugMove,
-  isLoading = false,
-}: ColumnProps) {
   const columnName = COLUMN_NAMES[column] ?? column
   const icon = columnIcons[column]
   const stagedCount = bugs.filter((bug) => stagedBugIds.has(bug.id)).length
@@ -40,10 +31,13 @@ export function Column({
 
   return (
     <div
+      ref={setNodeRef}
       role="region"
       aria-label={`${columnName} column`}
       aria-describedby={countId}
-      className="flex min-h-[500px] w-72 flex-shrink-0 flex-col rounded-lg bg-bg-secondary/50 p-4"
+      className={`flex min-h-[500px] w-72 flex-shrink-0 flex-col rounded-lg p-4 transition-colors ${
+        isOver ? 'bg-accent-primary/20 ring-2 ring-accent-primary' : 'bg-bg-secondary/50'
+      }`}
     >
       {/* Column Header */}
       <div className="mb-4 flex items-center justify-between">
@@ -86,20 +80,11 @@ export function Column({
 
       {/* Bug Cards */}
       {!isLoading && bugs.length > 0 && (
-        <Reorder.Group
-          axis="y"
-          values={bugs}
-          onReorder={handleReorder}
-          className="flex flex-1 flex-col gap-3 overflow-y-auto"
-        >
-          <AnimatePresence mode="popLayout">
-            {bugs.map((bug) => (
-              <Reorder.Item key={bug.id} value={bug} className="cursor-grab active:cursor-grabbing">
-                <Card bug={bug} isStaged={stagedBugIds.has(bug.id)} />
-              </Reorder.Item>
-            ))}
-          </AnimatePresence>
-        </Reorder.Group>
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
+          {bugs.map((bug) => (
+            <Card key={bug.id} bug={bug} isStaged={stagedBugIds.has(bug.id)} />
+          ))}
+        </div>
       )}
     </div>
   )
