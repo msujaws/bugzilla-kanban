@@ -1,9 +1,12 @@
+import { useMemo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { Card } from './Card'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import { COLUMN_NAMES } from '@/types'
+
+const NOBODY_EMAIL = 'nobody@mozilla.org'
 
 interface ColumnProps {
   column: KanbanColumn
@@ -48,6 +51,14 @@ export function Column({
   const icon = columnIcons[column]
   const stagedCount = bugs.filter((bug) => stagedBugIds.has(bug.id)).length
   const countId = `${column}-count`
+
+  // Filter out nobody@mozilla.org for non-backlog columns
+  // Bugzilla requires a real assignee for non-backlog statuses (ASSIGNED, IN_PROGRESS, etc.)
+  const filteredAssignees = useMemo(() => {
+    if (!allAssignees) return
+    if (column === 'backlog') return allAssignees
+    return allAssignees.filter((assignee) => assignee.email !== NOBODY_EMAIL)
+  }, [allAssignees, column])
 
   // Determine column styling based on state
   const getColumnClassName = () => {
@@ -128,7 +139,7 @@ export function Column({
               stagedAssignee={stagedAssignees?.get(bug.id)}
               isSelected={selectedIndex === index}
               isGrabbed={selectedIndex === index && isGrabbing}
-              allAssignees={allAssignees}
+              allAssignees={filteredAssignees}
               onAssigneeChange={onAssigneeChange}
             />
           ))}

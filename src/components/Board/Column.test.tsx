@@ -43,15 +43,18 @@ vi.mock('./Card', () => ({
     bug,
     isSelected,
     isGrabbed,
+    allAssignees,
   }: {
     bug: BugzillaBug
     isSelected?: boolean
     isGrabbed?: boolean
+    allAssignees?: Array<{ email: string; displayName: string }>
   }) => (
     <div
       data-testid={`card-${bug.id.toString()}`}
       data-selected={isSelected}
       data-grabbed={isGrabbed}
+      data-assignees={allAssignees ? allAssignees.map((a) => a.email).join(',') : ''}
     >
       Card: {bug.summary}
     </div>
@@ -328,6 +331,62 @@ describe('Column', () => {
       const card2 = screen.getByTestId('card-12346')
       expect(card2).toHaveAttribute('data-selected', 'true')
       expect(card2).toHaveAttribute('data-grabbed', 'true')
+    })
+  })
+
+  describe('assignee filtering', () => {
+    const assigneesWithNobody = [
+      { email: 'nobody@mozilla.org', displayName: 'Nobody' },
+      { email: 'dev@mozilla.com', displayName: 'Developer' },
+      { email: 'qa@mozilla.com', displayName: 'QA Engineer' },
+    ]
+
+    it('should include nobody@mozilla.org in backlog column', () => {
+      render(<Column {...defaultProps} column="backlog" allAssignees={assigneesWithNobody} />)
+
+      const card = screen.getByTestId('card-12345')
+      expect(card).toHaveAttribute('data-assignees', expect.stringContaining('nobody@mozilla.org'))
+    })
+
+    it('should exclude nobody@mozilla.org in todo column', () => {
+      render(<Column {...defaultProps} column="todo" allAssignees={assigneesWithNobody} />)
+
+      const card = screen.getByTestId('card-12345')
+      expect(card).toHaveAttribute(
+        'data-assignees',
+        expect.not.stringContaining('nobody@mozilla.org'),
+      )
+      expect(card).toHaveAttribute('data-assignees', expect.stringContaining('dev@mozilla.com'))
+    })
+
+    it('should exclude nobody@mozilla.org in in-progress column', () => {
+      render(<Column {...defaultProps} column="in-progress" allAssignees={assigneesWithNobody} />)
+
+      const card = screen.getByTestId('card-12345')
+      expect(card).toHaveAttribute(
+        'data-assignees',
+        expect.not.stringContaining('nobody@mozilla.org'),
+      )
+    })
+
+    it('should exclude nobody@mozilla.org in in-review column', () => {
+      render(<Column {...defaultProps} column="in-review" allAssignees={assigneesWithNobody} />)
+
+      const card = screen.getByTestId('card-12345')
+      expect(card).toHaveAttribute(
+        'data-assignees',
+        expect.not.stringContaining('nobody@mozilla.org'),
+      )
+    })
+
+    it('should exclude nobody@mozilla.org in done column', () => {
+      render(<Column {...defaultProps} column="done" allAssignees={assigneesWithNobody} />)
+
+      const card = screen.getByTestId('card-12345')
+      expect(card).toHaveAttribute(
+        'data-assignees',
+        expect.not.stringContaining('nobody@mozilla.org'),
+      )
     })
   })
 })

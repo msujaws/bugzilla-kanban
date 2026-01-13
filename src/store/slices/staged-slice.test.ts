@@ -430,6 +430,24 @@ describe('StagedSlice', () => {
         { id: 123, status: 'ASSIGNED', assigned_to: 'new@example.com' },
       ])
     })
+
+    it('should include both status and assignee when assignee changed first then column', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageChange, stageAssigneeChange, applyChanges } = useStore.getState()
+
+      // User first changes assignee, then drags to new column
+      stageAssigneeChange(123, 'old@example.com', 'new@example.com')
+      stageChange(123, 'backlog', 'todo')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, status: 'ASSIGNED', assigned_to: 'new@example.com' },
+      ])
+    })
   })
 
   describe('applyChanges with resolution', () => {
