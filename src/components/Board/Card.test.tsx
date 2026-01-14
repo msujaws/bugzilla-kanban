@@ -794,5 +794,68 @@ describe('Card', () => {
       expect(indicator?.className).toContain('bottom')
       expect(indicator?.className).toContain('right')
     })
+
+    it('should make qe indicator clickable when onQeVerifyChange is provided', () => {
+      render(<Card bug={mockBug} onQeVerifyChange={vi.fn()} />)
+
+      expect(screen.getByLabelText('Change QE verification')).toBeInTheDocument()
+    })
+
+    it('should not make qe indicator clickable when onQeVerifyChange is not provided', () => {
+      render(<Card bug={mockBug} />)
+
+      expect(screen.queryByLabelText('Change QE verification')).not.toBeInTheDocument()
+    })
+
+    it('should open picker when qe indicator is clicked', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} onQeVerifyChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change QE verification'))
+
+      expect(screen.getByRole('listbox', { name: /qe verification/i })).toBeInTheDocument()
+    })
+
+    it('should call onQeVerifyChange when qe status is selected', async () => {
+      const user = userEvent.setup()
+      const onQeVerifyChange = vi.fn()
+      render(<Card bug={mockBug} onQeVerifyChange={onQeVerifyChange} />)
+
+      await user.click(screen.getByLabelText('Change QE verification'))
+      await user.click(screen.getByText('qe-verify: -'))
+
+      expect(onQeVerifyChange).toHaveBeenCalledWith(mockBug.id, 'minus')
+    })
+
+    it('should show isQeVerifyStaged indicator when qe-verify is staged', () => {
+      render(<Card bug={mockBug} onQeVerifyChange={vi.fn()} isQeVerifyStaged={true} />)
+
+      const button = screen.getByLabelText('Change QE verification')
+      expect(button.className).toContain('ring-accent-staged')
+    })
+
+    it('should display staged qe status when isQeVerifyStaged is true', () => {
+      render(
+        <Card
+          bug={mockBug}
+          onQeVerifyChange={vi.fn()}
+          isQeVerifyStaged={true}
+          stagedQeVerify="plus"
+        />,
+      )
+
+      // Should show qe+ for staged plus status
+      expect(screen.getByText('qe+')).toBeInTheDocument()
+    })
+
+    it('should not trigger card onClick when clicking qe indicator', async () => {
+      const user = userEvent.setup()
+      const onClick = vi.fn()
+      render(<Card bug={mockBug} onClick={onClick} onQeVerifyChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change QE verification'))
+
+      expect(onClick).not.toHaveBeenCalled()
+    })
   })
 })
