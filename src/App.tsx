@@ -8,6 +8,7 @@ import { ApplyChangesButton } from './components/Board/ApplyChangesButton'
 import { FAQModal } from './components/FAQ/FaqModal'
 import { useStore } from './store'
 import { useUrlFilters } from './hooks/use-url-filters'
+import { useBoardAssignees } from './hooks/use-board-assignees'
 import { addSprintTag, removeSprintTag } from './lib/bugzilla/sprint-tag'
 
 function App() {
@@ -53,6 +54,13 @@ function App() {
   const toasts = useStore((state) => state.toasts)
   const removeToast = useStore((state) => state.removeToast)
   const addToast = useStore((state) => state.addToast)
+
+  // Assignee filter state
+  const assigneeFilter = useStore((state) => state.assigneeFilter)
+  const setAssigneeFilter = useStore((state) => state.setAssigneeFilter)
+
+  // Get all assignees from bugs for the filter dropdown
+  const allAssignees = useBoardAssignees(bugs)
 
   // Warn user before leaving page with unsaved staged changes
   useEffect(() => {
@@ -362,6 +370,9 @@ function App() {
             onSortOrderChange={handleSortOrderChange}
             onApplyFilters={handleApplyFilters}
             isLoading={isLoadingBugs}
+            assignees={allAssignees}
+            selectedAssignee={assigneeFilter}
+            onAssigneeChange={setAssigneeFilter}
           />
         </div>
 
