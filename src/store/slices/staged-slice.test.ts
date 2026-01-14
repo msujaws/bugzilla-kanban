@@ -746,4 +746,127 @@ describe('StagedSlice', () => {
       ])
     })
   })
+
+  describe('stageQeVerifyChange', () => {
+    it('should add a new qe-verify change', () => {
+      const { stageQeVerifyChange } = useStore.getState()
+
+      stageQeVerifyChange(123, 'unknown', 'plus')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.qeVerify).toEqual({ from: 'unknown', to: 'plus' })
+    })
+
+    it('should update existing qe-verify change', () => {
+      const { stageQeVerifyChange } = useStore.getState()
+
+      stageQeVerifyChange(123, 'unknown', 'minus')
+      stageQeVerifyChange(123, 'unknown', 'plus')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.qeVerify).toEqual({ from: 'unknown', to: 'plus' })
+    })
+
+    it('should remove qe-verify change if reverting to original', () => {
+      const { stageQeVerifyChange } = useStore.getState()
+
+      stageQeVerifyChange(123, 'unknown', 'plus')
+      stageQeVerifyChange(123, 'unknown', 'unknown')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should preserve other changes when adding qe-verify change', () => {
+      const { stageChange, stageQeVerifyChange } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageQeVerifyChange(123, 'unknown', 'minus')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.qeVerify).toEqual({ from: 'unknown', to: 'minus' })
+    })
+
+    it('should only remove qe-verify change when reverting, keeping other changes', () => {
+      const { stagePriorityChange, stageQeVerifyChange } = useStore.getState()
+
+      stagePriorityChange(123, 'P3', 'P1')
+      stageQeVerifyChange(123, 'unknown', 'plus')
+      stageQeVerifyChange(123, 'unknown', 'unknown')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.priority).toEqual({ from: 'P3', to: 'P1' })
+      expect(changes.get(123)?.qeVerify).toBeUndefined()
+    })
+  })
+
+  describe('applyChanges with qe-verify', () => {
+    it('should include flags in API call for qe-verify plus', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageQeVerifyChange, applyChanges } = useStore.getState()
+
+      stageQeVerifyChange(123, 'unknown', 'plus')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, flags: [{ name: 'qe-verify', status: '+' }] },
+      ])
+    })
+
+    it('should include flags in API call for qe-verify minus', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageQeVerifyChange, applyChanges } = useStore.getState()
+
+      stageQeVerifyChange(123, 'plus', 'minus')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, flags: [{ name: 'qe-verify', status: '-' }] },
+      ])
+    })
+
+    it('should include flags with X status when removing qe-verify flag', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageQeVerifyChange, applyChanges } = useStore.getState()
+
+      stageQeVerifyChange(123, 'plus', 'unknown')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, flags: [{ name: 'qe-verify', status: 'X' }] },
+      ])
+    })
+
+    it('should include qe-verify with other field changes', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stagePriorityChange, stageQeVerifyChange, applyChanges } = useStore.getState()
+
+      stagePriorityChange(123, 'P3', 'P1')
+      stageQeVerifyChange(123, 'unknown', 'plus')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, priority: 'P1', flags: [{ name: 'qe-verify', status: '+' }] },
+      ])
+    })
+  })
 })
