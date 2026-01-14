@@ -431,5 +431,41 @@ describe('BugzillaClient', () => {
         }),
       )
     })
+
+    it('should send flags when provided', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, flags: [{ name: 'qe-verify', status: '+' }] }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ flags: [{ name: 'qe-verify', status: '+' }] }),
+        }),
+      )
+    })
+
+    it('should send flags with other fields', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ bugs: [{ id: 1, changes: {} }] }),
+      })
+
+      const updates = [{ id: 1, priority: 'P1', flags: [{ name: 'qe-verify', status: '-' }] }]
+
+      await client.batchUpdateBugs(updates)
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          body: JSON.stringify({ priority: 'P1', flags: [{ name: 'qe-verify', status: '-' }] }),
+        }),
+      )
+    })
   })
 })
