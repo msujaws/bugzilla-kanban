@@ -72,6 +72,8 @@ All code must be written using TDD:
 
 Commit in logical chunks as you work. Don't wait until a feature is complete - commit after each meaningful step (e.g., tests passing, component implemented, wiring complete).
 
+Do not add a `Co-Authored-By` line to commit messages.
+
 ### Branded Types
 
 Use branded types from `src/types/branded.ts` when working with primitive values that have semantic meaning:
