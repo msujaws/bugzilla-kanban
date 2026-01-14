@@ -53,6 +53,11 @@ export interface BugFilters {
   limit?: number
 }
 
+export interface BugUpdateFlag {
+  name: string
+  status: string
+}
+
 export interface BugUpdate {
   id: number
   status?: string
@@ -61,6 +66,7 @@ export interface BugUpdate {
   whiteboard?: string
   cf_fx_points?: number | string
   priority?: string
+  flags?: BugUpdateFlag[]
 }
 
 export interface BatchUpdateResult {
