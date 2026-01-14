@@ -8,6 +8,17 @@ import { COLUMN_NAMES } from '@/types'
 
 const NOBODY_EMAIL = 'nobody@mozilla.org'
 
+function calculateTotalPoints(bugs: BugzillaBug[]): number {
+  let total = 0
+  for (const bug of bugs) {
+    const points = bug.cf_fx_points
+    if (typeof points === 'number' && points > 0) {
+      total += points
+    }
+  }
+  return total
+}
+
 interface ColumnProps {
   column: KanbanColumn
   bugs: BugzillaBug[]
@@ -63,6 +74,7 @@ export function Column({
   const icon = columnIcons[column]
   const stagedCount = bugs.filter((bug) => stagedBugIds.has(bug.id)).length
   const countId = `${column}-count`
+  const totalPoints = useMemo(() => calculateTotalPoints(bugs), [bugs])
 
   // Filter out nobody@mozilla.org for non-backlog columns
   // Bugzilla requires a real assignee for non-backlog statuses (ASSIGNED, IN_PROGRESS, etc.)
@@ -110,6 +122,14 @@ export function Column({
           >
             {bugs.length}
           </span>
+          {totalPoints > 0 && (
+            <span
+              aria-label="total points"
+              className="rounded-full bg-accent-primary/20 px-2 py-0.5 text-sm font-bold text-accent-primary"
+            >
+              {totalPoints} pts
+            </span>
+          )}
         </div>
       </div>
 
