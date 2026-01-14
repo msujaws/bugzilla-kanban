@@ -414,11 +414,11 @@ describe('Board', () => {
       expect(flexContainer).toBeInTheDocument()
     })
 
-    it('should have padding around the board', () => {
+    it('should have vertical padding around the board', () => {
       const { container } = render(<Board {...defaultProps} />)
 
       const board = container.firstChild as HTMLElement
-      expect(board.className).toContain('p-')
+      expect(board.className).toContain('py-')
     })
   })
 
