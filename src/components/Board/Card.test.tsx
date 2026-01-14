@@ -719,4 +719,80 @@ describe('Card', () => {
       expect(priorityBadges[0]).toHaveTextContent('P1')
     })
   })
+
+  describe('qe verification indicator', () => {
+    it('should show "qe?" when no qe-verify flag exists', () => {
+      render(<Card bug={mockBug} />)
+
+      expect(screen.getByText('qe?')).toBeInTheDocument()
+    })
+
+    it('should show "qe?" when qe-verify flag has "?" status', () => {
+      const bugWithQeQuestion = {
+        ...mockBug,
+        flags: [{ name: 'qe-verify', status: '?' }],
+      }
+      render(<Card bug={bugWithQeQuestion} />)
+
+      expect(screen.getByText('qe?')).toBeInTheDocument()
+    })
+
+    it('should show "qe-" when qe-verify flag has "-" status', () => {
+      const bugWithQeMinus = {
+        ...mockBug,
+        flags: [{ name: 'qe-verify', status: '-' }],
+      }
+      render(<Card bug={bugWithQeMinus} />)
+
+      expect(screen.getByText('qe-')).toBeInTheDocument()
+    })
+
+    it('should show "qe+" when qe-verify flag has "+" status', () => {
+      const bugWithQePlus = {
+        ...mockBug,
+        flags: [{ name: 'qe-verify', status: '+' }],
+      }
+      render(<Card bug={bugWithQePlus} />)
+
+      expect(screen.getByText('qe+')).toBeInTheDocument()
+    })
+
+    it('should have wavy underline style for unknown status', () => {
+      render(<Card bug={mockBug} />)
+
+      const indicator = screen.getByText('qe?')
+      expect(indicator.className).toContain('decoration-wavy')
+    })
+
+    it('should not have wavy underline for minus status', () => {
+      const bugWithQeMinus = {
+        ...mockBug,
+        flags: [{ name: 'qe-verify', status: '-' }],
+      }
+      render(<Card bug={bugWithQeMinus} />)
+
+      const indicator = screen.getByText('qe-')
+      expect(indicator.className).not.toContain('decoration-wavy')
+    })
+
+    it('should not have wavy underline for plus status', () => {
+      const bugWithQePlus = {
+        ...mockBug,
+        flags: [{ name: 'qe-verify', status: '+' }],
+      }
+      render(<Card bug={bugWithQePlus} />)
+
+      const indicator = screen.getByText('qe+')
+      expect(indicator.className).not.toContain('decoration-wavy')
+    })
+
+    it('should be positioned in the bottom right of the card', () => {
+      render(<Card bug={mockBug} />)
+
+      const indicator = screen.getByText('qe?').closest('div')
+      expect(indicator?.className).toContain('absolute')
+      expect(indicator?.className).toContain('bottom')
+      expect(indicator?.className).toContain('right')
+    })
+  })
 })
