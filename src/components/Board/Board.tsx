@@ -18,6 +18,7 @@ import { sortBugs } from '@/lib/bugzilla/sort-bugs'
 import { filterRecentBugs } from '@/lib/bugzilla/date-filter'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
+import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 import { useBoardAssignees } from '@/hooks/use-board-assignees'
 import { useStore } from '@/store'
 
@@ -30,6 +31,7 @@ interface BoardProps {
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   onPointsChange?: (bugId: number, points: number | string | undefined) => void
   onPriorityChange?: (bugId: number, priority: string) => void
+  onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
   onInvalidMove?: (bugId: number, reason: string) => void
   isLoading?: boolean
   onApplyChanges?: () => void
@@ -52,6 +54,7 @@ export function Board({
   onAssigneeChange,
   onPointsChange,
   onPriorityChange,
+  onQeVerifyChange,
   onInvalidMove,
   isLoading = false,
   onApplyChanges,
@@ -192,6 +195,28 @@ export function Board({
       }
     }
     return priorities
+  }, [stagedChanges])
+
+  // Get bug IDs with staged qe-verify changes
+  const stagedQeVerifyBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.qeVerify) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged qe-verifies map (bugId -> new status)
+  const stagedQeVerifies = useMemo(() => {
+    const qeVerifies = new Map<number, QeVerifyStatus>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.qeVerify) {
+        qeVerifies.set(bugId, change.qeVerify.to)
+      }
+    }
+    return qeVerifies
   }, [stagedChanges])
 
   // Get all assignees from bugs on the board
@@ -551,10 +576,13 @@ export function Board({
                 stagedPoints={stagedPoints}
                 stagedPriorityBugIds={stagedPriorityBugIds}
                 stagedPriorities={stagedPriorities}
+                stagedQeVerifyBugIds={stagedQeVerifyBugIds}
+                stagedQeVerifies={stagedQeVerifies}
                 allAssignees={allAssignees}
                 onAssigneeChange={onAssigneeChange}
                 onPointsChange={onPointsChange}
                 onPriorityChange={onPriorityChange}
+                onQeVerifyChange={onQeVerifyChange}
                 isLoading={isLoading}
                 selectedIndex={
                   selectedPosition?.columnIndex === columnIndex
@@ -576,6 +604,7 @@ export function Board({
           onAssigneeChange={onAssigneeChange}
           onPointsChange={onPointsChange}
           onPriorityChange={onPriorityChange}
+          onQeVerifyChange={onQeVerifyChange}
           isLoading={isLoading}
         />
       </main>

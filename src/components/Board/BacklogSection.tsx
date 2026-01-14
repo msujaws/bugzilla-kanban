@@ -4,6 +4,7 @@ import { Card } from './Card'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
 import type { Assignee } from '@/hooks/use-board-assignees'
+import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 
 interface BacklogSectionProps {
   bugs: BugzillaBug[]
@@ -12,6 +13,7 @@ interface BacklogSectionProps {
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   onPointsChange?: (bugId: number, points: number | string | undefined) => void
   onPriorityChange?: (bugId: number, priority: string) => void
+  onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
   onBugClick?: (bug: BugzillaBug) => void
   isLoading?: boolean
   isDropTarget?: boolean
@@ -24,6 +26,7 @@ export function BacklogSection({
   onAssigneeChange,
   onPointsChange,
   onPriorityChange,
+  onQeVerifyChange,
   onBugClick,
   isLoading = false,
   isDropTarget = false,
@@ -104,6 +107,28 @@ export function BacklogSection({
     for (const [bugId, change] of stagedChanges) {
       if (change.priority) {
         map.set(bugId, change.priority.to)
+      }
+    }
+    return map
+  }, [stagedChanges])
+
+  // Get staged qe-verify bug IDs
+  const stagedQeVerifyBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.qeVerify) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged qe-verifies
+  const stagedQeVerifies = useMemo(() => {
+    const map = new Map<number, QeVerifyStatus>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.qeVerify) {
+        map.set(bugId, change.qeVerify.to)
       }
     }
     return map
@@ -192,10 +217,13 @@ export function BacklogSection({
                 stagedPoints={stagedPoints.get(bug.id)}
                 isPriorityStaged={stagedPriorityBugIds.has(bug.id)}
                 stagedPriority={stagedPriorities.get(bug.id)}
+                isQeVerifyStaged={stagedQeVerifyBugIds.has(bug.id)}
+                stagedQeVerify={stagedQeVerifies.get(bug.id)}
                 allAssignees={allAssignees}
                 onAssigneeChange={onAssigneeChange}
                 onPointsChange={onPointsChange}
                 onPriorityChange={onPriorityChange}
+                onQeVerifyChange={onQeVerifyChange}
                 onClick={onBugClick}
               />
             </div>

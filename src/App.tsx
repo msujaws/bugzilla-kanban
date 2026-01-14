@@ -10,6 +10,7 @@ import { useStore } from './store'
 import { useUrlFilters } from './hooks/use-url-filters'
 import { useBoardAssignees } from './hooks/use-board-assignees'
 import { addSprintTag, removeSprintTag } from './lib/bugzilla/sprint-tag'
+import { getQeVerifyStatus, type QeVerifyStatus } from './lib/bugzilla/qe-verify'
 
 function App() {
   // Local UI state
@@ -46,6 +47,7 @@ function App() {
   const stageWhiteboardChange = useStore((state) => state.stageWhiteboardChange)
   const stagePointsChange = useStore((state) => state.stagePointsChange)
   const stagePriorityChange = useStore((state) => state.stagePriorityChange)
+  const stageQeVerifyChange = useStore((state) => state.stageQeVerifyChange)
   const applyChanges = useStore((state) => state.applyChanges)
   const clearAllChanges = useStore((state) => state.clearAllChanges)
   const getChangeCount = useStore((state) => state.getChangeCount)
@@ -216,6 +218,18 @@ function App() {
       }
     },
     [bugs, stagePriorityChange],
+  )
+
+  // Handle qe-verify change
+  const handleQeVerifyChange = useCallback(
+    (bugId: number, newStatus: QeVerifyStatus) => {
+      const bug = bugs.find((b) => b.id === bugId)
+      if (bug) {
+        const currentStatus = getQeVerifyStatus(bug.flags)
+        stageQeVerifyChange(bugId, currentStatus, newStatus)
+      }
+    },
+    [bugs, stageQeVerifyChange],
   )
 
   // Handle invalid move attempt (e.g., unassigned bug out of backlog)
@@ -392,6 +406,7 @@ function App() {
           onAssigneeChange={handleAssigneeChange}
           onPointsChange={handlePointsChange}
           onPriorityChange={handlePriorityChange}
+          onQeVerifyChange={handleQeVerifyChange}
           onInvalidMove={handleInvalidMove}
           isLoading={isLoadingBugs}
           onApplyChanges={handleApplyChanges}
