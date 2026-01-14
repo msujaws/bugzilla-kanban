@@ -5,6 +5,7 @@ import type { StateCreator } from 'zustand'
 import { BugzillaClient } from '@/lib/bugzilla/client'
 import { StatusMapper } from '@/lib/bugzilla/status-mapper'
 import type { BugUpdate } from '@/lib/bugzilla/types'
+import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 import type { ApiKey } from '@/types/branded'
 import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
 
@@ -16,6 +17,7 @@ export interface StagedChange {
   whiteboard?: { from: string; to: string }
   points?: { from: number | string | undefined; to: number | string | undefined }
   priority?: { from: string; to: string }
+  qeVerify?: { from: QeVerifyStatus; to: QeVerifyStatus }
 }
 
 export interface ApplyResult {
@@ -39,6 +41,7 @@ export interface StagedSlice {
     toPoints: number | string | undefined,
   ) => void
   stagePriorityChange: (bugId: number, fromPriority: string, toPriority: string) => void
+  stageQeVerifyChange: (bugId: number, fromStatus: QeVerifyStatus, toStatus: QeVerifyStatus) => void
   unstageChange: (bugId: number) => void
   clearAllChanges: () => void
   applyChanges: (apiKey: ApiKey) => Promise<ApplyResult>
@@ -197,6 +200,35 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
     })
   },
 
+  // Stage a qe-verify change for a bug
+  stageQeVerifyChange: (bugId: number, fromStatus: QeVerifyStatus, toStatus: QeVerifyStatus) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      // If moving back to original status, remove the qeVerify change
+      if (fromStatus === toStatus) {
+        if (existing) {
+          const { qeVerify: _removed, ...rest } = existing
+          // Check if there are other changes remaining
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        // Add/update qeVerify change, preserve other changes
+        newChanges.set(bugId, {
+          ...existing,
+          qeVerify: { from: fromStatus, to: toStatus },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
   // Remove a staged change
   unstageChange: (bugId: number) => {
     set((state) => {
@@ -251,6 +283,14 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
 
         if (change.priority) {
           update.priority = change.priority.to
+        }
+
+        if (change.qeVerify) {
+          // Convert QeVerifyStatus to flag status
+          // plus -> '+', minus -> '-', unknown -> 'X' (remove flag)
+          const flagStatus =
+            change.qeVerify.to === 'plus' ? '+' : change.qeVerify.to === 'minus' ? '-' : 'X'
+          update.flags = [{ name: 'qe-verify', status: flagStatus }]
         }
 
         updates.push(update)
