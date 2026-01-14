@@ -348,7 +348,7 @@ function App() {
       </header>
 
       {/* Main content */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto py-6">
         {/* Filter bar */}
         <div className="mb-6">
           <FilterBar

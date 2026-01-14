@@ -508,7 +508,7 @@ export function Board({
         role="main"
         aria-label="Kanban Board"
         aria-busy={isLoading}
-        className="min-h-screen bg-bg-primary p-6"
+        className="min-h-screen bg-bg-primary py-6"
       >
         {/* Clear confirmation banner */}
         {showClearConfirmation && (
