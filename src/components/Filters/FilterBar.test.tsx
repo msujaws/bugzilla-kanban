@@ -3,6 +3,25 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FilterBar } from './FilterBar'
 
+// Mock framer-motion for AssigneeFilter
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({
+      children,
+      initial: _initial,
+      animate: _animate,
+      exit: _exit,
+      ...props
+    }: React.PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
+  },
+  AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
+}))
+
+const mockAssignees = [
+  { email: 'alice@example.com', displayName: 'Alice', count: 5 },
+  { email: 'bob@example.com', displayName: 'Bob', count: 3 },
+]
+
 describe('FilterBar', () => {
   const defaultProps = {
     whiteboardTag: '',
@@ -15,6 +34,9 @@ describe('FilterBar', () => {
     onSortOrderChange: vi.fn(),
     onApplyFilters: vi.fn(),
     isLoading: false,
+    assignees: mockAssignees,
+    selectedAssignee: null as string | null,
+    onAssigneeChange: vi.fn(),
   }
 
   beforeEach(() => {
@@ -264,6 +286,86 @@ describe('FilterBar', () => {
       render(<FilterBar {...defaultProps} sortOrder="lastChanged" />)
 
       expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument()
+    })
+  })
+
+  describe('assignee filter', () => {
+    it('should render assignee filter dropdown', () => {
+      render(<FilterBar {...defaultProps} />)
+
+      expect(screen.getByText('All Assignees')).toBeInTheDocument()
+    })
+
+    it('should show selected assignee name', () => {
+      render(<FilterBar {...defaultProps} selectedAssignee="alice@example.com" />)
+
+      // The button should contain the selected assignee name
+      expect(screen.getByRole('button', { name: /alice/i })).toBeInTheDocument()
+    })
+
+    it('should call onAssigneeChange when assignee is selected', async () => {
+      const user = userEvent.setup()
+      const onAssigneeChange = vi.fn()
+      render(<FilterBar {...defaultProps} onAssigneeChange={onAssigneeChange} />)
+
+      // Open the dropdown
+      await user.click(screen.getByText('All Assignees'))
+
+      // Select an assignee
+      await user.click(screen.getByText('Alice'))
+
+      expect(onAssigneeChange).toHaveBeenCalledWith('alice@example.com')
+    })
+
+    it('should clear assignee filter when "All Assignees" is selected', async () => {
+      const user = userEvent.setup()
+      const onAssigneeChange = vi.fn()
+      render(
+        <FilterBar
+          {...defaultProps}
+          selectedAssignee="alice@example.com"
+          onAssigneeChange={onAssigneeChange}
+        />,
+      )
+
+      // Open the dropdown (button now shows Alice)
+      await user.click(screen.getByRole('button', { name: /alice/i }))
+
+      // Select "All Assignees"
+      await user.click(screen.getByText('All Assignees'))
+
+      expect(onAssigneeChange).toHaveBeenCalledWith(null)
+    })
+
+    it('should disable assignee filter when loading', () => {
+      render(<FilterBar {...defaultProps} isLoading={true} />)
+
+      // Find the assignee filter button (contains "All Assignees" text)
+      const assigneeButton = screen.getByRole('button', { name: /all assignees/i })
+      expect(assigneeButton).toBeDisabled()
+    })
+
+    it('should show clear button when assignee filter is set', () => {
+      render(<FilterBar {...defaultProps} selectedAssignee="alice@example.com" />)
+
+      expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument()
+    })
+
+    it('should clear assignee filter when clear button is clicked', async () => {
+      const user = userEvent.setup()
+      const onAssigneeChange = vi.fn()
+      render(
+        <FilterBar
+          {...defaultProps}
+          selectedAssignee="alice@example.com"
+          onAssigneeChange={onAssigneeChange}
+        />,
+      )
+
+      const clearButton = screen.getByRole('button', { name: /clear/i })
+      await user.click(clearButton)
+
+      expect(onAssigneeChange).toHaveBeenCalledWith(null)
     })
   })
 })

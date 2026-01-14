@@ -1,5 +1,7 @@
 import type { KeyboardEvent } from 'react'
 import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
+import type { Assignee } from '@/hooks/use-board-assignees'
+import { AssigneeFilter } from './AssigneeFilter'
 
 interface FilterBarProps {
   whiteboardTag: string
@@ -12,6 +14,9 @@ interface FilterBarProps {
   onSortOrderChange: (value: SortOrder) => void
   onApplyFilters: () => void
   isLoading: boolean
+  assignees?: Assignee[]
+  selectedAssignee?: string | null
+  onAssigneeChange?: (email: string | null) => void
 }
 
 export function FilterBar({
@@ -25,9 +30,16 @@ export function FilterBar({
   onSortOrderChange,
   onApplyFilters,
   isLoading,
+  assignees = [],
+  selectedAssignee = null,
+  onAssigneeChange,
 }: FilterBarProps) {
   const hasFilters =
-    whiteboardTag !== '' || component !== '' || excludeMetaBugs || sortOrder !== 'priority'
+    whiteboardTag !== '' ||
+    component !== '' ||
+    excludeMetaBugs ||
+    sortOrder !== 'priority' ||
+    selectedAssignee !== null
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter') {
@@ -40,6 +52,9 @@ export function FilterBar({
     onComponentChange('')
     onExcludeMetaBugsChange(false)
     onSortOrderChange('priority')
+    if (onAssigneeChange) {
+      onAssigneeChange(null)
+    }
   }
 
   return (
@@ -89,6 +104,19 @@ export function FilterBar({
             className="w-full rounded border border-bg-tertiary bg-bg-primary px-3 py-2 text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
+
+        {/* Assignee filter */}
+        {onAssigneeChange && (
+          <div className="flex flex-col self-end">
+            <label className="mb-1 block text-sm text-text-secondary">Assignee</label>
+            <AssigneeFilter
+              assignees={assignees}
+              selectedAssignee={selectedAssignee}
+              onSelect={onAssigneeChange}
+              disabled={isLoading}
+            />
+          </div>
+        )}
 
         {/* Exclude meta bugs checkbox */}
         <div className="flex items-center gap-2 self-end pb-2">
