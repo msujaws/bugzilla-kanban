@@ -278,7 +278,7 @@ export function Card({
       </div>
 
       {/* Summary */}
-      <p className="mb-3 truncate text-sm font-medium text-text-primary" title={bug.summary}>
+      <p className="mb-3 line-clamp-2 text-sm font-medium text-text-primary" title={bug.summary}>
         {bug.summary}
       </p>
 

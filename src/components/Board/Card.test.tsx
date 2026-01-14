@@ -314,7 +314,7 @@ describe('Card', () => {
   })
 
   describe('truncation', () => {
-    it('should truncate long summaries', () => {
+    it('should clamp long summaries to two lines', () => {
       const longSummaryBug = {
         ...mockBug,
         summary:
@@ -323,7 +323,7 @@ describe('Card', () => {
       render(<Card bug={longSummaryBug} />)
 
       const summary = screen.getByText(longSummaryBug.summary)
-      expect(summary.className).toContain('truncate')
+      expect(summary.className).toContain('line-clamp-2')
     })
 
     it('should show full summary in tooltip on hover', () => {
