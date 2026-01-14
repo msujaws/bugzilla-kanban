@@ -4,9 +4,10 @@ import { createNotificationsSlice, type NotificationsSlice } from './slices/noti
 import { createAuthSlice, type AuthSlice } from './slices/auth-slice'
 import { createBugsSlice, type BugsSlice } from './slices/bugs-slice'
 import { createStagedSlice, type StagedSlice } from './slices/staged-slice'
+import { createUISlice, type UISlice } from './slices/ui-slice'
 
 // Combined store type
-export type AppStore = NotificationsSlice & AuthSlice & BugsSlice & StagedSlice
+export type AppStore = NotificationsSlice & AuthSlice & BugsSlice & StagedSlice & UISlice
 
 // Combined slice creator
 const createSlices: StateCreator<AppStore> = (...args) => ({
@@ -14,6 +15,7 @@ const createSlices: StateCreator<AppStore> = (...args) => ({
   ...createAuthSlice(...args),
   ...createBugsSlice(...args),
   ...createStagedSlice(...args),
+  ...createUISlice(...args),
 })
 
 // Create the store - only enable devtools in development
