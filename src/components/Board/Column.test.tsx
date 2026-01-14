@@ -341,6 +341,68 @@ describe('Column', () => {
     })
   })
 
+  describe('points total', () => {
+    const bugsWithPoints: BugzillaBug[] = [
+      {
+        id: 12_345,
+        summary: 'Fix login button',
+        status: 'NEW',
+        assigned_to: 'dev@example.com',
+        priority: 'P2',
+        severity: 'major',
+        component: 'Auth',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:30:00Z',
+        cf_fx_points: 5,
+      },
+      {
+        id: 12_346,
+        summary: 'Update documentation',
+        status: 'NEW',
+        assigned_to: 'writer@example.com',
+        priority: 'P3',
+        severity: 'normal',
+        component: 'Docs',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-14T09:00:00Z',
+        cf_fx_points: 3,
+      },
+    ]
+
+    it('should display total points when bugs have points', () => {
+      render(<Column {...defaultProps} bugs={bugsWithPoints} />)
+      expect(screen.getByText('8 pts')).toBeInTheDocument()
+    })
+
+    it('should not display points badge when total is 0', () => {
+      render(<Column {...defaultProps} bugs={mockBugs} />)
+      expect(screen.queryByText(/pts/i)).not.toBeInTheDocument()
+    })
+
+    it('should handle string points like "?" by excluding them from total', () => {
+      const bugsWithQuestionMark: BugzillaBug[] = [
+        { ...bugsWithPoints[0], cf_fx_points: '?' },
+        { ...bugsWithPoints[1], cf_fx_points: 5 },
+      ]
+      render(<Column {...defaultProps} bugs={bugsWithQuestionMark} />)
+      expect(screen.getByText('5 pts')).toBeInTheDocument()
+    })
+
+    it('should handle undefined points', () => {
+      const bugsWithMixed: BugzillaBug[] = [
+        { ...bugsWithPoints[0], cf_fx_points: 8 },
+        { ...bugsWithPoints[1], cf_fx_points: undefined },
+      ]
+      render(<Column {...defaultProps} bugs={bugsWithMixed} />)
+      expect(screen.getByText('8 pts')).toBeInTheDocument()
+    })
+
+    it('should display points badge with aria-label for accessibility', () => {
+      render(<Column {...defaultProps} bugs={bugsWithPoints} />)
+      expect(screen.getByLabelText(/total points/i)).toBeInTheDocument()
+    })
+  })
+
   describe('assignee filtering', () => {
     const assigneesWithNobody = [
       { email: 'nobody@mozilla.org', displayName: 'Nobody' },
