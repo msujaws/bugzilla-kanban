@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import { formatAssignee } from '@/lib/bugzilla/display-utils'
+import { getQeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 import { AssigneePicker } from './AssigneePicker'
 import { PointsPicker } from './PointsPicker'
 import { PriorityPicker } from './PriorityPicker'
@@ -196,7 +197,7 @@ export function Card({
       tabIndex={onClick || (allAssignees && onAssigneeChange) ? 0 : undefined}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className={`cursor-grab rounded-lg bg-bg-secondary p-4 shadow-lg transition-all active:cursor-grabbing ${
+      className={`relative cursor-grab rounded-lg bg-bg-secondary p-4 shadow-lg transition-all active:cursor-grabbing ${
         onClick ? 'cursor-pointer' : ''
       } ${getStateClasses()}`}
     >
@@ -308,6 +309,24 @@ export function Card({
           </>
         )}
       </div>
+
+      {/* QE Verification Indicator */}
+      {(() => {
+        const qeStatus = getQeVerifyStatus(bug.flags)
+        const displayText = qeStatus === 'unknown' ? 'qe?' : qeStatus === 'minus' ? 'qe-' : 'qe+'
+        const isUnknown = qeStatus === 'unknown'
+        return (
+          <div className="absolute bottom-2 right-2">
+            <span
+              className={`text-xs text-text-tertiary ${
+                isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
+              }`}
+            >
+              {displayText}
+            </span>
+          </div>
+        )
+      })()}
 
       {/* Assignee Picker */}
       {allAssignees && (
