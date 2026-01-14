@@ -121,6 +121,9 @@ export class BugzillaClient {
         if (update.priority !== undefined) {
           changes.priority = update.priority
         }
+        if (update.flags !== undefined) {
+          changes.flags = update.flags
+        }
         await this.updateBug(bugId, changes)
         result.successful.push(update.id)
       } catch (error) {
