@@ -64,7 +64,7 @@ describe('App', () => {
     it('should render the app title', () => {
       render(<App />)
 
-      expect(screen.getByText('Bugzilla Kanban')).toBeInTheDocument()
+      expect(screen.getByText('BoardZilla')).toBeInTheDocument()
     })
 
     it('should render the tagline', () => {
@@ -92,7 +92,7 @@ describe('App', () => {
     it('should render the header with title', () => {
       render(<App />)
 
-      expect(screen.getByText('Bugzilla Kanban')).toBeInTheDocument()
+      expect(screen.getByText('BoardZilla')).toBeInTheDocument()
     })
 
     it('should show filter bar', () => {

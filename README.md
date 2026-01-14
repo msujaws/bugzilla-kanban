@@ -1,4 +1,4 @@
-# Bugzilla Kanban
+# BoardZilla
 
 > Puttin' bugz in their place since '26
 

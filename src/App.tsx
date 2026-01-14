@@ -285,7 +285,7 @@ function App() {
     return (
       <div className="min-h-screen bg-bg-primary text-text-primary">
         <div className="container mx-auto px-4 py-8">
-          <h1 className="mb-2 text-center text-4xl font-bold">Bugzilla Kanban</h1>
+          <h1 className="mb-2 text-center text-4xl font-bold">BoardZilla</h1>
           <p className="mb-4 text-center text-text-secondary">
             Puttin' bugz in their place since '26 😎
           </p>
@@ -332,7 +332,7 @@ function App() {
       <header className="border-b border-bg-tertiary bg-bg-secondary px-4 py-4">
         <div className="container mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Bugzilla Kanban</h1>
+            <h1 className="text-2xl font-bold">BoardZilla</h1>
             <div className="flex items-center gap-3 text-sm">
               <span className="text-text-secondary">Puttin' bugz in their place since '26 😎</span>
               <span className="text-text-tertiary">•</span>

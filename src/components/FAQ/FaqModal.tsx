@@ -10,7 +10,7 @@ const faqs = [
   {
     question: 'What is this app?',
     answer:
-      'Bugzilla Kanban is a visual board for managing Mozilla Bugzilla bugs. It lets you drag and drop bugs between status columns and batch-update them in Bugzilla.',
+      'BoardZilla is a visual board for managing Mozilla Bugzilla bugs. It lets you drag and drop bugs between status columns and batch-update them in Bugzilla.',
   },
   {
     question: 'How do I get a Bugzilla API key?',
