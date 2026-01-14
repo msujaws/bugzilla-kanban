@@ -4,10 +4,11 @@ import { CSS } from '@dnd-kit/utilities'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import { formatAssignee } from '@/lib/bugzilla/display-utils'
-import { getQeVerifyStatus } from '@/lib/bugzilla/qe-verify'
+import { getQeVerifyStatus, type QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 import { AssigneePicker } from './AssigneePicker'
 import { PointsPicker } from './PointsPicker'
 import { PriorityPicker } from './PriorityPicker'
+import { QeVerifyPicker } from './QeVerifyPicker'
 
 const BUGZILLA_BUG_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?id='
 
@@ -23,11 +24,14 @@ interface CardProps {
   stagedPoints?: number | string
   isPriorityStaged?: boolean
   stagedPriority?: string
+  isQeVerifyStaged?: boolean
+  stagedQeVerify?: QeVerifyStatus
   onClick?: (bug: BugzillaBug) => void
   allAssignees?: Assignee[]
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   onPointsChange?: (bugId: number, points: number | string | undefined) => void
   onPriorityChange?: (bugId: number, priority: string) => void
+  onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
 }
 
 const priorityColors: Record<string, string> = {
@@ -60,19 +64,24 @@ export function Card({
   stagedPoints,
   isPriorityStaged = false,
   stagedPriority,
+  isQeVerifyStaged = false,
+  stagedQeVerify,
   onClick,
   allAssignees,
   onAssigneeChange,
   onPointsChange,
   onPriorityChange,
+  onQeVerifyChange,
 }: CardProps) {
   const [isAssigneePickerOpen, setIsAssigneePickerOpen] = useState(false)
   const [isPointsPickerOpen, setIsPointsPickerOpen] = useState(false)
   const [isPriorityPickerOpen, setIsPriorityPickerOpen] = useState(false)
+  const [isQeVerifyPickerOpen, setIsQeVerifyPickerOpen] = useState(false)
   const [anchorPosition, setAnchorPosition] = useState<{ x: number; y: number } | undefined>()
   const assigneeButtonRef = useRef<HTMLButtonElement>(null)
   const pointsButtonRef = useRef<HTMLButtonElement>(null)
   const priorityButtonRef = useRef<HTMLButtonElement>(null)
+  const qeVerifyButtonRef = useRef<HTMLButtonElement>(null)
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: bug.id,
   })
@@ -101,6 +110,14 @@ export function Card({
     setIsPriorityPickerOpen(true)
   }, [])
 
+  const openQeVerifyPicker = useCallback(() => {
+    if (qeVerifyButtonRef.current) {
+      const rect = qeVerifyButtonRef.current.getBoundingClientRect()
+      setAnchorPosition({ x: rect.left, y: rect.bottom + 4 })
+    }
+    setIsQeVerifyPickerOpen(true)
+  }, [])
+
   const handleAssigneeButtonClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     openAssigneePicker()
@@ -114,6 +131,11 @@ export function Card({
   const handlePriorityButtonClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     openPriorityPicker()
+  }
+
+  const handleQeVerifyButtonClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    openQeVerifyPicker()
   }
 
   const handleAssigneeSelect = (email: string) => {
@@ -135,6 +157,13 @@ export function Card({
       onPriorityChange(bug.id, priority)
     }
     setIsPriorityPickerOpen(false)
+  }
+
+  const handleQeVerifySelect = (status: QeVerifyStatus) => {
+    if (onQeVerifyChange) {
+      onQeVerifyChange(bug.id, status)
+    }
+    setIsQeVerifyPickerOpen(false)
   }
 
   // Display staged values if available, otherwise original
@@ -312,18 +341,35 @@ export function Card({
 
       {/* QE Verification Indicator */}
       {(() => {
-        const qeStatus = getQeVerifyStatus(bug.flags)
-        const displayText = qeStatus === 'unknown' ? 'qe?' : qeStatus === 'minus' ? 'qe-' : 'qe+'
-        const isUnknown = qeStatus === 'unknown'
+        const currentQeStatus = getQeVerifyStatus(bug.flags)
+        const displayedQeStatus =
+          isQeVerifyStaged && stagedQeVerify ? stagedQeVerify : currentQeStatus
+        const displayText =
+          displayedQeStatus === 'unknown' ? 'qe?' : displayedQeStatus === 'minus' ? 'qe-' : 'qe+'
+        const isUnknown = displayedQeStatus === 'unknown'
         return (
           <div className="absolute bottom-2 right-2">
-            <span
-              className={`text-xs text-text-tertiary ${
-                isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
-              }`}
-            >
-              {displayText}
-            </span>
+            {onQeVerifyChange ? (
+              <button
+                ref={qeVerifyButtonRef}
+                type="button"
+                aria-label="Change QE verification"
+                onClick={handleQeVerifyButtonClick}
+                className={`text-xs text-text-tertiary transition-colors hover:text-text-secondary ${
+                  isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
+                } ${isQeVerifyStaged ? 'ring-2 ring-accent-staged rounded' : ''}`}
+              >
+                {displayText}
+              </button>
+            ) : (
+              <span
+                className={`text-xs text-text-tertiary ${
+                  isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
+                }`}
+              >
+                {displayText}
+              </span>
+            )}
           </div>
         )
       })()}
@@ -364,6 +410,19 @@ export function Card({
           }}
           onSelect={handlePrioritySelect}
           currentPriority={bug.priority}
+          anchorPosition={anchorPosition}
+        />
+      )}
+
+      {/* QE Verify Picker */}
+      {onQeVerifyChange && (
+        <QeVerifyPicker
+          isOpen={isQeVerifyPickerOpen}
+          onClose={() => {
+            setIsQeVerifyPickerOpen(false)
+          }}
+          onSelect={handleQeVerifySelect}
+          currentStatus={getQeVerifyStatus(bug.flags)}
           anchorPosition={anchorPosition}
         />
       )}
