@@ -941,4 +941,86 @@ describe('Board', () => {
     // since backlog is separate from the board and keyboard navigation only works
     // within the 4 board columns (todo, in-progress, in-testing, done)
   })
+
+  describe('assignee filtering', () => {
+    const bugsWithDifferentAssignees: BugzillaBug[] = [
+      {
+        id: 100,
+        summary: 'Bug by Alice',
+        status: 'ASSIGNED',
+        assigned_to: 'alice@example.com',
+        priority: 'P2',
+        severity: 'major',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+      {
+        id: 101,
+        summary: 'Bug by Bob',
+        status: 'ASSIGNED',
+        assigned_to: 'bob@example.com',
+        priority: 'P3',
+        severity: 'normal',
+        component: 'UI',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+      {
+        id: 102,
+        summary: 'Another bug by Alice',
+        status: 'IN_PROGRESS',
+        assigned_to: 'alice@example.com',
+        priority: 'P1',
+        severity: 'critical',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+    ]
+
+    it('should show all bugs when no assignee filter is set', () => {
+      render(<Board {...defaultProps} bugs={bugsWithDifferentAssignees} />)
+
+      expect(screen.getByText('Bug by Alice')).toBeInTheDocument()
+      expect(screen.getByText('Bug by Bob')).toBeInTheDocument()
+      expect(screen.getByText('Another bug by Alice')).toBeInTheDocument()
+    })
+
+    it('should filter bugs by assignee when filter is set', async () => {
+      // Import the actual store to set the filter
+      const { useStore } = await import('@/store')
+
+      // Set the assignee filter
+      useStore.getState().setAssigneeFilter('alice@example.com')
+
+      render(<Board {...defaultProps} bugs={bugsWithDifferentAssignees} />)
+
+      // Alice's bugs should be visible
+      expect(screen.getByText('Bug by Alice')).toBeInTheDocument()
+      expect(screen.getByText('Another bug by Alice')).toBeInTheDocument()
+
+      // Bob's bug should not be visible
+      expect(screen.queryByText('Bug by Bob')).not.toBeInTheDocument()
+
+      // Clean up: reset filter
+      useStore.getState().setAssigneeFilter(null)
+    })
+
+    it('should show empty columns when no bugs match the filter', async () => {
+      const { useStore } = await import('@/store')
+
+      // Set filter to a non-existent assignee
+      useStore.getState().setAssigneeFilter('nonexistent@example.com')
+
+      render(<Board {...defaultProps} bugs={bugsWithDifferentAssignees} />)
+
+      // None of the bugs should be visible
+      expect(screen.queryByText('Bug by Alice')).not.toBeInTheDocument()
+      expect(screen.queryByText('Bug by Bob')).not.toBeInTheDocument()
+
+      // Clean up
+      useStore.getState().setAssigneeFilter(null)
+    })
+  })
 })

@@ -58,6 +58,7 @@ export function Board({
   onClearChanges,
 }: BoardProps) {
   const sortOrder = useStore((state) => state.filters.sortOrder)
+  const assigneeFilter = useStore((state) => state.assigneeFilter)
   const [activeBug, setActiveBug] = useState<BugzillaBug | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<SelectedPosition | null>(null)
   const [isGrabbing, setIsGrabbing] = useState(false)
@@ -78,6 +79,12 @@ export function Board({
   // All available columns including backlog (for bug distribution)
   const allColumns = statusMapper.getAvailableColumns()
 
+  // Filter bugs by assignee if filter is set
+  const filteredBugs = useMemo(() => {
+    if (!assigneeFilter) return bugs
+    return bugs.filter((bug) => bug.assigned_to === assigneeFilter)
+  }, [bugs, assigneeFilter])
+
   // Group bugs by column based on their status (with staged changes applied)
   const bugsByColumn = useMemo(() => {
     const grouped = new Map<KanbanColumn, BugzillaBug[]>()
@@ -88,7 +95,7 @@ export function Board({
     }
 
     // Distribute bugs to their columns (considering staged status changes)
-    for (const bug of bugs) {
+    for (const bug of filteredBugs) {
       const stagedChange = stagedChanges.get(bug.id)
       // If bug has a staged status change, show it in the target column
       const column = stagedChange?.status
@@ -110,7 +117,7 @@ export function Board({
     }
 
     return grouped
-  }, [bugs, stagedChanges, sortOrder, allColumns])
+  }, [filteredBugs, stagedChanges, sortOrder, allColumns])
 
   // Get all staged bug IDs for highlighting
   const stagedBugIds = useMemo(() => {
