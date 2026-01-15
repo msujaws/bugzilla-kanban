@@ -113,7 +113,7 @@ export function FilterBar({
         )}
 
         {/* Sort order */}
-        <div className="flex items-center gap-2 self-end pb-2">
+        <div className="flex items-center gap-2 self-end">
           <div role="group" aria-label="Sort order" className="flex">
             <button
               type="button"
@@ -122,7 +122,7 @@ export function FilterBar({
                 onSortOrderChange('priority')
               }}
               disabled={isLoading}
-              className={`rounded-l border border-r-0 px-3 py-1.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`rounded-l border border-r-0 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 sortOrder === 'priority'
                   ? 'border-accent-primary bg-accent-primary text-white'
                   : 'border-bg-tertiary bg-bg-primary text-text-secondary hover:bg-bg-tertiary'
@@ -137,7 +137,7 @@ export function FilterBar({
                 onSortOrderChange('lastChanged')
               }}
               disabled={isLoading}
-              className={`rounded-r border px-3 py-1.5 text-sm whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`rounded-r border px-3 py-2 text-sm whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 sortOrder === 'lastChanged'
                   ? 'border-accent-primary bg-accent-primary text-white'
                   : 'border-bg-tertiary bg-bg-primary text-text-secondary hover:bg-bg-tertiary'
@@ -165,7 +165,7 @@ export function FilterBar({
             type="button"
             onClick={onApplyFilters}
             disabled={isLoading}
-            className="rounded bg-accent-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-accent-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded border border-transparent bg-accent-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-accent-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? (
               <>
