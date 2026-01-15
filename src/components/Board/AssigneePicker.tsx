@@ -1,11 +1,15 @@
 import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Assignee } from '@/hooks/use-board-assignees'
+import { usePopupPosition } from '@/hooks/use-popup-position'
 
 interface AnchorPosition {
   x: number
   y: number
 }
+
+const POPUP_WIDTH = 288 // w-72
+const POPUP_HEIGHT = 300 // estimate for header + list
 
 interface AssigneePickerProps {
   isOpen: boolean
@@ -24,6 +28,12 @@ export function AssigneePicker({
   currentAssignee,
   anchorPosition,
 }: AssigneePickerProps) {
+  const adjustedPosition = usePopupPosition({
+    anchorPosition,
+    popupWidth: POPUP_WIDTH,
+    popupHeight: POPUP_HEIGHT,
+  })
+
   // Handle Escape key
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -63,13 +73,13 @@ export function AssigneePicker({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             className={`absolute z-50 max-h-64 w-72 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary ${
-              anchorPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
+              adjustedPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
             }`}
             style={
-              anchorPosition
+              adjustedPosition
                 ? {
-                    left: `${anchorPosition.x.toString()}px`,
-                    top: `${anchorPosition.y.toString()}px`,
+                    left: `${adjustedPosition.x.toString()}px`,
+                    top: `${adjustedPosition.y.toString()}px`,
                   }
                 : undefined
             }

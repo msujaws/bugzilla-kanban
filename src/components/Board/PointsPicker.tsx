@@ -1,10 +1,14 @@
 import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { usePopupPosition } from '@/hooks/use-popup-position'
 
 interface AnchorPosition {
   x: number
   y: number
 }
+
+const POPUP_WIDTH = 192 // w-48
+const POPUP_HEIGHT = 300 // estimate for header + list
 
 interface PointsPickerProps {
   isOpen: boolean
@@ -33,6 +37,12 @@ export function PointsPicker({
   currentPoints,
   anchorPosition,
 }: PointsPickerProps) {
+  const adjustedPosition = usePopupPosition({
+    anchorPosition,
+    popupWidth: POPUP_WIDTH,
+    popupHeight: POPUP_HEIGHT,
+  })
+
   // Handle Escape key
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -72,13 +82,13 @@ export function PointsPicker({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             className={`absolute z-50 w-48 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary ${
-              anchorPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
+              adjustedPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
             }`}
             style={
-              anchorPosition
+              adjustedPosition
                 ? {
-                    left: `${anchorPosition.x.toString()}px`,
-                    top: `${anchorPosition.y.toString()}px`,
+                    left: `${adjustedPosition.x.toString()}px`,
+                    top: `${adjustedPosition.y.toString()}px`,
                   }
                 : undefined
             }
