@@ -844,13 +844,15 @@ describe('Card', () => {
       expect(indicator.className).not.toContain('decoration-wavy')
     })
 
-    it('should be positioned in the bottom right of the card', () => {
+    it('should be in the same row as assignee, aligned to the right', () => {
       render(<Card bug={mockBug} />)
 
-      const indicator = screen.getByText('qe?').closest('div')
-      expect(indicator?.className).toContain('absolute')
-      expect(indicator?.className).toContain('bottom')
-      expect(indicator?.className).toContain('right')
+      // QE indicator should be in the same row as the assignee
+      const assigneeRow = screen.getByText('qe?').closest('div')
+      expect(assigneeRow?.className).toContain('flex')
+      // The indicator should have flex-shrink-0 to stay on the right
+      const indicator = screen.getByText('qe?')
+      expect(indicator.className).toContain('flex-shrink-0')
     })
 
     it('should make qe indicator clickable when onQeVerifyChange is provided', () => {

@@ -358,7 +358,7 @@ export function Card({
         </span>
       </div>
 
-      {/* Assignee */}
+      {/* Assignee and QE Verification row */}
       <div className="flex items-center gap-2 text-xs text-text-tertiary">
         {allAssignees && onAssigneeChange ? (
           <button
@@ -376,47 +376,43 @@ export function Card({
             </span>
           </button>
         ) : (
-          <>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="material-icons text-sm">person</span>
             <span className="min-w-0 flex-1 truncate">{formatAssignee(displayedAssignee)}</span>
-          </>
-        )}
-      </div>
-
-      {/* QE Verification Indicator */}
-      {(() => {
-        const currentQeStatus = getQeVerifyStatus(bug.flags)
-        const displayedQeStatus =
-          isQeVerifyStaged && stagedQeVerify ? stagedQeVerify : currentQeStatus
-        const displayText =
-          displayedQeStatus === 'unknown' ? 'qe?' : displayedQeStatus === 'minus' ? 'qe-' : 'qe+'
-        const isUnknown = displayedQeStatus === 'unknown'
-        return (
-          <div className="absolute bottom-2 right-2">
-            {onQeVerifyChange ? (
-              <button
-                ref={qeVerifyButtonRef}
-                type="button"
-                aria-label="Change QE verification"
-                onClick={handleQeVerifyButtonClick}
-                className={`text-xs text-text-tertiary transition-colors hover:text-text-secondary ${
-                  isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
-                } ${isQeVerifyStaged ? 'ring-2 ring-accent-staged rounded' : ''}`}
-              >
-                {displayText}
-              </button>
-            ) : (
-              <span
-                className={`text-xs text-text-tertiary ${
-                  isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
-                }`}
-              >
-                {displayText}
-              </span>
-            )}
           </div>
-        )
-      })()}
+        )}
+
+        {/* QE Verification Indicator */}
+        {(() => {
+          const currentQeStatus = getQeVerifyStatus(bug.flags)
+          const displayedQeStatus =
+            isQeVerifyStaged && stagedQeVerify ? stagedQeVerify : currentQeStatus
+          const displayText =
+            displayedQeStatus === 'unknown' ? 'qe?' : displayedQeStatus === 'minus' ? 'qe-' : 'qe+'
+          const isUnknown = displayedQeStatus === 'unknown'
+          return onQeVerifyChange ? (
+            <button
+              ref={qeVerifyButtonRef}
+              type="button"
+              aria-label="Change QE verification"
+              onClick={handleQeVerifyButtonClick}
+              className={`flex-shrink-0 text-xs text-text-tertiary transition-colors hover:text-text-secondary ${
+                isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
+              } ${isQeVerifyStaged ? 'ring-2 ring-accent-staged rounded' : ''}`}
+            >
+              {displayText}
+            </button>
+          ) : (
+            <span
+              className={`flex-shrink-0 text-xs text-text-tertiary ${
+                isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
+              }`}
+            >
+              {displayText}
+            </span>
+          )
+        })()}
+      </div>
 
       {/* Assignee Picker */}
       {allAssignees && (
