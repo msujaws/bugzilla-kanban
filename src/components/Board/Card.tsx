@@ -8,6 +8,7 @@ import { getQeVerifyStatus, type QeVerifyStatus } from '@/lib/bugzilla/qe-verify
 import { AssigneePicker } from './AssigneePicker'
 import { PointsPicker } from './PointsPicker'
 import { PriorityPicker } from './PriorityPicker'
+import { SeverityPicker } from './SeverityPicker'
 import { QeVerifyPicker } from './QeVerifyPicker'
 
 const BUGZILLA_BUG_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?id='
@@ -24,6 +25,8 @@ interface CardProps {
   stagedPoints?: number | string
   isPriorityStaged?: boolean
   stagedPriority?: string
+  isSeverityStaged?: boolean
+  stagedSeverity?: string
   isQeVerifyStaged?: boolean
   stagedQeVerify?: QeVerifyStatus
   onClick?: (bug: BugzillaBug) => void
@@ -31,6 +34,7 @@ interface CardProps {
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   onPointsChange?: (bugId: number, points: number | string | undefined) => void
   onPriorityChange?: (bugId: number, priority: string) => void
+  onSeverityChange?: (bugId: number, severity: string) => void
   onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
 }
 
@@ -64,6 +68,8 @@ export function Card({
   stagedPoints,
   isPriorityStaged = false,
   stagedPriority,
+  isSeverityStaged = false,
+  stagedSeverity,
   isQeVerifyStaged = false,
   stagedQeVerify,
   onClick,
@@ -71,16 +77,19 @@ export function Card({
   onAssigneeChange,
   onPointsChange,
   onPriorityChange,
+  onSeverityChange,
   onQeVerifyChange,
 }: CardProps) {
   const [isAssigneePickerOpen, setIsAssigneePickerOpen] = useState(false)
   const [isPointsPickerOpen, setIsPointsPickerOpen] = useState(false)
   const [isPriorityPickerOpen, setIsPriorityPickerOpen] = useState(false)
+  const [isSeverityPickerOpen, setIsSeverityPickerOpen] = useState(false)
   const [isQeVerifyPickerOpen, setIsQeVerifyPickerOpen] = useState(false)
   const [anchorPosition, setAnchorPosition] = useState<{ x: number; y: number } | undefined>()
   const assigneeButtonRef = useRef<HTMLButtonElement>(null)
   const pointsButtonRef = useRef<HTMLButtonElement>(null)
   const priorityButtonRef = useRef<HTMLButtonElement>(null)
+  const severityButtonRef = useRef<HTMLButtonElement>(null)
   const qeVerifyButtonRef = useRef<HTMLButtonElement>(null)
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: bug.id,
@@ -110,6 +119,14 @@ export function Card({
     setIsPriorityPickerOpen(true)
   }, [])
 
+  const openSeverityPicker = useCallback(() => {
+    if (severityButtonRef.current) {
+      const rect = severityButtonRef.current.getBoundingClientRect()
+      setAnchorPosition({ x: rect.left, y: rect.bottom + 4 })
+    }
+    setIsSeverityPickerOpen(true)
+  }, [])
+
   const openQeVerifyPicker = useCallback(() => {
     if (qeVerifyButtonRef.current) {
       const rect = qeVerifyButtonRef.current.getBoundingClientRect()
@@ -131,6 +148,11 @@ export function Card({
   const handlePriorityButtonClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     openPriorityPicker()
+  }
+
+  const handleSeverityButtonClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    openSeverityPicker()
   }
 
   const handleQeVerifyButtonClick = (event: React.MouseEvent) => {
@@ -159,6 +181,13 @@ export function Card({
     setIsPriorityPickerOpen(false)
   }
 
+  const handleSeveritySelect = (severity: string) => {
+    if (onSeverityChange) {
+      onSeverityChange(bug.id, severity)
+    }
+    setIsSeverityPickerOpen(false)
+  }
+
   const handleQeVerifySelect = (status: QeVerifyStatus) => {
     if (onQeVerifyChange) {
       onQeVerifyChange(bug.id, status)
@@ -171,9 +200,10 @@ export function Card({
   const displayedPoints =
     isPointsStaged && stagedPoints !== undefined ? stagedPoints : bug.cf_fx_points
   const displayedPriority = isPriorityStaged && stagedPriority ? stagedPriority : bug.priority
+  const displayedSeverity = isSeverityStaged && stagedSeverity ? stagedSeverity : bug.severity
 
   const priorityColor = priorityColors[displayedPriority] ?? 'bg-priority-p5'
-  const severityColor = severityColors[bug.severity] ?? 'text-text-tertiary'
+  const severityColor = severityColors[displayedSeverity] ?? 'text-text-tertiary'
 
   const style = transform
     ? {
@@ -304,9 +334,25 @@ export function Card({
         )}
 
         {/* Severity badge */}
-        <span className={`${severityColor} rounded bg-bg-tertiary px-2 py-0.5 text-xs font-medium`}>
-          {bug.severity}
-        </span>
+        {onSeverityChange ? (
+          <button
+            ref={severityButtonRef}
+            type="button"
+            aria-label="Change severity"
+            onClick={handleSeverityButtonClick}
+            className={`${severityColor} rounded bg-bg-tertiary px-2 py-0.5 text-xs font-medium transition-colors hover:opacity-80 ${
+              isSeverityStaged ? 'ring-2 ring-accent-staged' : ''
+            }`}
+          >
+            {displayedSeverity}
+          </button>
+        ) : (
+          <span
+            className={`${severityColor} rounded bg-bg-tertiary px-2 py-0.5 text-xs font-medium`}
+          >
+            {displayedSeverity}
+          </span>
+        )}
 
         {/* Component badge */}
         <span className="rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary">
@@ -410,6 +456,19 @@ export function Card({
           }}
           onSelect={handlePrioritySelect}
           currentPriority={bug.priority}
+          anchorPosition={anchorPosition}
+        />
+      )}
+
+      {/* Severity Picker */}
+      {onSeverityChange && (
+        <SeverityPicker
+          isOpen={isSeverityPickerOpen}
+          onClose={() => {
+            setIsSeverityPickerOpen(false)
+          }}
+          onSelect={handleSeveritySelect}
+          currentSeverity={bug.severity}
           anchorPosition={anchorPosition}
         />
       )}

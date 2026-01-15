@@ -720,6 +720,74 @@ describe('Card', () => {
     })
   })
 
+  describe('severity picker', () => {
+    it('should make severity badge clickable when onSeverityChange is provided', () => {
+      render(<Card bug={mockBug} onSeverityChange={vi.fn()} />)
+
+      expect(screen.getByLabelText('Change severity')).toBeInTheDocument()
+    })
+
+    it('should not make severity badge clickable when onSeverityChange is not provided', () => {
+      render(<Card bug={mockBug} />)
+
+      expect(screen.queryByLabelText('Change severity')).not.toBeInTheDocument()
+    })
+
+    it('should open picker when severity badge is clicked', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} onSeverityChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change severity'))
+
+      expect(screen.getByRole('listbox', { name: /severity/i })).toBeInTheDocument()
+    })
+
+    it('should call onSeverityChange when severity is selected', async () => {
+      const user = userEvent.setup()
+      const onSeverityChange = vi.fn()
+      render(<Card bug={mockBug} onSeverityChange={onSeverityChange} />)
+
+      await user.click(screen.getByLabelText('Change severity'))
+      await user.click(screen.getByText('critical'))
+
+      expect(onSeverityChange).toHaveBeenCalledWith(mockBug.id, 'critical')
+    })
+
+    it('should show isSeverityStaged indicator when severity is staged', () => {
+      render(<Card bug={mockBug} onSeverityChange={vi.fn()} isSeverityStaged={true} />)
+
+      const button = screen.getByLabelText('Change severity')
+      expect(button.className).toContain('ring-accent-staged')
+    })
+
+    it('should display staged severity when isSeverityStaged is true', () => {
+      render(
+        <Card
+          bug={mockBug}
+          onSeverityChange={vi.fn()}
+          isSeverityStaged={true}
+          stagedSeverity="blocker"
+        />,
+      )
+
+      // Should show staged severity, not original major
+      const severityBadges = screen.getAllByText(
+        /blocker|critical|major|normal|minor|trivial|enhancement/,
+      )
+      expect(severityBadges[0]).toHaveTextContent('blocker')
+    })
+
+    it('should not trigger card onClick when clicking severity button', async () => {
+      const user = userEvent.setup()
+      const onClick = vi.fn()
+      render(<Card bug={mockBug} onClick={onClick} onSeverityChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change severity'))
+
+      expect(onClick).not.toHaveBeenCalled()
+    })
+  })
+
   describe('qe verification indicator', () => {
     it('should show "qe?" when no qe-verify flag exists', () => {
       render(<Card bug={mockBug} />)
