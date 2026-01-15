@@ -336,38 +336,47 @@ function App() {
       {/* Header */}
       <header className="border-b border-bg-tertiary bg-bg-secondary px-4 py-4">
         <div className="container mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">BoardZilla</h1>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-text-secondary">Puttin' bugz in their place since '26 😎</span>
-              <span className="text-text-tertiary">•</span>
-              <a
-                href="https://github.com/msujaws/bugzilla-kanban"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-text-tertiary transition-colors hover:text-accent-primary"
-              >
-                by <span className="font-bold">@jaws</span>
-              </a>
-              <span className="text-text-tertiary">•</span>
-              <button
-                onClick={() => {
-                  setShowFAQModal(true)
-                }}
-                className="text-text-tertiary transition-colors hover:text-accent-primary"
-              >
-                FAQ
-              </button>
-            </div>
-            {/* Keyboard hints */}
-            <div className="mt-1 flex items-center gap-2 text-xs text-text-tertiary">
-              <span>Drag & Drop with mouse, or use</span>
-              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Arrows</kbd>
-              <span>to select,</span>
-              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Shift</kbd>
-              <span>to grab/drop,</span>
-              <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Shift+Enter</kbd>
-              <span>to apply</span>
+          <div className="flex items-center gap-4">
+            <img
+              src="/mascot.webp"
+              alt="BoardZilla mascot - a friendly dinosaur with kanban boards"
+              className="h-16 w-auto"
+            />
+            <div>
+              <h1 className="text-2xl font-bold">BoardZilla</h1>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-text-secondary">
+                  Puttin' bugz in their place since '26 😎
+                </span>
+                <span className="text-text-tertiary">•</span>
+                <a
+                  href="https://github.com/msujaws/bugzilla-kanban"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-text-tertiary transition-colors hover:text-accent-primary"
+                >
+                  by <span className="font-bold">@jaws</span>
+                </a>
+                <span className="text-text-tertiary">•</span>
+                <button
+                  onClick={() => {
+                    setShowFAQModal(true)
+                  }}
+                  className="text-text-tertiary transition-colors hover:text-accent-primary"
+                >
+                  FAQ
+                </button>
+              </div>
+              {/* Keyboard hints */}
+              <div className="mt-1 flex items-center gap-2 text-xs text-text-tertiary">
+                <span>Drag & Drop with mouse, or use</span>
+                <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Arrows</kbd>
+                <span>to select,</span>
+                <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Shift</kbd>
+                <span>to grab/drop,</span>
+                <kbd className="rounded bg-bg-tertiary px-1.5 py-0.5 font-mono">Shift+Enter</kbd>
+                <span>to apply</span>
+              </div>
             </div>
           </div>
           <ApiKeyStatus onOpenModal={handleOpenModal} />
