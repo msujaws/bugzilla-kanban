@@ -1,8 +1,17 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Column } from './Column'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { KanbanColumn } from '@/lib/bugzilla/status-mapper'
+
+// Helper to render with user-event
+function renderWithUser(ui: React.ReactElement) {
+  return {
+    user: userEvent.setup(),
+    ...render(ui),
+  }
+}
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -196,39 +205,49 @@ describe('Column', () => {
       expect(screen.getByRole('button', { name: /column info/i })).toBeInTheDocument()
     })
 
-    it('should have title attribute with backlog description', () => {
-      render(<Column {...defaultProps} column="backlog" />)
+    it('should show popover with backlog description when clicking info button', async () => {
+      const { user } = renderWithUser(<Column {...defaultProps} column="backlog" />)
 
       const infoButton = screen.getByRole('button', { name: /column info/i })
-      expect(infoButton).toHaveAttribute('title', expect.stringContaining('NEW or UNCONFIRMED'))
+      await user.click(infoButton)
+
+      expect(screen.getByText(/NEW or UNCONFIRMED/)).toBeInTheDocument()
     })
 
-    it('should have title attribute with todo description', () => {
-      render(<Column {...defaultProps} column="todo" />)
+    it('should show popover with todo description when clicking info button', async () => {
+      const { user } = renderWithUser(<Column {...defaultProps} column="todo" />)
 
       const infoButton = screen.getByRole('button', { name: /column info/i })
-      expect(infoButton).toHaveAttribute('title', expect.stringContaining('[bzkanban-sprint]'))
+      await user.click(infoButton)
+
+      expect(screen.getByText(/\[bzkanban-sprint\]/)).toBeInTheDocument()
     })
 
-    it('should have title attribute with in-progress description', () => {
-      render(<Column {...defaultProps} column="in-progress" />)
+    it('should show popover with in-progress description when clicking info button', async () => {
+      const { user } = renderWithUser(<Column {...defaultProps} column="in-progress" />)
 
       const infoButton = screen.getByRole('button', { name: /column info/i })
-      expect(infoButton).toHaveAttribute('title', expect.stringContaining('ASSIGNED'))
+      await user.click(infoButton)
+
+      expect(screen.getByText(/ASSIGNED/)).toBeInTheDocument()
     })
 
-    it('should have title attribute with in-testing description', () => {
-      render(<Column {...defaultProps} column="in-testing" />)
+    it('should show popover with in-testing description when clicking info button', async () => {
+      const { user } = renderWithUser(<Column {...defaultProps} column="in-testing" />)
 
       const infoButton = screen.getByRole('button', { name: /column info/i })
-      expect(infoButton).toHaveAttribute('title', expect.stringContaining('qe-verify+'))
+      await user.click(infoButton)
+
+      expect(screen.getByText(/qe-verify\+/)).toBeInTheDocument()
     })
 
-    it('should have title attribute with done description', () => {
-      render(<Column {...defaultProps} column="done" />)
+    it('should show popover with done description when clicking info button', async () => {
+      const { user } = renderWithUser(<Column {...defaultProps} column="done" />)
 
       const infoButton = screen.getByRole('button', { name: /column info/i })
-      expect(infoButton).toHaveAttribute('title', expect.stringContaining('FIXED'))
+      await user.click(infoButton)
+
+      expect(screen.getByText(/FIXED/)).toBeInTheDocument()
     })
   })
 

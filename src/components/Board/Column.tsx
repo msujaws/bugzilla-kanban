@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { Card } from './Card'
+import { ColumnInfoPopover } from './ColumnInfoPopover'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import type { Assignee } from '@/hooks/use-board-assignees'
@@ -57,7 +58,7 @@ const columnIcons: Record<KanbanColumn, string> = {
 const columnDescriptions: Record<KanbanColumn, string> = {
   backlog: 'Bugs with status NEW or UNCONFIRMED without a [bzkanban-sprint] whiteboard tag',
   todo: 'Bugs with status NEW or UNCONFIRMED that have a [bzkanban-sprint] whiteboard tag',
-  'in-progress': 'Bugs with status ASSIGNED or IN_PROGRESS',
+  'in-progress': 'Bugs with status ASSIGNED',
   'in-testing': 'Bugs with status RESOLVED, resolution FIXED, and qe-verify+ flag',
   done: 'Bugs with status RESOLVED/VERIFIED/CLOSED and resolution FIXED (last 2 weeks)',
 }
@@ -91,12 +92,21 @@ export function Column({
     id: column,
   })
 
+  const [isInfoOpen, setIsInfoOpen] = useState(false)
+  const [infoAnchorPosition, setInfoAnchorPosition] = useState<{ x: number; y: number }>()
+
   const columnName = COLUMN_NAMES[column] ?? column
   const icon = columnIcons[column]
   const description = columnDescriptions[column]
   const stagedCount = bugs.filter((bug) => stagedBugIds.has(bug.id)).length
   const countId = `${column}-count`
   const totalPoints = useMemo(() => calculateTotalPoints(bugs), [bugs])
+
+  const handleInfoClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    setInfoAnchorPosition({ x: rect.left, y: rect.bottom + 4 })
+    setIsInfoOpen(true)
+  }
 
   // Filter out nobody@mozilla.org for non-backlog columns
   // Bugzilla requires a real assignee for non-backlog statuses (ASSIGNED, IN_PROGRESS, etc.)
@@ -134,11 +144,19 @@ export function Column({
           <button
             type="button"
             aria-label="Column info"
-            title={description}
+            onClick={handleInfoClick}
             className="text-text-tertiary transition-colors hover:text-text-secondary"
           >
             <span className="material-icons text-base">info_outline</span>
           </button>
+          <ColumnInfoPopover
+            isOpen={isInfoOpen}
+            onClose={() => {
+              setIsInfoOpen(false)
+            }}
+            description={description}
+            anchorPosition={infoAnchorPosition}
+          />
         </div>
         <div className="flex items-center gap-2">
           {stagedCount > 0 && (
