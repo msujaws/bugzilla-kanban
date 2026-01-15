@@ -20,7 +20,6 @@ function isPublicBug(bug: BugzillaBug): boolean {
 export interface BugsFilters {
   whiteboardTag: string
   component: string
-  excludeMetaBugs: boolean
   sortOrder: SortOrder
 }
 
@@ -48,7 +47,6 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
   filters: {
     whiteboardTag: '',
     component: '',
-    excludeMetaBugs: false,
     sortOrder: 'priority',
   },
   lastApiKey: null,
@@ -72,8 +70,8 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
       const allBugs = await client.getBugs(bugFilters)
       // Filter out security and confidential bugs (those with non-empty groups)
       const publicBugs = allBugs.filter(isPublicBug)
-      // Filter out meta bugs if enabled
-      const bugs = filterMetaBugs(publicBugs, filters.excludeMetaBugs)
+      // Always filter out meta bugs
+      const bugs = filterMetaBugs(publicBugs, true)
       set({ bugs, isLoading: false, error: null })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

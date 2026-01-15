@@ -189,6 +189,49 @@ describe('Column', () => {
     })
   })
 
+  describe('column descriptions', () => {
+    it('should show info icon button in header', () => {
+      render(<Column {...defaultProps} column="backlog" />)
+
+      expect(screen.getByRole('button', { name: /column info/i })).toBeInTheDocument()
+    })
+
+    it('should have title attribute with backlog description', () => {
+      render(<Column {...defaultProps} column="backlog" />)
+
+      const infoButton = screen.getByRole('button', { name: /column info/i })
+      expect(infoButton).toHaveAttribute('title', expect.stringContaining('NEW or UNCONFIRMED'))
+    })
+
+    it('should have title attribute with todo description', () => {
+      render(<Column {...defaultProps} column="todo" />)
+
+      const infoButton = screen.getByRole('button', { name: /column info/i })
+      expect(infoButton).toHaveAttribute('title', expect.stringContaining('[bzkanban-sprint]'))
+    })
+
+    it('should have title attribute with in-progress description', () => {
+      render(<Column {...defaultProps} column="in-progress" />)
+
+      const infoButton = screen.getByRole('button', { name: /column info/i })
+      expect(infoButton).toHaveAttribute('title', expect.stringContaining('ASSIGNED'))
+    })
+
+    it('should have title attribute with in-testing description', () => {
+      render(<Column {...defaultProps} column="in-testing" />)
+
+      const infoButton = screen.getByRole('button', { name: /column info/i })
+      expect(infoButton).toHaveAttribute('title', expect.stringContaining('qe-verify+'))
+    })
+
+    it('should have title attribute with done description', () => {
+      render(<Column {...defaultProps} column="done" />)
+
+      const infoButton = screen.getByRole('button', { name: /column info/i })
+      expect(infoButton).toHaveAttribute('title', expect.stringContaining('FIXED'))
+    })
+  })
+
   describe('column icons', () => {
     it('should show inbox icon for backlog', () => {
       render(<Column {...defaultProps} column="backlog" />)

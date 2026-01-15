@@ -220,14 +220,18 @@ describe('Board', () => {
     })
 
     it('should place RESOLVED bugs in in-review', () => {
-      const bugs = [{ ...mockBugs[0], status: 'RESOLVED', summary: 'Resolved bug' }]
+      const bugs = [
+        { ...mockBugs[0], status: 'RESOLVED', resolution: 'FIXED', summary: 'Resolved bug' },
+      ]
       render(<Board {...defaultProps} bugs={bugs} />)
 
       expect(screen.getByText('Resolved bug')).toBeInTheDocument()
     })
 
     it('should place VERIFIED bugs in done', () => {
-      const bugs = [{ ...mockBugs[0], status: 'VERIFIED', summary: 'Done bug' }]
+      const bugs = [
+        { ...mockBugs[0], status: 'VERIFIED', resolution: 'FIXED', summary: 'Done bug' },
+      ]
       render(<Board {...defaultProps} bugs={bugs} />)
 
       expect(screen.getByText('Done bug')).toBeInTheDocument()
@@ -572,6 +576,7 @@ describe('Board', () => {
             id: 50,
             summary: 'Done bug',
             status: 'VERIFIED',
+            resolution: 'FIXED',
             assigned_to: 'dev@example.com',
             priority: 'P1',
             severity: 'normal',
@@ -940,6 +945,84 @@ describe('Board', () => {
     // Note: Unassigned bug move validation is now tested in BacklogSection tests
     // since backlog is separate from the board and keyboard navigation only works
     // within the 4 board columns (todo, in-progress, in-testing, done)
+  })
+
+  describe('done column resolution filter', () => {
+    const bugsWithDifferentResolutions: BugzillaBug[] = [
+      {
+        id: 200,
+        summary: 'Fixed bug',
+        status: 'RESOLVED',
+        resolution: 'FIXED',
+        assigned_to: 'dev@example.com',
+        priority: 'P2',
+        severity: 'major',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+      {
+        id: 201,
+        summary: 'Wontfix bug',
+        status: 'RESOLVED',
+        resolution: 'WONTFIX',
+        assigned_to: 'dev@example.com',
+        priority: 'P3',
+        severity: 'normal',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+      {
+        id: 202,
+        summary: 'Duplicate bug',
+        status: 'RESOLVED',
+        resolution: 'DUPLICATE',
+        assigned_to: 'dev@example.com',
+        priority: 'P3',
+        severity: 'normal',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+      {
+        id: 203,
+        summary: 'Invalid bug',
+        status: 'CLOSED',
+        resolution: 'INVALID',
+        assigned_to: 'dev@example.com',
+        priority: 'P3',
+        severity: 'normal',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+      {
+        id: 204,
+        summary: 'Verified fixed bug',
+        status: 'VERIFIED',
+        resolution: 'FIXED',
+        assigned_to: 'dev@example.com',
+        priority: 'P1',
+        severity: 'critical',
+        component: 'Core',
+        whiteboard: '[kanban]',
+        last_change_time: '2024-01-15T10:00:00Z',
+      },
+    ]
+
+    it('should only show bugs with FIXED resolution in done column', () => {
+      render(<Board {...defaultProps} bugs={bugsWithDifferentResolutions} />)
+
+      // Fixed bugs should be visible
+      expect(screen.getByText('Fixed bug')).toBeInTheDocument()
+      expect(screen.getByText('Verified fixed bug')).toBeInTheDocument()
+
+      // Non-fixed bugs should not be visible
+      expect(screen.queryByText('Wontfix bug')).not.toBeInTheDocument()
+      expect(screen.queryByText('Duplicate bug')).not.toBeInTheDocument()
+      expect(screen.queryByText('Invalid bug')).not.toBeInTheDocument()
+    })
   })
 
   describe('assignee filtering', () => {

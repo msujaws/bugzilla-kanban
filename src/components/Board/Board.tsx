@@ -111,9 +111,10 @@ export function Board({
       grouped.set(column, columnBugs)
     }
 
-    // Filter done column to only show bugs from the past 2 weeks
+    // Filter done column to only show bugs with FIXED resolution from the past 2 weeks
     const doneBugs = grouped.get('done') ?? []
-    grouped.set('done', filterRecentBugs(doneBugs))
+    const fixedDoneBugs = doneBugs.filter((bug) => bug.resolution === 'FIXED')
+    grouped.set('done', filterRecentBugs(fixedDoneBugs))
 
     // Sort bugs within each column by the configured sort order
     for (const column of allColumns) {

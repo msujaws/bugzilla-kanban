@@ -131,13 +131,6 @@ function App() {
     [setFilters],
   )
 
-  const handleExcludeMetaBugsChange = useCallback(
-    (value: boolean) => {
-      setFilters({ excludeMetaBugs: value })
-    },
-    [setFilters],
-  )
-
   const handleSortOrderChange = useCallback(
     (value: 'priority' | 'lastChanged') => {
       setFilters({ sortOrder: value })
@@ -388,11 +381,9 @@ function App() {
           <FilterBar
             whiteboardTag={filters.whiteboardTag}
             component={filters.component}
-            excludeMetaBugs={filters.excludeMetaBugs}
             sortOrder={filters.sortOrder}
             onWhiteboardTagChange={handleWhiteboardTagChange}
             onComponentChange={handleComponentChange}
-            onExcludeMetaBugsChange={handleExcludeMetaBugsChange}
             onSortOrderChange={handleSortOrderChange}
             onApplyFilters={handleApplyFilters}
             isLoading={isLoadingBugs}

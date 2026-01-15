@@ -54,6 +54,14 @@ const columnIcons: Record<KanbanColumn, string> = {
   done: 'done_all',
 }
 
+const columnDescriptions: Record<KanbanColumn, string> = {
+  backlog: 'Bugs with status NEW or UNCONFIRMED without a [bzkanban-sprint] whiteboard tag',
+  todo: 'Bugs with status NEW or UNCONFIRMED that have a [bzkanban-sprint] whiteboard tag',
+  'in-progress': 'Bugs with status ASSIGNED or IN_PROGRESS',
+  'in-testing': 'Bugs with status RESOLVED, resolution FIXED, and qe-verify+ flag',
+  done: 'Bugs with status RESOLVED/VERIFIED/CLOSED and resolution FIXED (last 2 weeks)',
+}
+
 export function Column({
   column,
   bugs,
@@ -85,6 +93,7 @@ export function Column({
 
   const columnName = COLUMN_NAMES[column] ?? column
   const icon = columnIcons[column]
+  const description = columnDescriptions[column]
   const stagedCount = bugs.filter((bug) => stagedBugIds.has(bug.id)).length
   const countId = `${column}-count`
   const totalPoints = useMemo(() => calculateTotalPoints(bugs), [bugs])
@@ -122,6 +131,14 @@ export function Column({
         <div className="flex items-center gap-2">
           <span className="material-icons text-text-secondary">{icon}</span>
           <h2 className="text-lg font-bold text-text-primary">{columnName}</h2>
+          <button
+            type="button"
+            aria-label="Column info"
+            title={description}
+            className="text-text-tertiary transition-colors hover:text-text-secondary"
+          >
+            <span className="material-icons text-base">info_outline</span>
+          </button>
         </div>
         <div className="flex items-center gap-2">
           {stagedCount > 0 && (

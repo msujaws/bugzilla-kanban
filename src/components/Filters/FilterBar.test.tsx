@@ -26,11 +26,9 @@ describe('FilterBar', () => {
   const defaultProps = {
     whiteboardTag: '',
     component: '',
-    excludeMetaBugs: false,
     sortOrder: 'priority' as const,
     onWhiteboardTagChange: vi.fn(),
     onComponentChange: vi.fn(),
-    onExcludeMetaBugsChange: vi.fn(),
     onSortOrderChange: vi.fn(),
     onApplyFilters: vi.fn(),
     isLoading: false,

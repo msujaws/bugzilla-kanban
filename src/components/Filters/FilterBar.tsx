@@ -6,11 +6,9 @@ import { AssigneeFilter } from './AssigneeFilter'
 interface FilterBarProps {
   whiteboardTag: string
   component: string
-  excludeMetaBugs: boolean
   sortOrder: SortOrder
   onWhiteboardTagChange: (value: string) => void
   onComponentChange: (value: string) => void
-  onExcludeMetaBugsChange: (value: boolean) => void
   onSortOrderChange: (value: SortOrder) => void
   onApplyFilters: () => void
   isLoading: boolean
@@ -22,11 +20,9 @@ interface FilterBarProps {
 export function FilterBar({
   whiteboardTag,
   component,
-  excludeMetaBugs,
   sortOrder,
   onWhiteboardTagChange,
   onComponentChange,
-  onExcludeMetaBugsChange,
   onSortOrderChange,
   onApplyFilters,
   isLoading,
@@ -37,7 +33,6 @@ export function FilterBar({
   const hasFilters =
     whiteboardTag !== '' ||
     component !== '' ||
-    excludeMetaBugs ||
     sortOrder !== 'priority' ||
     selectedAssignee !== null
 
@@ -50,7 +45,6 @@ export function FilterBar({
   const handleClear = () => {
     onWhiteboardTagChange('')
     onComponentChange('')
-    onExcludeMetaBugsChange(false)
     onSortOrderChange('priority')
     if (onAssigneeChange) {
       onAssigneeChange(null)
@@ -117,23 +111,6 @@ export function FilterBar({
             />
           </div>
         )}
-
-        {/* Exclude meta bugs checkbox */}
-        <div className="flex items-center gap-2 self-end pb-2">
-          <input
-            id="exclude-meta"
-            type="checkbox"
-            checked={excludeMetaBugs}
-            onChange={(e) => {
-              onExcludeMetaBugsChange(e.target.checked)
-            }}
-            disabled={isLoading}
-            className="h-4 w-4 rounded border-bg-tertiary bg-bg-primary text-accent-primary focus:ring-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          <label htmlFor="exclude-meta" className="text-sm text-text-secondary whitespace-nowrap">
-            Exclude meta bugs
-          </label>
-        </div>
 
         {/* Sort order */}
         <div className="flex items-center gap-2 self-end pb-2">

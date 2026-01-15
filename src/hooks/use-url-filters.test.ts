@@ -48,7 +48,6 @@ describe('useUrlFilters', () => {
       expect(result.current.initialFilters).toEqual({
         whiteboardTag: '',
         component: '',
-        excludeMetaBugs: false,
         sortOrder: 'priority',
       })
     })
@@ -69,14 +68,6 @@ describe('useUrlFilters', () => {
       expect(result.current.initialFilters.component).toBe('Core')
     })
 
-    it('should read excludeMetaBugs from URL', () => {
-      window.location.search = '?excludeMeta=true'
-
-      const { result } = renderHook(() => useUrlFilters())
-
-      expect(result.current.initialFilters.excludeMetaBugs).toBe(true)
-    })
-
     it('should read sortOrder from URL', () => {
       window.location.search = '?sort=lastChanged'
 
@@ -86,15 +77,13 @@ describe('useUrlFilters', () => {
     })
 
     it('should read all filters from URL', () => {
-      window.location.search =
-        '?whiteboard=%5Bkanban%5D&component=Core&excludeMeta=true&sort=lastChanged'
+      window.location.search = '?whiteboard=%5Bkanban%5D&component=Core&sort=lastChanged'
 
       const { result } = renderHook(() => useUrlFilters())
 
       expect(result.current.initialFilters).toEqual({
         whiteboardTag: '[kanban]',
         component: 'Core',
-        excludeMetaBugs: true,
         sortOrder: 'lastChanged',
       })
     })
@@ -116,7 +105,6 @@ describe('useUrlFilters', () => {
         result.current.updateUrl({
           whiteboardTag: '[kanban]',
           component: '',
-          excludeMetaBugs: false,
           sortOrder: 'priority',
         })
       })
@@ -131,7 +119,6 @@ describe('useUrlFilters', () => {
         result.current.updateUrl({
           whiteboardTag: '[kanban]',
           component: '',
-          excludeMetaBugs: false,
           sortOrder: 'priority',
         })
       })
@@ -147,29 +134,12 @@ describe('useUrlFilters', () => {
         result.current.updateUrl({
           whiteboardTag: '',
           component: 'Core',
-          excludeMetaBugs: false,
           sortOrder: 'priority',
         })
       })
 
       const call = replaceStateMock.mock.calls[0]
       expect(call[2]).toContain('component=Core')
-    })
-
-    it('should add excludeMeta param when true', () => {
-      const { result } = renderHook(() => useUrlFilters())
-
-      act(() => {
-        result.current.updateUrl({
-          whiteboardTag: '',
-          component: '',
-          excludeMetaBugs: true,
-          sortOrder: 'priority',
-        })
-      })
-
-      const call = replaceStateMock.mock.calls[0]
-      expect(call[2]).toContain('excludeMeta=true')
     })
 
     it('should add sort param when not priority', () => {
@@ -179,7 +149,6 @@ describe('useUrlFilters', () => {
         result.current.updateUrl({
           whiteboardTag: '',
           component: '',
-          excludeMetaBugs: false,
           sortOrder: 'lastChanged',
         })
       })
@@ -195,7 +164,6 @@ describe('useUrlFilters', () => {
         result.current.updateUrl({
           whiteboardTag: '',
           component: '',
-          excludeMetaBugs: false,
           sortOrder: 'priority',
         })
       })

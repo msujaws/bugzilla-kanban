@@ -229,6 +229,36 @@ describe('BugsSlice', () => {
       const { bugs } = useStore.getState()
       expect(bugs).toHaveLength(2)
     })
+
+    it('should always exclude meta bugs', async () => {
+      const bugsWithMeta: BugzillaBug[] = [
+        { ...mockBugs[0], groups: [] },
+        { ...mockBugs[1], groups: [], keywords: ['meta'] },
+      ]
+      mockGetBugs.mockResolvedValueOnce(bugsWithMeta)
+
+      const { fetchBugs } = useStore.getState()
+      await fetchBugs(testApiKey)
+
+      const { bugs } = useStore.getState()
+      expect(bugs).toHaveLength(1)
+      expect(bugs[0].id).toBe(1)
+    })
+
+    it('should exclude bugs with [meta] in whiteboard', async () => {
+      const bugsWithMeta: BugzillaBug[] = [
+        { ...mockBugs[0], groups: [] },
+        { ...mockBugs[1], groups: [], whiteboard: '[meta] [kanban]' },
+      ]
+      mockGetBugs.mockResolvedValueOnce(bugsWithMeta)
+
+      const { fetchBugs } = useStore.getState()
+      await fetchBugs(testApiKey)
+
+      const { bugs } = useStore.getState()
+      expect(bugs).toHaveLength(1)
+      expect(bugs[0].id).toBe(1)
+    })
   })
 
   describe('refreshBugs', () => {

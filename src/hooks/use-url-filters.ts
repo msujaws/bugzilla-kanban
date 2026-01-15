@@ -7,7 +7,6 @@ import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
 export interface UrlFilters {
   whiteboardTag: string
   component: string
-  excludeMetaBugs: boolean
   sortOrder: SortOrder
 }
 
@@ -17,7 +16,6 @@ export interface UrlFilters {
 const DEFAULT_FILTERS: UrlFilters = {
   whiteboardTag: '',
   component: '',
-  excludeMetaBugs: false,
   sortOrder: 'priority',
 }
 
@@ -27,7 +25,6 @@ const DEFAULT_FILTERS: UrlFilters = {
 const URL_PARAMS = {
   whiteboard: 'whiteboard',
   component: 'component',
-  excludeMeta: 'excludeMeta',
   sort: 'sort',
 } as const
 
@@ -44,7 +41,6 @@ function parseFiltersFromUrl(): UrlFilters {
 
   const whiteboardTag = params.get(URL_PARAMS.whiteboard) ?? ''
   const component = params.get(URL_PARAMS.component) ?? ''
-  const excludeMetaBugs = params.get(URL_PARAMS.excludeMeta) === 'true'
   const sortParam = params.get(URL_PARAMS.sort)
   const sortOrder: SortOrder = VALID_SORT_ORDERS.has(sortParam as SortOrder)
     ? (sortParam as SortOrder)
@@ -53,7 +49,6 @@ function parseFiltersFromUrl(): UrlFilters {
   return {
     whiteboardTag,
     component,
-    excludeMetaBugs,
     sortOrder,
   }
 }
@@ -66,7 +61,6 @@ function hasFiltersInUrl(): boolean {
   return (
     params.has(URL_PARAMS.whiteboard) ||
     params.has(URL_PARAMS.component) ||
-    params.has(URL_PARAMS.excludeMeta) ||
     params.has(URL_PARAMS.sort)
   )
 }
@@ -89,9 +83,6 @@ export function useUrlFilters() {
     }
     if (filters.component !== DEFAULT_FILTERS.component) {
       params.set(URL_PARAMS.component, filters.component)
-    }
-    if (filters.excludeMetaBugs !== DEFAULT_FILTERS.excludeMetaBugs) {
-      params.set(URL_PARAMS.excludeMeta, String(filters.excludeMetaBugs))
     }
     if (filters.sortOrder !== DEFAULT_FILTERS.sortOrder) {
       params.set(URL_PARAMS.sort, filters.sortOrder)
