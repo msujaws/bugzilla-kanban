@@ -47,6 +47,7 @@ function App() {
   const stageWhiteboardChange = useStore((state) => state.stageWhiteboardChange)
   const stagePointsChange = useStore((state) => state.stagePointsChange)
   const stagePriorityChange = useStore((state) => state.stagePriorityChange)
+  const stageSeverityChange = useStore((state) => state.stageSeverityChange)
   const stageQeVerifyChange = useStore((state) => state.stageQeVerifyChange)
   const applyChanges = useStore((state) => state.applyChanges)
   const clearAllChanges = useStore((state) => state.clearAllChanges)
@@ -218,6 +219,17 @@ function App() {
       }
     },
     [bugs, stagePriorityChange],
+  )
+
+  // Handle severity change
+  const handleSeverityChange = useCallback(
+    (bugId: number, newSeverity: string) => {
+      const bug = bugs.find((b) => b.id === bugId)
+      if (bug) {
+        stageSeverityChange(bugId, bug.severity, newSeverity)
+      }
+    },
+    [bugs, stageSeverityChange],
   )
 
   // Handle qe-verify change
@@ -406,6 +418,7 @@ function App() {
           onAssigneeChange={handleAssigneeChange}
           onPointsChange={handlePointsChange}
           onPriorityChange={handlePriorityChange}
+          onSeverityChange={handleSeverityChange}
           onQeVerifyChange={handleQeVerifyChange}
           onInvalidMove={handleInvalidMove}
           isLoading={isLoadingBugs}

@@ -66,6 +66,7 @@ export interface BugUpdate {
   whiteboard?: string
   cf_fx_points?: number | string
   priority?: string
+  severity?: string
   flags?: BugUpdateFlag[]
 }
 

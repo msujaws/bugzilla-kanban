@@ -13,6 +13,7 @@ interface BacklogSectionProps {
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   onPointsChange?: (bugId: number, points: number | string | undefined) => void
   onPriorityChange?: (bugId: number, priority: string) => void
+  onSeverityChange?: (bugId: number, severity: string) => void
   onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
   onBugClick?: (bug: BugzillaBug) => void
   isLoading?: boolean
@@ -26,6 +27,7 @@ export function BacklogSection({
   onAssigneeChange,
   onPointsChange,
   onPriorityChange,
+  onSeverityChange,
   onQeVerifyChange,
   onBugClick,
   isLoading = false,
@@ -107,6 +109,28 @@ export function BacklogSection({
     for (const [bugId, change] of stagedChanges) {
       if (change.priority) {
         map.set(bugId, change.priority.to)
+      }
+    }
+    return map
+  }, [stagedChanges])
+
+  // Get staged severity bug IDs
+  const stagedSeverityBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.severity) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged severities
+  const stagedSeverities = useMemo(() => {
+    const map = new Map<number, string>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.severity) {
+        map.set(bugId, change.severity.to)
       }
     }
     return map
@@ -217,12 +241,15 @@ export function BacklogSection({
                 stagedPoints={stagedPoints.get(bug.id)}
                 isPriorityStaged={stagedPriorityBugIds.has(bug.id)}
                 stagedPriority={stagedPriorities.get(bug.id)}
+                isSeverityStaged={stagedSeverityBugIds.has(bug.id)}
+                stagedSeverity={stagedSeverities.get(bug.id)}
                 isQeVerifyStaged={stagedQeVerifyBugIds.has(bug.id)}
                 stagedQeVerify={stagedQeVerifies.get(bug.id)}
                 allAssignees={allAssignees}
                 onAssigneeChange={onAssigneeChange}
                 onPointsChange={onPointsChange}
                 onPriorityChange={onPriorityChange}
+                onSeverityChange={onSeverityChange}
                 onQeVerifyChange={onQeVerifyChange}
                 onClick={onBugClick}
               />

@@ -17,6 +17,7 @@ export interface StagedChange {
   whiteboard?: { from: string; to: string }
   points?: { from: number | string | undefined; to: number | string | undefined }
   priority?: { from: string; to: string }
+  severity?: { from: string; to: string }
   qeVerify?: { from: QeVerifyStatus; to: QeVerifyStatus }
 }
 
@@ -41,6 +42,7 @@ export interface StagedSlice {
     toPoints: number | string | undefined,
   ) => void
   stagePriorityChange: (bugId: number, fromPriority: string, toPriority: string) => void
+  stageSeverityChange: (bugId: number, fromSeverity: string, toSeverity: string) => void
   stageQeVerifyChange: (bugId: number, fromStatus: QeVerifyStatus, toStatus: QeVerifyStatus) => void
   unstageChange: (bugId: number) => void
   clearAllChanges: () => void
@@ -200,6 +202,35 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
     })
   },
 
+  // Stage a severity change for a bug
+  stageSeverityChange: (bugId: number, fromSeverity: string, toSeverity: string) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      // If moving back to original severity, remove the severity change
+      if (fromSeverity === toSeverity) {
+        if (existing) {
+          const { severity: _removed, ...rest } = existing
+          // Check if there are other changes remaining
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        // Add/update severity change, preserve other changes
+        newChanges.set(bugId, {
+          ...existing,
+          severity: { from: fromSeverity, to: toSeverity },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
   // Stage a qe-verify change for a bug
   stageQeVerifyChange: (bugId: number, fromStatus: QeVerifyStatus, toStatus: QeVerifyStatus) => {
     set((state) => {
@@ -283,6 +314,10 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
 
         if (change.priority) {
           update.priority = change.priority.to
+        }
+
+        if (change.severity) {
+          update.severity = change.severity.to
         }
 
         if (change.qeVerify) {

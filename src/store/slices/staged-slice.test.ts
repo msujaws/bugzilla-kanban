@@ -803,6 +803,85 @@ describe('StagedSlice', () => {
     })
   })
 
+  describe('stageSeverityChange', () => {
+    it('should add a new severity change', () => {
+      const { stageSeverityChange } = useStore.getState()
+
+      stageSeverityChange(123, 'normal', 'critical')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.severity).toEqual({ from: 'normal', to: 'critical' })
+    })
+
+    it('should remove severity change if reverting to original', () => {
+      const { stageSeverityChange } = useStore.getState()
+
+      stageSeverityChange(123, 'normal', 'critical')
+      stageSeverityChange(123, 'normal', 'normal')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should preserve other changes when adding severity change', () => {
+      const { stageChange, stageSeverityChange } = useStore.getState()
+
+      stageChange(123, 'backlog', 'todo')
+      stageSeverityChange(123, 'normal', 'blocker')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.severity).toEqual({ from: 'normal', to: 'blocker' })
+    })
+
+    it('should only remove severity change when reverting, keeping other changes', () => {
+      const { stagePriorityChange, stageSeverityChange } = useStore.getState()
+
+      stagePriorityChange(123, 'P3', 'P1')
+      stageSeverityChange(123, 'normal', 'critical')
+      stageSeverityChange(123, 'normal', 'normal')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.priority).toEqual({ from: 'P3', to: 'P1' })
+      expect(changes.get(123)?.severity).toBeUndefined()
+    })
+  })
+
+  describe('applyChanges with severity', () => {
+    it('should include severity in API call', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageSeverityChange, applyChanges } = useStore.getState()
+
+      stageSeverityChange(123, 'normal', 'critical')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([{ id: 123, severity: 'critical' }])
+    })
+
+    it('should include severity with other field changes', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stagePriorityChange, stageSeverityChange, applyChanges } = useStore.getState()
+
+      stagePriorityChange(123, 'P3', 'P1')
+      stageSeverityChange(123, 'normal', 'blocker')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, priority: 'P1', severity: 'blocker' },
+      ])
+    })
+  })
+
   describe('applyChanges with qe-verify', () => {
     it('should include flags in API call for qe-verify plus', async () => {
       mockBatchUpdateBugs.mockResolvedValueOnce({

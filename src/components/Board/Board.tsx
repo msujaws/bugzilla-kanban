@@ -31,6 +31,7 @@ interface BoardProps {
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   onPointsChange?: (bugId: number, points: number | string | undefined) => void
   onPriorityChange?: (bugId: number, priority: string) => void
+  onSeverityChange?: (bugId: number, severity: string) => void
   onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
   onInvalidMove?: (bugId: number, reason: string) => void
   isLoading?: boolean
@@ -54,6 +55,7 @@ export function Board({
   onAssigneeChange,
   onPointsChange,
   onPriorityChange,
+  onSeverityChange,
   onQeVerifyChange,
   onInvalidMove,
   isLoading = false,
@@ -195,6 +197,28 @@ export function Board({
       }
     }
     return priorities
+  }, [stagedChanges])
+
+  // Get bug IDs with staged severity changes
+  const stagedSeverityBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.severity) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged severities map (bugId -> new severity)
+  const stagedSeverities = useMemo(() => {
+    const severities = new Map<number, string>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.severity) {
+        severities.set(bugId, change.severity.to)
+      }
+    }
+    return severities
   }, [stagedChanges])
 
   // Get bug IDs with staged qe-verify changes
@@ -576,12 +600,15 @@ export function Board({
                 stagedPoints={stagedPoints}
                 stagedPriorityBugIds={stagedPriorityBugIds}
                 stagedPriorities={stagedPriorities}
+                stagedSeverityBugIds={stagedSeverityBugIds}
+                stagedSeverities={stagedSeverities}
                 stagedQeVerifyBugIds={stagedQeVerifyBugIds}
                 stagedQeVerifies={stagedQeVerifies}
                 allAssignees={allAssignees}
                 onAssigneeChange={onAssigneeChange}
                 onPointsChange={onPointsChange}
                 onPriorityChange={onPriorityChange}
+                onSeverityChange={onSeverityChange}
                 onQeVerifyChange={onQeVerifyChange}
                 isLoading={isLoading}
                 selectedIndex={
@@ -604,6 +631,7 @@ export function Board({
           onAssigneeChange={onAssigneeChange}
           onPointsChange={onPointsChange}
           onPriorityChange={onPriorityChange}
+          onSeverityChange={onSeverityChange}
           onQeVerifyChange={onQeVerifyChange}
           isLoading={isLoading}
         />

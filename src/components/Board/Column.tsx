@@ -30,12 +30,15 @@ interface ColumnProps {
   stagedPoints?: Map<number, number | string | undefined>
   stagedPriorityBugIds?: Set<number>
   stagedPriorities?: Map<number, string>
+  stagedSeverityBugIds?: Set<number>
+  stagedSeverities?: Map<number, string>
   stagedQeVerifyBugIds?: Set<number>
   stagedQeVerifies?: Map<number, QeVerifyStatus>
   allAssignees?: Assignee[]
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   onPointsChange?: (bugId: number, points: number | string | undefined) => void
   onPriorityChange?: (bugId: number, priority: string) => void
+  onSeverityChange?: (bugId: number, severity: string) => void
   onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
   isLoading?: boolean
   selectedIndex?: number
@@ -61,12 +64,15 @@ export function Column({
   stagedPoints,
   stagedPriorityBugIds,
   stagedPriorities,
+  stagedSeverityBugIds,
+  stagedSeverities,
   stagedQeVerifyBugIds,
   stagedQeVerifies,
   allAssignees,
   onAssigneeChange,
   onPointsChange,
   onPriorityChange,
+  onSeverityChange,
   onQeVerifyChange,
   isLoading = false,
   selectedIndex,
@@ -180,6 +186,8 @@ export function Column({
               stagedPoints={stagedPoints?.get(bug.id)}
               isPriorityStaged={stagedPriorityBugIds?.has(bug.id)}
               stagedPriority={stagedPriorities?.get(bug.id)}
+              isSeverityStaged={stagedSeverityBugIds?.has(bug.id)}
+              stagedSeverity={stagedSeverities?.get(bug.id)}
               isQeVerifyStaged={stagedQeVerifyBugIds?.has(bug.id)}
               stagedQeVerify={stagedQeVerifies?.get(bug.id)}
               isSelected={selectedIndex === index}
@@ -188,6 +196,7 @@ export function Column({
               onAssigneeChange={onAssigneeChange}
               onPointsChange={onPointsChange}
               onPriorityChange={onPriorityChange}
+              onSeverityChange={onSeverityChange}
               onQeVerifyChange={onQeVerifyChange}
             />
           ))}
