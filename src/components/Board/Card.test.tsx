@@ -38,7 +38,7 @@ const mockBug: BugzillaBug = {
   status: 'NEW',
   assigned_to: 'developer@example.com',
   priority: 'P2',
-  severity: 'major',
+  severity: 'S3',
   component: 'Authentication',
   whiteboard: '[kanban]',
   last_change_time: '2024-01-15T10:30:00Z',
@@ -90,7 +90,7 @@ describe('Card', () => {
     it('should render severity', () => {
       render(<Card bug={mockBug} />)
 
-      expect(screen.getByText('major')).toBeInTheDocument()
+      expect(screen.getByText('S3')).toBeInTheDocument()
     })
 
     it('should render component', () => {
@@ -157,52 +157,44 @@ describe('Card', () => {
   })
 
   describe('severity badge', () => {
-    it('should show blocker severity with error color', () => {
-      const blockerBug = { ...mockBug, severity: 'blocker' }
-      render(<Card bug={blockerBug} />)
+    it('should show S1 severity with error color', () => {
+      const s1Bug = { ...mockBug, severity: 'S1' }
+      render(<Card bug={s1Bug} />)
 
-      const severityBadge = screen.getByText('blocker')
+      const severityBadge = screen.getByText('S1')
       expect(severityBadge.className).toContain('accent-error')
     })
 
-    it('should show critical severity with error color', () => {
-      const criticalBug = { ...mockBug, severity: 'critical' }
-      render(<Card bug={criticalBug} />)
+    it('should show S2 severity with warning color', () => {
+      const s2Bug = { ...mockBug, severity: 'S2' }
+      render(<Card bug={s2Bug} />)
 
-      const severityBadge = screen.getByText('critical')
-      expect(severityBadge.className).toContain('accent-error')
-    })
-
-    it('should show major severity with warning color', () => {
-      const majorBug = { ...mockBug, severity: 'major' }
-      render(<Card bug={majorBug} />)
-
-      const severityBadge = screen.getByText('major')
+      const severityBadge = screen.getByText('S2')
       expect(severityBadge.className).toContain('accent-warning')
     })
 
-    it('should show normal severity with default color', () => {
-      const normalBug = { ...mockBug, severity: 'normal' }
-      render(<Card bug={normalBug} />)
+    it('should show S3 severity with secondary text color', () => {
+      const s3Bug = { ...mockBug, severity: 'S3' }
+      render(<Card bug={s3Bug} />)
 
-      const severityBadge = screen.getByText('normal')
+      const severityBadge = screen.getByText('S3')
+      expect(severityBadge.className).toContain('text-secondary')
+    })
+
+    it('should show S4 severity with primary accent color', () => {
+      const s4Bug = { ...mockBug, severity: 'S4' }
+      render(<Card bug={s4Bug} />)
+
+      const severityBadge = screen.getByText('S4')
+      expect(severityBadge.className).toContain('accent-primary')
+    })
+
+    it('should show N/A severity with tertiary text color', () => {
+      const naBug = { ...mockBug, severity: 'N/A' }
+      render(<Card bug={naBug} />)
+
+      const severityBadge = screen.getByText('N/A')
       expect(severityBadge.className).toContain('text-tertiary')
-    })
-
-    it('should show minor severity with success color', () => {
-      const minorBug = { ...mockBug, severity: 'minor' }
-      render(<Card bug={minorBug} />)
-
-      const severityBadge = screen.getByText('minor')
-      expect(severityBadge.className).toContain('accent-success')
-    })
-
-    it('should show trivial severity with success color', () => {
-      const trivialBug = { ...mockBug, severity: 'trivial' }
-      render(<Card bug={trivialBug} />)
-
-      const severityBadge = screen.getByText('trivial')
-      expect(severityBadge.className).toContain('accent-success')
     })
   })
 
@@ -748,9 +740,9 @@ describe('Card', () => {
       render(<Card bug={mockBug} onSeverityChange={onSeverityChange} />)
 
       await user.click(screen.getByLabelText('Change severity'))
-      await user.click(screen.getByText('critical'))
+      await user.click(screen.getByText('S1'))
 
-      expect(onSeverityChange).toHaveBeenCalledWith(mockBug.id, 'critical')
+      expect(onSeverityChange).toHaveBeenCalledWith(mockBug.id, 'S1')
     })
 
     it('should show isSeverityStaged indicator when severity is staged', () => {
@@ -766,15 +758,13 @@ describe('Card', () => {
           bug={mockBug}
           onSeverityChange={vi.fn()}
           isSeverityStaged={true}
-          stagedSeverity="blocker"
+          stagedSeverity="S1"
         />,
       )
 
-      // Should show staged severity, not original major
-      const severityBadges = screen.getAllByText(
-        /blocker|critical|major|normal|minor|trivial|enhancement/,
-      )
-      expect(severityBadges[0]).toHaveTextContent('blocker')
+      // Should show staged severity, not original S3
+      const severityBadges = screen.getAllByText(/S1|S2|S3|S4|N\/A/)
+      expect(severityBadges[0]).toHaveTextContent('S1')
     })
 
     it('should not trigger card onClick when clicking severity button', async () => {

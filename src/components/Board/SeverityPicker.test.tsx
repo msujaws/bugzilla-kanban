@@ -17,7 +17,7 @@ describe('SeverityPicker', () => {
     isOpen: true,
     onClose: vi.fn(),
     onSelect: vi.fn(),
-    currentSeverity: 'normal',
+    currentSeverity: 'S3',
   }
 
   beforeEach(() => {
@@ -40,20 +40,18 @@ describe('SeverityPicker', () => {
     it('should render all severity options', () => {
       render(<SeverityPicker {...defaultProps} />)
 
-      expect(screen.getByText('blocker')).toBeInTheDocument()
-      expect(screen.getByText('critical')).toBeInTheDocument()
-      expect(screen.getByText('major')).toBeInTheDocument()
-      expect(screen.getByText('normal')).toBeInTheDocument()
-      expect(screen.getByText('minor')).toBeInTheDocument()
-      expect(screen.getByText('trivial')).toBeInTheDocument()
-      expect(screen.getByText('enhancement')).toBeInTheDocument()
+      expect(screen.getByText('S1')).toBeInTheDocument()
+      expect(screen.getByText('S2')).toBeInTheDocument()
+      expect(screen.getByText('S3')).toBeInTheDocument()
+      expect(screen.getByText('S4')).toBeInTheDocument()
+      expect(screen.getByText('N/A')).toBeInTheDocument()
     })
 
     it('should show severity descriptions', () => {
       render(<SeverityPicker {...defaultProps} />)
 
-      expect(screen.getByText(/blocks development/i)).toBeInTheDocument()
-      expect(screen.getByText(/feature request/i)).toBeInTheDocument()
+      expect(screen.getByText(/catastrophic/i)).toBeInTheDocument()
+      expect(screen.getByText(/not applicable/i)).toBeInTheDocument()
     })
   })
 
@@ -62,25 +60,25 @@ describe('SeverityPicker', () => {
       const onSelect = vi.fn()
       render(<SeverityPicker {...defaultProps} onSelect={onSelect} />)
 
-      fireEvent.click(screen.getByText('critical'))
+      fireEvent.click(screen.getByText('S1'))
 
-      expect(onSelect).toHaveBeenCalledWith('critical')
+      expect(onSelect).toHaveBeenCalledWith('S1')
     })
 
     it('should call onClose after selection', () => {
       const onClose = vi.fn()
       render(<SeverityPicker {...defaultProps} onClose={onClose} />)
 
-      fireEvent.click(screen.getByText('major'))
+      fireEvent.click(screen.getByText('S2'))
 
       expect(onClose).toHaveBeenCalled()
     })
 
     it('should highlight currently selected severity', () => {
-      render(<SeverityPicker {...defaultProps} currentSeverity="major" />)
+      render(<SeverityPicker {...defaultProps} currentSeverity="S2" />)
 
       const selectedOption = screen.getByRole('option', { selected: true })
-      expect(selectedOption).toHaveTextContent('major')
+      expect(selectedOption).toHaveTextContent('S2')
     })
   })
 
@@ -122,7 +120,7 @@ describe('SeverityPicker', () => {
       render(<SeverityPicker {...defaultProps} />)
 
       const options = screen.getAllByRole('option')
-      expect(options).toHaveLength(7) // blocker, critical, major, normal, minor, trivial, enhancement
+      expect(options).toHaveLength(5) // S1, S2, S3, S4, N/A
     })
   })
 
@@ -132,7 +130,7 @@ describe('SeverityPicker', () => {
 
       // Each severity should have a colored indicator dot
       const colorDots = container.querySelectorAll('[class*="rounded-full"][class*="w-3"]')
-      expect(colorDots).toHaveLength(7)
+      expect(colorDots).toHaveLength(5)
     })
   })
 })

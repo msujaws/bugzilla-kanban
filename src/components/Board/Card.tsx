@@ -47,13 +47,11 @@ const priorityColors: Record<string, string> = {
 }
 
 const severityColors: Record<string, string> = {
-  blocker: 'text-accent-error',
-  critical: 'text-accent-error',
-  major: 'text-accent-warning',
-  normal: 'text-text-tertiary',
-  minor: 'text-accent-success',
-  trivial: 'text-accent-success',
-  enhancement: 'text-accent-primary',
+  S1: 'text-accent-error',
+  S2: 'text-accent-warning',
+  S3: 'text-text-secondary',
+  S4: 'text-accent-primary',
+  'N/A': 'text-text-tertiary',
 }
 
 export function Card({

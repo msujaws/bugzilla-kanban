@@ -15,18 +15,11 @@ interface SeverityPickerProps {
 }
 
 const SEVERITY_OPTIONS = [
-  { value: 'blocker', label: 'blocker', description: 'Blocks development', color: 'bg-red-700' },
-  { value: 'critical', label: 'critical', description: 'Severe impact', color: 'bg-red-500' },
-  { value: 'major', label: 'major', description: 'Major functionality', color: 'bg-orange-500' },
-  { value: 'normal', label: 'normal', description: 'Default severity', color: 'bg-gray-500' },
-  { value: 'minor', label: 'minor', description: 'Minor issue', color: 'bg-green-500' },
-  { value: 'trivial', label: 'trivial', description: 'Trivial fix', color: 'bg-green-400' },
-  {
-    value: 'enhancement',
-    label: 'enhancement',
-    description: 'Feature request',
-    color: 'bg-blue-500',
-  },
+  { value: 'S1', label: 'S1', description: 'Catastrophic', color: 'bg-red-500' },
+  { value: 'S2', label: 'S2', description: 'Serious', color: 'bg-orange-500' },
+  { value: 'S3', label: 'S3', description: 'Normal', color: 'bg-yellow-500' },
+  { value: 'S4', label: 'S4', description: 'Minor', color: 'bg-blue-500' },
+  { value: 'N/A', label: 'N/A', description: 'Not applicable', color: 'bg-gray-500' },
 ] as const
 
 export function SeverityPicker({
