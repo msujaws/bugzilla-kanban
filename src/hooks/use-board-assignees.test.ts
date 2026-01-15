@@ -6,6 +6,7 @@ const createBug = (
   id: number,
   assignedTo: string,
   assignedToDetail?: { email: string; name: string; real_name: string },
+  overrides?: Partial<BugzillaBug>,
 ): BugzillaBug => ({
   id,
   summary: `Bug ${id.toString()}`,
@@ -18,7 +19,22 @@ const createBug = (
   whiteboard: '',
   last_change_time: '2024-01-01T00:00:00Z',
   creation_time: '2024-01-01T00:00:00Z',
+  ...overrides,
 })
+
+// Helper to get a recent date (within 2 weeks)
+const getRecentDate = () => {
+  const date = new Date()
+  date.setDate(date.getDate() - 7) // 1 week ago
+  return date.toISOString()
+}
+
+// Helper to get an old date (more than 2 weeks ago)
+const getOldDate = () => {
+  const date = new Date()
+  date.setDate(date.getDate() - 30) // 30 days ago
+  return date.toISOString()
+}
 
 describe('getBoardAssignees', () => {
   it('should return empty array for empty bugs list', () => {
@@ -146,5 +162,98 @@ describe('getBoardAssignees', () => {
     expect(assignee).toHaveProperty('email')
     expect(assignee).toHaveProperty('displayName')
     expect(assignee).toHaveProperty('count')
+  })
+
+  describe('done column filtering', () => {
+    it('should exclude done bugs with non-FIXED resolution from count', () => {
+      const bugs = [
+        createBug(1, 'alice@example.com'), // NEW - should count
+        createBug(2, 'alice@example.com', undefined, {
+          status: 'RESOLVED',
+          resolution: 'WONTFIX',
+          last_change_time: getRecentDate(),
+        }), // RESOLVED but WONTFIX - should NOT count
+      ]
+
+      const result = getBoardAssignees(bugs)
+      const alice = result.find((a) => a.email === 'alice@example.com')
+
+      expect(alice?.count).toBe(1) // Only the NEW bug
+    })
+
+    it('should exclude done bugs older than 2 weeks from count', () => {
+      const bugs = [
+        createBug(1, 'alice@example.com'), // NEW - should count
+        createBug(2, 'alice@example.com', undefined, {
+          status: 'RESOLVED',
+          resolution: 'FIXED',
+          last_change_time: getOldDate(),
+        }), // FIXED but old - should NOT count
+      ]
+
+      const result = getBoardAssignees(bugs)
+      const alice = result.find((a) => a.email === 'alice@example.com')
+
+      expect(alice?.count).toBe(1) // Only the NEW bug
+    })
+
+    it('should include recent done bugs with FIXED resolution in count', () => {
+      const bugs = [
+        createBug(1, 'alice@example.com'), // NEW - should count
+        createBug(2, 'alice@example.com', undefined, {
+          status: 'RESOLVED',
+          resolution: 'FIXED',
+          last_change_time: getRecentDate(),
+        }), // FIXED and recent - should count
+      ]
+
+      const result = getBoardAssignees(bugs)
+      const alice = result.find((a) => a.email === 'alice@example.com')
+
+      expect(alice?.count).toBe(2) // Both bugs
+    })
+
+    it('should handle VERIFIED and CLOSED statuses the same as RESOLVED', () => {
+      const bugs = [
+        createBug(1, 'alice@example.com', undefined, {
+          status: 'VERIFIED',
+          resolution: 'INVALID',
+          last_change_time: getRecentDate(),
+        }), // VERIFIED but INVALID - should NOT count
+        createBug(2, 'alice@example.com', undefined, {
+          status: 'CLOSED',
+          resolution: 'DUPLICATE',
+          last_change_time: getRecentDate(),
+        }), // CLOSED but DUPLICATE - should NOT count
+        createBug(3, 'alice@example.com', undefined, {
+          status: 'VERIFIED',
+          resolution: 'FIXED',
+          last_change_time: getRecentDate(),
+        }), // VERIFIED + FIXED + recent - should count
+      ]
+
+      const result = getBoardAssignees(bugs)
+      const alice = result.find((a) => a.email === 'alice@example.com')
+
+      expect(alice?.count).toBe(1) // Only the VERIFIED+FIXED bug
+    })
+
+    it('should not filter non-done bugs regardless of age', () => {
+      const bugs = [
+        createBug(1, 'alice@example.com', undefined, {
+          status: 'NEW',
+          last_change_time: getOldDate(),
+        }), // OLD but NEW status - should count
+        createBug(2, 'alice@example.com', undefined, {
+          status: 'ASSIGNED',
+          last_change_time: getOldDate(),
+        }), // OLD but ASSIGNED - should count
+      ]
+
+      const result = getBoardAssignees(bugs)
+      const alice = result.find((a) => a.email === 'alice@example.com')
+
+      expect(alice?.count).toBe(2) // Both bugs count
+    })
   })
 })

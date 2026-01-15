@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
+import { isWithinTwoWeeks } from '@/lib/bugzilla/date-filter'
 
 export interface Assignee {
   email: string
@@ -8,7 +9,27 @@ export interface Assignee {
 }
 
 /**
- * Extracts unique assignees from bugs, sorted by frequency
+ * Done statuses that require FIXED resolution + recency filtering
+ */
+const DONE_STATUSES = new Set(['RESOLVED', 'VERIFIED', 'CLOSED'])
+
+/**
+ * Check if a bug would be displayed on the board.
+ * Bugs in done statuses are only displayed if they have FIXED resolution
+ * and were changed within the past 2 weeks.
+ */
+function isBugDisplayed(bug: BugzillaBug): boolean {
+  if (DONE_STATUSES.has(bug.status)) {
+    // Done bugs must have FIXED resolution and be recent
+    return bug.resolution === 'FIXED' && isWithinTwoWeeks(bug.last_change_time)
+  }
+  // All other bugs are displayed
+  return true
+}
+
+/**
+ * Extracts unique assignees from bugs, sorted by frequency.
+ * Only counts bugs that would actually be displayed on the board.
  * @param bugs - Array of bugs to extract assignees from
  * @returns Array of unique assignees sorted by count (descending)
  */
@@ -16,6 +37,11 @@ export function getBoardAssignees(bugs: BugzillaBug[]): Assignee[] {
   const assigneeMap = new Map<string, { displayName: string; count: number }>()
 
   for (const bug of bugs) {
+    // Skip bugs that wouldn't be displayed on the board
+    if (!isBugDisplayed(bug)) {
+      continue
+    }
+
     const email = bug.assigned_to
     const existing = assigneeMap.get(email)
 
