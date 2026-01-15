@@ -328,9 +328,9 @@ describe('App', () => {
       // Clear any calls from initialization
       replaceStateMock.mockClear()
 
-      // Change sort order by clicking the radio button
-      const lastChangedRadio = screen.getByRole('radio', { name: /last changed/i })
-      await user.click(lastChangedRadio)
+      // Change sort order by clicking the button
+      const lastChangedButton = screen.getByRole('button', { name: /last changed/i })
+      await user.click(lastChangedButton)
 
       // URL should NOT have been updated
       expect(replaceStateMock).not.toHaveBeenCalled()

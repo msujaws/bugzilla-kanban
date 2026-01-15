@@ -136,36 +136,39 @@ export function FilterBar({
         </div>
 
         {/* Sort order */}
-        <div className="flex items-center gap-3 self-end pb-2">
-          <span className="text-sm text-text-secondary">Sort:</span>
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input
-              type="radio"
-              name="sortOrder"
-              value="priority"
-              checked={sortOrder === 'priority'}
-              onChange={() => {
+        <div className="flex items-center gap-2 self-end pb-2">
+          <div role="group" aria-label="Sort order" className="flex">
+            <button
+              type="button"
+              aria-pressed={sortOrder === 'priority'}
+              onClick={() => {
                 onSortOrderChange('priority')
               }}
               disabled={isLoading}
-              className="h-4 w-4 border-bg-tertiary bg-bg-primary text-accent-primary focus:ring-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <span className="text-sm text-text-secondary">Priority</span>
-          </label>
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input
-              type="radio"
-              name="sortOrder"
-              value="lastChanged"
-              checked={sortOrder === 'lastChanged'}
-              onChange={() => {
+              className={`rounded-l border border-r-0 px-3 py-1.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                sortOrder === 'priority'
+                  ? 'border-accent-primary bg-accent-primary text-white'
+                  : 'border-bg-tertiary bg-bg-primary text-text-secondary hover:bg-bg-tertiary'
+              }`}
+            >
+              {sortOrder === 'priority' ? '↓ ' : ''}Priority
+            </button>
+            <button
+              type="button"
+              aria-pressed={sortOrder === 'lastChanged'}
+              onClick={() => {
                 onSortOrderChange('lastChanged')
               }}
               disabled={isLoading}
-              className="h-4 w-4 border-bg-tertiary bg-bg-primary text-accent-primary focus:ring-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <span className="text-sm text-text-secondary whitespace-nowrap">Last Changed</span>
-          </label>
+              className={`rounded-r border px-3 py-1.5 text-sm whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                sortOrder === 'lastChanged'
+                  ? 'border-accent-primary bg-accent-primary text-white'
+                  : 'border-bg-tertiary bg-bg-primary text-text-secondary hover:bg-bg-tertiary'
+              }`}
+            >
+              {sortOrder === 'lastChanged' ? '↓ ' : ''}Last Changed
+            </button>
+          </div>
         </div>
 
         {/* Actions */}

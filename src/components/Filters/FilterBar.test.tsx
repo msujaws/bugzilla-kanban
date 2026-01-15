@@ -237,35 +237,46 @@ describe('FilterBar', () => {
   })
 
   describe('sort order', () => {
-    it('should render sort order radio buttons', () => {
+    it('should render sort order toggle button group', () => {
       render(<FilterBar {...defaultProps} />)
 
-      expect(screen.getByLabelText(/priority/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/last changed/i)).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: /sort order/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /priority/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /last changed/i })).toBeInTheDocument()
     })
 
-    it('should have priority selected by default', () => {
+    it('should show down arrow on priority button when selected', () => {
       render(<FilterBar {...defaultProps} sortOrder="priority" />)
 
-      const priorityRadio = screen.getByLabelText(/priority/i)
-      const lastChangedRadio = screen.getByLabelText(/last changed/i)
+      const priorityButton = screen.getByRole('button', { name: /priority/i })
+      const lastChangedButton = screen.getByRole('button', { name: /last changed/i })
 
-      expect(priorityRadio).toBeChecked()
-      expect(lastChangedRadio).not.toBeChecked()
+      expect(priorityButton).toHaveTextContent('↓')
+      expect(lastChangedButton).not.toHaveTextContent('↓')
     })
 
-    it('should call onSortOrderChange when last changed is selected', async () => {
+    it('should show down arrow on last changed button when selected', () => {
+      render(<FilterBar {...defaultProps} sortOrder="lastChanged" />)
+
+      const priorityButton = screen.getByRole('button', { name: /priority/i })
+      const lastChangedButton = screen.getByRole('button', { name: /last changed/i })
+
+      expect(priorityButton).not.toHaveTextContent('↓')
+      expect(lastChangedButton).toHaveTextContent('↓')
+    })
+
+    it('should call onSortOrderChange when last changed is clicked', async () => {
       const user = userEvent.setup()
       const onSortOrderChange = vi.fn()
       render(<FilterBar {...defaultProps} onSortOrderChange={onSortOrderChange} />)
 
-      const lastChangedRadio = screen.getByLabelText(/last changed/i)
-      await user.click(lastChangedRadio)
+      const lastChangedButton = screen.getByRole('button', { name: /last changed/i })
+      await user.click(lastChangedButton)
 
       expect(onSortOrderChange).toHaveBeenCalledWith('lastChanged')
     })
 
-    it('should call onSortOrderChange when priority is selected', async () => {
+    it('should call onSortOrderChange when priority is clicked', async () => {
       const user = userEvent.setup()
       const onSortOrderChange = vi.fn()
       render(
@@ -276,8 +287,8 @@ describe('FilterBar', () => {
         />,
       )
 
-      const priorityRadio = screen.getByLabelText(/priority/i)
-      await user.click(priorityRadio)
+      const priorityButton = screen.getByRole('button', { name: /priority/i })
+      await user.click(priorityButton)
 
       expect(onSortOrderChange).toHaveBeenCalledWith('priority')
     })
@@ -286,6 +297,23 @@ describe('FilterBar', () => {
       render(<FilterBar {...defaultProps} sortOrder="lastChanged" />)
 
       expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument()
+    })
+
+    it('should visually indicate the selected sort option', () => {
+      render(<FilterBar {...defaultProps} sortOrder="priority" />)
+
+      const priorityButton = screen.getByRole('button', { name: /priority/i })
+      expect(priorityButton).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('should disable buttons when loading', () => {
+      render(<FilterBar {...defaultProps} isLoading={true} />)
+
+      const priorityButton = screen.getByRole('button', { name: /priority/i })
+      const lastChangedButton = screen.getByRole('button', { name: /last changed/i })
+
+      expect(priorityButton).toBeDisabled()
+      expect(lastChangedButton).toBeDisabled()
     })
   })
 
