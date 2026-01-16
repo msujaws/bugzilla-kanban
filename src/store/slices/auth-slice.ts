@@ -13,6 +13,7 @@ export interface AuthSlice {
   isValid: boolean
   isValidating: boolean
   validationError: string | null
+  username: string | null
 
   // Actions
   setApiKey: (apiKey: string) => Promise<void>
@@ -29,6 +30,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
   isValid: false,
   isValidating: false,
   validationError: null,
+  username: null,
 
   // Set API key, save to storage, and validate
   setApiKey: async (apiKeyString: string) => {
@@ -51,7 +53,15 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
       const client = new BugzillaClient(apiKey, DEFAULT_BUGZILLA_URL)
       await client.getBugs({ status: ['NEW'], limit: 1 })
 
-      set({ isValid: true, isValidating: false, validationError: null })
+      // Fetch user info
+      const userInfo = await client.whoAmI()
+
+      set({
+        isValid: true,
+        isValidating: false,
+        validationError: null,
+        username: userInfo.real_name || userInfo.name,
+      })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       set({ isValid: false, isValidating: false, validationError: errorMessage })
@@ -66,6 +76,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
       isValid: false,
       isValidating: false,
       validationError: null,
+      username: null,
     })
   },
 
@@ -86,7 +97,15 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
       const client = new BugzillaClient(apiKey, DEFAULT_BUGZILLA_URL)
       await client.getBugs({ status: ['NEW'], limit: 1 })
 
-      set({ isValid: true, isValidating: false, validationError: null })
+      // Fetch user info
+      const userInfo = await client.whoAmI()
+
+      set({
+        isValid: true,
+        isValidating: false,
+        validationError: null,
+        username: userInfo.real_name || userInfo.name,
+      })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       set({

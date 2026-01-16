@@ -74,3 +74,9 @@ export interface BatchUpdateResult {
   successful: number[]
   failed: Array<{ id: number; error: string }>
 }
+
+export interface WhoAmIResponse {
+  id: number
+  real_name: string
+  name: string
+}

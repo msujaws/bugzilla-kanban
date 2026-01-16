@@ -4,12 +4,15 @@ import { createAuthSlice } from './auth-slice'
 import type { AuthSlice } from './auth-slice'
 
 // Use vi.hoisted to create mocks that can be referenced in vi.mock
-const { mockSaveApiKey, mockGetApiKey, mockClearApiKey, mockGetBugs } = vi.hoisted(() => ({
-  mockSaveApiKey: vi.fn(),
-  mockGetApiKey: vi.fn(),
-  mockClearApiKey: vi.fn(),
-  mockGetBugs: vi.fn(),
-}))
+const { mockSaveApiKey, mockGetApiKey, mockClearApiKey, mockGetBugs, mockWhoAmI } = vi.hoisted(
+  () => ({
+    mockSaveApiKey: vi.fn(),
+    mockGetApiKey: vi.fn(),
+    mockClearApiKey: vi.fn(),
+    mockGetBugs: vi.fn(),
+    mockWhoAmI: vi.fn(),
+  }),
+)
 
 // Mock ApiKeyStorage
 vi.mock('@/lib/storage/api-key-storage', () => ({
@@ -24,6 +27,7 @@ vi.mock('@/lib/storage/api-key-storage', () => ({
 vi.mock('@/lib/bugzilla/client', () => ({
   BugzillaClient: vi.fn().mockImplementation(() => ({
     getBugs: mockGetBugs,
+    whoAmI: mockWhoAmI,
   })),
 }))
 
@@ -36,6 +40,7 @@ describe('AuthSlice', () => {
     mockSaveApiKey.mockResolvedValue()
     mockGetApiKey.mockResolvedValue(null)
     mockGetBugs.mockResolvedValue([])
+    mockWhoAmI.mockResolvedValue({ id: 12345, real_name: 'Test User', name: 'test@mozilla.com' })
 
     useStore = create<AuthSlice>()((...args) => ({
       ...createAuthSlice(...args),
@@ -64,6 +69,12 @@ describe('AuthSlice', () => {
 
       expect(validationError).toBeNull()
     })
+
+    it('should have username null initially', () => {
+      const { username } = useStore.getState()
+
+      expect(username).toBeNull()
+    })
   })
 
   describe('setApiKey', () => {
@@ -90,6 +101,15 @@ describe('AuthSlice', () => {
       const { isValid, isValidating } = useStore.getState()
       expect(isValidating).toBe(false)
       expect(isValid).toBe(true)
+    })
+
+    it('should fetch and store username on successful validation', async () => {
+      const { setApiKey } = useStore.getState()
+      await setApiKey('test-api-key-123')
+
+      const { username } = useStore.getState()
+      expect(username).toBe('Test User')
+      expect(mockWhoAmI).toHaveBeenCalled()
     })
 
     it('should set isValidating during validation', async () => {
@@ -177,6 +197,20 @@ describe('AuthSlice', () => {
 
       // Can't easily verify this without exposing storage instance
       // Trust that implementation calls storage.clearApiKey()
+    })
+
+    it('should clear username', async () => {
+      const { setApiKey, clearApiKey } = useStore.getState()
+      await setApiKey('test-api-key-123')
+
+      const { username: usernameBefore } = useStore.getState()
+      expect(usernameBefore).toBe('Test User')
+
+      clearApiKey()
+
+      const { username: usernameAfter } = useStore.getState()
+
+      expect(usernameAfter).toBeNull()
     })
   })
 

@@ -9,6 +9,7 @@ export function ApiKeyStatus({ onOpenModal }: ApiKeyStatusProps) {
   const isValid = useStore((state) => state.isValid)
   const isValidating = useStore((state) => state.isValidating)
   const clearApiKey = useStore((state) => state.clearApiKey)
+  const username = useStore((state) => state.username)
 
   // Determine current state
   const hasApiKey = Boolean(apiKey)
@@ -60,7 +61,9 @@ export function ApiKeyStatus({ onOpenModal }: ApiKeyStatusProps) {
       <div role="status" className="flex items-center gap-3 rounded-lg bg-bg-secondary px-4 py-2">
         <span className="material-icons text-accent-success">check_circle</span>
         <div className="flex-1">
-          <p className="text-sm font-bold text-text-primary">Connected! 🎉</p>
+          <p className="text-sm font-bold text-text-primary">
+            Connected as {username || 'Unknown'} 🎉
+          </p>
           <p className="text-xs text-text-secondary">You&apos;re all set to manage bugs</p>
         </div>
         <button

@@ -7,6 +7,7 @@ import type {
   BugFilters,
   BugUpdate,
   BatchUpdateResult,
+  WhoAmIResponse,
 } from './types'
 
 const DEFAULT_TIMEOUT = 30_000 // 30 seconds
@@ -83,6 +84,14 @@ export class BugzillaClient {
       method: 'PUT',
       body: JSON.stringify(changes),
     })
+  }
+
+  /**
+   * Get current user info (authenticated user)
+   */
+  async whoAmI(): Promise<WhoAmIResponse> {
+    const url = `${this.baseUrl}/whoami`
+    return this.request<WhoAmIResponse>(url)
   }
 
   /**

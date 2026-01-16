@@ -468,4 +468,47 @@ describe('BugzillaClient', () => {
       )
     })
   })
+
+  describe('whoAmI', () => {
+    it('should return current user info', async () => {
+      const mockUser = {
+        id: 12_345,
+        real_name: 'Test User',
+        name: 'testuser@mozilla.com',
+      }
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockUser),
+      })
+
+      const result = await client.whoAmI()
+
+      expect(result).toEqual(mockUser)
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining(`${baseUrl}/whoami`),
+        expect.objectContaining({
+          headers: {
+            'X-BUGZILLA-API-KEY': mockApiKey,
+            'Content-Type': 'application/json',
+          },
+        }),
+      )
+    })
+
+    it('should throw error on 401 Unauthorized', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: () =>
+          Promise.resolve({
+            error: true,
+            message: 'Invalid API key',
+            code: 401,
+          }),
+      })
+
+      await expect(client.whoAmI()).rejects.toThrow('Unauthorized: Invalid API key')
+    })
+  })
 })
