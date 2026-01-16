@@ -298,7 +298,9 @@ test.describe('Kanban Flow', () => {
 
     await page.getByPlaceholder('e.g., [kanban] or bug-triage').fill('kanban')
     await page.getByRole('button', { name: 'Apply Filters' }).click()
-    await page.waitForResponse('**/api/bugzilla/**')
+
+    // Wait for bugs to load by checking for a bug card (more reliable than waitForResponse)
+    await expect(page.getByRole('article').first()).toBeVisible({ timeout: 15000 })
 
     // Drag and attempt to apply
     const backlogColumn = page.getByRole('region', { name: 'Backlog section' })
@@ -395,8 +397,8 @@ test.describe('Kanban Flow', () => {
     const pointsPicker = page.getByRole('listbox', { name: 'Select story points' })
     await expect(pointsPicker).toBeVisible({ timeout: 5000 })
 
-    // Click option
-    const option = pointsPicker.getByRole('option', { name: /^8$/ })
+    // Click option (aria-label is "8 points")
+    const option = pointsPicker.getByRole('option', { name: /^8 points/ })
     await option.click()
 
     // Wait for picker to close
