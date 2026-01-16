@@ -99,7 +99,7 @@ export function FilterBar({
       {/* Header */}
       <div className="mb-4 flex items-center gap-2">
         <span className="material-icons text-text-secondary">filter_list</span>
-        <h2 className="text-lg font-bold text-text-primary">Filter your bugs 🔍</h2>
+        <h2 className="text-lg font-bold text-text-primary">Filter your bugs</h2>
       </div>
 
       {/* Filter inputs */}
