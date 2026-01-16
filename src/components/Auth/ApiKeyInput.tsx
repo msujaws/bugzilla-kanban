@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react'
 import { useStore } from '@/store'
+import { useFocusTrap } from '@/hooks/use-focus-trap'
 
 interface ApiKeyInputProps {
   isOpen: boolean
@@ -11,6 +12,10 @@ export function ApiKeyInput({ isOpen, onClose, onOpenFAQ }: ApiKeyInputProps) {
   const [apiKey, setApiKey] = useState('')
 
   const inputReference = useRef<HTMLInputElement>(null)
+  const dialogReference = useRef<HTMLDivElement>(null)
+
+  // Trap focus within dialog when open
+  useFocusTrap(dialogReference, isOpen)
 
   const setStoreApiKey = useStore((state) => state.setApiKey)
   const isValidating = useStore((state) => state.isValidating)
@@ -82,6 +87,7 @@ export function ApiKeyInput({ isOpen, onClose, onOpenFAQ }: ApiKeyInputProps) {
       }}
     >
       <div
+        ref={dialogReference}
         role="dialog"
         aria-modal="true"
         aria-labelledby="api-key-modal-title"

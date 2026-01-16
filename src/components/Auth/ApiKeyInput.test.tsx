@@ -288,5 +288,39 @@ describe('ApiKeyInput', () => {
       await user.tab()
       expect(cancelButton).toHaveFocus()
     })
+
+    it('should trap focus within modal on Tab from last element', async () => {
+      const user = userEvent.setup()
+      render(<ApiKeyInput isOpen={true} onClose={mockOnClose} />)
+
+      // Focus the cancel button (last focusable element in default state)
+      const cancelButton = screen.getByRole('button', { name: /cancel/i })
+      cancelButton.focus()
+      expect(cancelButton).toHaveFocus()
+
+      // Tab should wrap to first focusable element
+      await user.tab()
+
+      // Should wrap to first focusable element in the dialog
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.contains(document.activeElement)).toBe(true)
+    })
+
+    it('should trap focus within modal on Shift+Tab from first element', async () => {
+      const user = userEvent.setup()
+      render(<ApiKeyInput isOpen={true} onClose={mockOnClose} />)
+
+      // Focus the input (first focusable element)
+      const input = screen.getByLabelText(/api key/i)
+      input.focus()
+      expect(input).toHaveFocus()
+
+      // Shift+Tab should wrap to last focusable element
+      await user.tab({ shift: true })
+
+      // Should wrap to last focusable element in the dialog
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.contains(document.activeElement)).toBe(true)
+    })
   })
 })

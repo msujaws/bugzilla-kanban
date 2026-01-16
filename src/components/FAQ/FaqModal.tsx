@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useFocusTrap } from '@/hooks/use-focus-trap'
 
 interface FAQModalProps {
   isOpen: boolean
@@ -50,6 +51,11 @@ const faqs = [
 ]
 
 export function FAQModal({ isOpen, onClose }: FAQModalProps) {
+  const dialogReference = useRef<HTMLDivElement>(null)
+
+  // Trap focus within dialog when open
+  useFocusTrap(dialogReference, isOpen)
+
   // Handle Escape key
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -79,6 +85,7 @@ export function FAQModal({ isOpen, onClose }: FAQModalProps) {
           }}
         >
           <motion.div
+            ref={dialogReference}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
