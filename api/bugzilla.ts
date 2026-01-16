@@ -12,7 +12,7 @@ const ALLOWED_ORIGINS = [
 ]
 
 // Allowed endpoint prefixes - whitelist only safe endpoints
-const ALLOWED_ENDPOINTS = new Set(['bug', 'user'])
+const ALLOWED_ENDPOINTS = new Set(['bug', 'user', 'whoami'])
 
 function isOriginAllowed(origin: string | undefined): boolean {
   // Same-origin requests (no origin header) are allowed

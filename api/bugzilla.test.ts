@@ -185,6 +185,20 @@ describe('Bugzilla API Proxy Security', () => {
       expect(fetch).toHaveBeenCalled()
     })
 
+    it('should allow /whoami endpoint', async () => {
+      const req = createMockRequest({
+        url: '/api/bugzilla/whoami',
+        query: { path: ['whoami'] },
+        headers: { origin: 'http://localhost:5173' },
+      })
+      const res = createMockResponse()
+
+      await handler(req, res)
+
+      expect(res._status).not.toBe(403)
+      expect(fetch).toHaveBeenCalled()
+    })
+
     it('should reject unauthorized endpoints', async () => {
       const req = createMockRequest({
         url: '/api/bugzilla/admin/settings',
