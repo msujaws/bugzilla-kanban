@@ -918,4 +918,85 @@ describe('Card', () => {
       expect(onClick).not.toHaveBeenCalled()
     })
   })
+
+  describe('picker accessibility', () => {
+    it('should have aria-expanded=false on priority button when picker is closed', () => {
+      render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
+
+      const button = screen.getByLabelText('Change priority')
+      expect(button).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('should have aria-expanded=true on priority button when picker is open', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change priority'))
+
+      const button = screen.getByLabelText('Change priority')
+      expect(button).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('should have aria-controls linking priority button to listbox', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
+
+      await user.click(screen.getByLabelText('Change priority'))
+
+      const button = screen.getByLabelText('Change priority')
+      const listbox = screen.getByRole('listbox', { name: /priority/i })
+      expect(button).toHaveAttribute('aria-controls', listbox.id)
+    })
+
+    it('should have aria-haspopup=listbox on priority button', () => {
+      render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
+
+      const button = screen.getByLabelText('Change priority')
+      expect(button).toHaveAttribute('aria-haspopup', 'listbox')
+    })
+
+    it('should have aria-expanded on severity button', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} onSeverityChange={vi.fn()} />)
+
+      const button = screen.getByLabelText('Change severity')
+      expect(button).toHaveAttribute('aria-expanded', 'false')
+
+      await user.click(button)
+      expect(button).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('should have aria-expanded on assignee button', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
+
+      const button = screen.getByLabelText('Change assignee')
+      expect(button).toHaveAttribute('aria-expanded', 'false')
+
+      await user.click(button)
+      expect(button).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('should have aria-expanded on points button', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={{ ...mockBug, cf_fx_points: 5 }} onPointsChange={vi.fn()} />)
+
+      const button = screen.getByLabelText('Change story points')
+      expect(button).toHaveAttribute('aria-expanded', 'false')
+
+      await user.click(button)
+      expect(button).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('should have aria-expanded on qe-verify button', async () => {
+      const user = userEvent.setup()
+      render(<Card bug={mockBug} onQeVerifyChange={vi.fn()} />)
+
+      const button = screen.getByLabelText('Change QE verification')
+      expect(button).toHaveAttribute('aria-expanded', 'false')
+
+      await user.click(button)
+      expect(button).toHaveAttribute('aria-expanded', 'true')
+    })
+  })
 })

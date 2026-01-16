@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useId } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
@@ -84,6 +84,13 @@ export function Card({
   const [isSeverityPickerOpen, setIsSeverityPickerOpen] = useState(false)
   const [isQeVerifyPickerOpen, setIsQeVerifyPickerOpen] = useState(false)
   const [anchorPosition, setAnchorPosition] = useState<{ x: number; y: number } | undefined>()
+
+  // Generate unique IDs for picker listboxes
+  const assigneeListboxId = useId()
+  const pointsListboxId = useId()
+  const priorityListboxId = useId()
+  const severityListboxId = useId()
+  const qeVerifyListboxId = useId()
   const assigneeButtonRef = useRef<HTMLButtonElement>(null)
   const pointsButtonRef = useRef<HTMLButtonElement>(null)
   const priorityButtonRef = useRef<HTMLButtonElement>(null)
@@ -288,6 +295,9 @@ export function Card({
               ref={pointsButtonRef}
               type="button"
               aria-label="Change story points"
+              aria-expanded={isPointsPickerOpen}
+              aria-haspopup="listbox"
+              aria-controls={pointsListboxId}
               onClick={handlePointsButtonClick}
               className={`ml-auto rounded-full bg-accent-primary/20 px-2 py-0.5 text-xs font-bold text-accent-primary transition-colors hover:bg-accent-primary/30 ${
                 isPointsStaged ? 'ring-2 ring-accent-staged' : ''
@@ -318,6 +328,9 @@ export function Card({
             ref={priorityButtonRef}
             type="button"
             aria-label="Change priority"
+            aria-expanded={isPriorityPickerOpen}
+            aria-haspopup="listbox"
+            aria-controls={priorityListboxId}
             onClick={handlePriorityButtonClick}
             className={`${priorityColor} rounded px-2 py-0.5 text-xs font-bold text-white transition-colors hover:opacity-80 ${
               isPriorityStaged ? 'ring-2 ring-accent-staged' : ''
@@ -337,6 +350,9 @@ export function Card({
             ref={severityButtonRef}
             type="button"
             aria-label="Change severity"
+            aria-expanded={isSeverityPickerOpen}
+            aria-haspopup="listbox"
+            aria-controls={severityListboxId}
             onClick={handleSeverityButtonClick}
             className={`${severityColor} rounded bg-bg-tertiary px-2 py-0.5 text-xs font-medium transition-colors hover:opacity-80 ${
               isSeverityStaged ? 'ring-2 ring-accent-staged' : ''
@@ -365,6 +381,9 @@ export function Card({
             ref={assigneeButtonRef}
             type="button"
             aria-label="Change assignee"
+            aria-expanded={isAssigneePickerOpen}
+            aria-haspopup="listbox"
+            aria-controls={assigneeListboxId}
             onClick={handleAssigneeButtonClick}
             className={`flex min-w-0 flex-1 items-center gap-2 rounded p-0.5 transition-colors hover:bg-bg-tertiary hover:text-text-primary ${
               isAssigneeStaged ? 'ring-2 ring-accent-staged' : ''
@@ -395,6 +414,9 @@ export function Card({
               ref={qeVerifyButtonRef}
               type="button"
               aria-label="Change QE verification"
+              aria-expanded={isQeVerifyPickerOpen}
+              aria-haspopup="listbox"
+              aria-controls={qeVerifyListboxId}
               onClick={handleQeVerifyButtonClick}
               className={`flex-shrink-0 text-xs text-text-tertiary transition-colors hover:text-text-secondary ${
                 isUnknown ? 'underline decoration-wavy decoration-text-tertiary' : ''
@@ -425,6 +447,7 @@ export function Card({
           assignees={allAssignees}
           currentAssignee={bug.assigned_to}
           anchorPosition={anchorPosition}
+          listboxId={assigneeListboxId}
         />
       )}
 
@@ -438,6 +461,7 @@ export function Card({
           onSelect={handlePointsSelect}
           currentPoints={bug.cf_fx_points}
           anchorPosition={anchorPosition}
+          listboxId={pointsListboxId}
         />
       )}
 
@@ -451,6 +475,7 @@ export function Card({
           onSelect={handlePrioritySelect}
           currentPriority={bug.priority}
           anchorPosition={anchorPosition}
+          listboxId={priorityListboxId}
         />
       )}
 
@@ -464,6 +489,7 @@ export function Card({
           onSelect={handleSeveritySelect}
           currentSeverity={bug.severity}
           anchorPosition={anchorPosition}
+          listboxId={severityListboxId}
         />
       )}
 
@@ -477,6 +503,7 @@ export function Card({
           onSelect={handleQeVerifySelect}
           currentStatus={getQeVerifyStatus(bug.flags)}
           anchorPosition={anchorPosition}
+          listboxId={qeVerifyListboxId}
         />
       )}
     </div>

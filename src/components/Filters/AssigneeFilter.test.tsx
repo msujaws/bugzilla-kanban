@@ -120,4 +120,35 @@ describe('AssigneeFilter', () => {
     render(<AssigneeFilter {...defaultProps} disabled={true} />)
     expect(screen.getByRole('button')).toBeDisabled()
   })
+
+  describe('accessibility', () => {
+    it('should have aria-expanded=false when dropdown is closed', () => {
+      render(<AssigneeFilter {...defaultProps} />)
+      expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('should have aria-expanded=true when dropdown is open', async () => {
+      const user = userEvent.setup()
+      render(<AssigneeFilter {...defaultProps} />)
+
+      await user.click(screen.getByRole('button'))
+      expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('should have aria-controls linking button to listbox', async () => {
+      const user = userEvent.setup()
+      render(<AssigneeFilter {...defaultProps} />)
+
+      await user.click(screen.getByRole('button'))
+
+      const button = screen.getByRole('button')
+      const listbox = screen.getByRole('listbox')
+      expect(button).toHaveAttribute('aria-controls', listbox.id)
+    })
+
+    it('should have aria-haspopup=listbox on button', () => {
+      render(<AssigneeFilter {...defaultProps} />)
+      expect(screen.getByRole('button')).toHaveAttribute('aria-haspopup', 'listbox')
+    })
+  })
 })

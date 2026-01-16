@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Assignee } from '@/hooks/use-board-assignees'
 
@@ -17,6 +17,7 @@ export function AssigneeFilter({
 }: AssigneeFilterProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const listboxId = useId()
 
   // Find selected assignee's display name
   const selectedDisplayName = selectedAssignee
@@ -66,6 +67,9 @@ export function AssigneeFilter({
           setIsOpen(!isOpen)
         }}
         disabled={disabled}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls={listboxId}
         className="flex min-w-[160px] items-center gap-2 rounded border border-bg-tertiary bg-bg-primary px-3 py-2 text-sm text-text-primary transition-colors hover:bg-bg-tertiary focus:border-accent-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className="material-icons text-base text-text-secondary">person</span>
@@ -83,7 +87,12 @@ export function AssigneeFilter({
             exit={{ opacity: 0, y: -4 }}
             className="absolute left-0 top-full z-50 mt-1 w-64 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary"
           >
-            <ul role="listbox" aria-label="Filter by assignee" className="max-h-64 overflow-y-auto">
+            <ul
+              id={listboxId}
+              role="listbox"
+              aria-label="Filter by assignee"
+              className="max-h-64 overflow-y-auto"
+            >
               {/* All Assignees option */}
               <li
                 role="option"

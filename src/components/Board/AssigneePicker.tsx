@@ -18,6 +18,7 @@ interface AssigneePickerProps {
   assignees: Assignee[]
   currentAssignee: string
   anchorPosition?: AnchorPosition
+  listboxId?: string
 }
 
 export function AssigneePicker({
@@ -27,6 +28,7 @@ export function AssigneePicker({
   assignees,
   currentAssignee,
   anchorPosition,
+  listboxId,
 }: AssigneePickerProps) {
   const adjustedPosition = usePopupPosition({
     anchorPosition,
@@ -93,7 +95,12 @@ export function AssigneePicker({
             </div>
 
             {/* Assignee list */}
-            <ul role="listbox" aria-label="Select assignee" className="max-h-48 overflow-y-auto">
+            <ul
+              id={listboxId}
+              role="listbox"
+              aria-label="Select assignee"
+              className="max-h-48 overflow-y-auto"
+            >
               {assignees.length === 0 ? (
                 <li className="px-4 py-3 text-center text-sm text-text-tertiary">
                   No assignees found

@@ -17,6 +17,7 @@ interface QeVerifyPickerProps {
   onSelect: (status: QeVerifyStatus) => void
   currentStatus: QeVerifyStatus
   anchorPosition?: AnchorPosition
+  listboxId?: string
 }
 
 const QE_VERIFY_OPTIONS = [
@@ -31,6 +32,7 @@ export function QeVerifyPicker({
   onSelect,
   currentStatus,
   anchorPosition,
+  listboxId,
 }: QeVerifyPickerProps) {
   const adjustedPosition = usePopupPosition({
     anchorPosition,
@@ -98,6 +100,7 @@ export function QeVerifyPicker({
 
             {/* Options list */}
             <ul
+              id={listboxId}
               role="listbox"
               aria-label="Select QE verification"
               className="max-h-64 overflow-y-auto"

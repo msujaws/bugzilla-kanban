@@ -16,6 +16,7 @@ interface PriorityPickerProps {
   onSelect: (priority: string) => void
   currentPriority: string
   anchorPosition?: AnchorPosition
+  listboxId?: string
 }
 
 const PRIORITY_OPTIONS = [
@@ -32,6 +33,7 @@ export function PriorityPicker({
   onSelect,
   currentPriority,
   anchorPosition,
+  listboxId,
 }: PriorityPickerProps) {
   const adjustedPosition = usePopupPosition({
     anchorPosition,
@@ -98,7 +100,12 @@ export function PriorityPicker({
             </div>
 
             {/* Priority list */}
-            <ul role="listbox" aria-label="Select priority" className="max-h-64 overflow-y-auto">
+            <ul
+              id={listboxId}
+              role="listbox"
+              aria-label="Select priority"
+              className="max-h-64 overflow-y-auto"
+            >
               {PRIORITY_OPTIONS.map((option) => {
                 const isSelected = currentPriority === option.value
                 return (

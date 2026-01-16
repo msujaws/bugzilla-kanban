@@ -16,6 +16,7 @@ interface SeverityPickerProps {
   onSelect: (severity: string) => void
   currentSeverity: string
   anchorPosition?: AnchorPosition
+  listboxId?: string
 }
 
 const SEVERITY_OPTIONS = [
@@ -32,6 +33,7 @@ export function SeverityPicker({
   onSelect,
   currentSeverity,
   anchorPosition,
+  listboxId,
 }: SeverityPickerProps) {
   const adjustedPosition = usePopupPosition({
     anchorPosition,
@@ -98,7 +100,12 @@ export function SeverityPicker({
             </div>
 
             {/* Severity list */}
-            <ul role="listbox" aria-label="Select severity" className="max-h-64 overflow-y-auto">
+            <ul
+              id={listboxId}
+              role="listbox"
+              aria-label="Select severity"
+              className="max-h-64 overflow-y-auto"
+            >
               {SEVERITY_OPTIONS.map((option) => {
                 const isSelected = currentSeverity === option.value
                 return (

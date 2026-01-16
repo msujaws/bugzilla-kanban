@@ -16,6 +16,7 @@ interface PointsPickerProps {
   onSelect: (points: number | string | undefined) => void
   currentPoints?: number | string
   anchorPosition?: AnchorPosition
+  listboxId?: string
 }
 
 const POINTS_OPTIONS = [
@@ -36,6 +37,7 @@ export function PointsPicker({
   onSelect,
   currentPoints,
   anchorPosition,
+  listboxId,
 }: PointsPickerProps) {
   const adjustedPosition = usePopupPosition({
     anchorPosition,
@@ -103,6 +105,7 @@ export function PointsPicker({
 
             {/* Points list */}
             <ul
+              id={listboxId}
               role="listbox"
               aria-label="Select story points"
               className="max-h-64 overflow-y-auto"
