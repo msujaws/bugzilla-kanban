@@ -115,6 +115,27 @@ describe('App', () => {
       expect(screen.getByText(/connected/i)).toBeInTheDocument()
     })
 
+    describe('mascot easter egg', () => {
+      it('should open origin story modal when mascot is clicked', async () => {
+        const user = userEvent.setup()
+        render(<App />)
+
+        // Click the mascot image
+        const mascot = screen.getByAltText(/boardzilla mascot/i)
+        await user.click(mascot)
+
+        // Origin story modal should appear
+        expect(screen.getByRole('heading', { name: /legend of boardzilla/i })).toBeInTheDocument()
+      })
+
+      it('should not show pointer cursor on mascot to keep it secret', () => {
+        render(<App />)
+
+        const mascot = screen.getByAltText(/boardzilla mascot/i)
+        expect(mascot).not.toHaveClass('cursor-pointer')
+      })
+    })
+
     describe('keyboard hints', () => {
       it('should display keyboard hints in header', () => {
         render(<App />)

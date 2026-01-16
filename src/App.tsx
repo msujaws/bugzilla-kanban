@@ -6,6 +6,7 @@ import { FilterBar } from './components/Filters/FilterBar'
 import { Board } from './components/Board/Board'
 import { ApplyChangesButton } from './components/Board/ApplyChangesButton'
 import { FAQModal } from './components/FAQ/FaqModal'
+import { OriginStoryModal } from './components/OriginStory/OriginStoryModal'
 import { useStore } from './store'
 import { useUrlFilters } from './hooks/use-url-filters'
 import { useBoardAssignees } from './hooks/use-board-assignees'
@@ -16,6 +17,7 @@ function App() {
   // Local UI state
   const [showApiKeyModal, setShowApiKeyModal] = useState(false)
   const [showFAQModal, setShowFAQModal] = useState(false)
+  const [showOriginStoryModal, setShowOriginStoryModal] = useState(false)
 
   // Auth state
   const apiKey = useStore((state) => state.apiKey)
@@ -118,6 +120,11 @@ function App() {
   // Handle open FAQ
   const handleOpenFAQ = useCallback(() => {
     setShowFAQModal(true)
+  }, [])
+
+  // Handle open origin story (easter egg)
+  const handleOpenOriginStory = useCallback(() => {
+    setShowOriginStoryModal(true)
   }, [])
 
   // Handle filter changes
@@ -373,6 +380,7 @@ function App() {
               src="/mascot.webp"
               alt="BoardZilla mascot - a friendly dinosaur with kanban boards"
               className="h-16 w-auto"
+              onClick={handleOpenOriginStory}
             />
             <div>
               <h1 className="text-2xl font-bold">BoardZilla</h1>
@@ -479,6 +487,14 @@ function App() {
         isOpen={showFAQModal}
         onClose={() => {
           setShowFAQModal(false)
+        }}
+      />
+
+      {/* Origin Story Modal (easter egg) */}
+      <OriginStoryModal
+        isOpen={showOriginStoryModal}
+        onClose={() => {
+          setShowOriginStoryModal(false)
         }}
       />
     </div>
