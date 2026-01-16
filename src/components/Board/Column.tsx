@@ -64,6 +64,14 @@ const columnDescriptions: Record<KanbanColumn, string> = {
   done: 'Bugs with status RESOLVED/VERIFIED/CLOSED and resolution FIXED (last 2 weeks)',
 }
 
+const columnEmptyMessages: Record<KanbanColumn, { title: string; subtitle: string }> = {
+  backlog: { title: 'Backlog bankruptcy!', subtitle: 'The best kind of bankruptcy.' },
+  todo: { title: 'Clean slate!', subtitle: 'Nothing planned… yet.' },
+  'in-progress': { title: 'All clear!', subtitle: 'Keyboards are resting.' },
+  'in-testing': { title: 'QE standing by!', subtitle: 'Send over some bugz to verify.' },
+  done: { title: 'Ship it!', subtitle: 'Check back after some bugz are resolved.' },
+}
+
 export function Column({
   column,
   bugs,
@@ -210,11 +218,11 @@ export function Column({
           <span className="material-icons text-4xl">
             {hasActiveFilters ? 'filter_alt_off' : 'celebration'}
           </span>
-          <p className="text-sm">No bugs here! 🎉</p>
+          <p className="text-sm">{columnEmptyMessages[column].title}</p>
           {hasActiveFilters ? (
             <p className="text-xs">Try adjusting your filters to see more bugs.</p>
           ) : (
-            <p className="text-xs">Time to celebrate!</p>
+            <p className="text-xs">{columnEmptyMessages[column].subtitle}</p>
           )}
         </div>
       )}

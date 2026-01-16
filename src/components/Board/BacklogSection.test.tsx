@@ -83,12 +83,12 @@ describe('BacklogSection', () => {
   describe('empty state', () => {
     it('should show empty state when no bugs', () => {
       render(<BacklogSection {...defaultProps} bugs={[]} />)
-      expect(screen.getByText(/No bugs here/)).toBeInTheDocument()
+      expect(screen.getByText(/Backlog bankruptcy/)).toBeInTheDocument()
     })
 
     it('should align empty state towards top', () => {
       render(<BacklogSection {...defaultProps} bugs={[]} />)
-      const emptyState = screen.getByText(/No bugs here/).parentElement
+      const emptyState = screen.getByText(/Backlog bankruptcy/).parentElement
       expect(emptyState).toHaveClass('justify-start')
     })
   })

@@ -126,19 +126,19 @@ describe('Column', () => {
     it('should show empty state when no bugs', () => {
       render(<Column {...defaultProps} bugs={[]} />)
 
-      expect(screen.getByText(/no bugs here/i)).toBeInTheDocument()
+      expect(screen.getByText(/backlog bankruptcy/i)).toBeInTheDocument()
     })
 
-    it('should show playful empty state message', () => {
+    it('should show column-specific empty state subtitle', () => {
       render(<Column {...defaultProps} bugs={[]} />)
 
-      expect(screen.getByText(/time to celebrate/i)).toBeInTheDocument()
+      expect(screen.getByText(/the best kind of bankruptcy/i)).toBeInTheDocument()
     })
 
     it('should align empty state towards top of column', () => {
       render(<Column {...defaultProps} bugs={[]} />)
 
-      const emptyState = screen.getByText(/no bugs here/i).parentElement
+      const emptyState = screen.getByText(/backlog bankruptcy/i).parentElement
       expect(emptyState).toHaveClass('justify-start')
     })
 
@@ -152,14 +152,14 @@ describe('Column', () => {
       render(<Column {...defaultProps} bugs={[]} hasActiveFilters={false} />)
 
       expect(screen.queryByText(/try adjusting your filters/i)).not.toBeInTheDocument()
-      expect(screen.getByText(/no bugs here/i)).toBeInTheDocument()
+      expect(screen.getByText(/backlog bankruptcy/i)).toBeInTheDocument()
     })
 
-    it('should show celebration message without filter guidance when filters active but bugs exist', () => {
+    it('should show bugs without empty state when filters active but bugs exist', () => {
       render(<Column {...defaultProps} bugs={mockBugs} hasActiveFilters={true} />)
 
       // Should show bugs, not empty state
-      expect(screen.queryByText(/no bugs here/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/backlog bankruptcy/i)).not.toBeInTheDocument()
       expect(screen.queryByText(/try adjusting your filters/i)).not.toBeInTheDocument()
     })
   })

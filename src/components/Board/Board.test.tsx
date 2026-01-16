@@ -380,9 +380,14 @@ describe('Board', () => {
     it('should show empty state when no bugs', () => {
       render(<Board {...defaultProps} bugs={[]} />)
 
-      // 4 board columns + 1 backlog section = 5 empty messages
-      const emptyMessages = screen.getAllByText(/no bugs here/i)
-      expect(emptyMessages.length).toBe(5)
+      // Each column has its own empty state message
+      // Backlog: "Backlog bankruptcy!", Todo: "Clean slate!", In Progress: "All clear!",
+      // In Testing: "QE standing by!", Done: "Ship it!"
+      expect(screen.getByText(/backlog bankruptcy/i)).toBeInTheDocument()
+      expect(screen.getByText(/clean slate/i)).toBeInTheDocument()
+      expect(screen.getByText(/all clear/i)).toBeInTheDocument()
+      expect(screen.getByText(/QE standing by/i)).toBeInTheDocument()
+      expect(screen.getByText(/ship it/i)).toBeInTheDocument()
     })
   })
 
@@ -748,8 +753,12 @@ describe('Board', () => {
         fireEvent.keyDown(document, { key: 'ArrowDown' })
         fireEvent.keyDown(document, { key: 'Shift' })
 
-        // 4 board columns + 1 backlog section = 5 empty messages
-        expect(screen.getAllByText(/no bugs here/i).length).toBe(5)
+        // Each column should show its empty state message
+        expect(screen.getByText(/backlog bankruptcy/i)).toBeInTheDocument()
+        expect(screen.getByText(/clean slate/i)).toBeInTheDocument()
+        expect(screen.getByText(/all clear/i)).toBeInTheDocument()
+        expect(screen.getByText(/QE standing by/i)).toBeInTheDocument()
+        expect(screen.getByText(/ship it/i)).toBeInTheDocument()
       })
     })
 

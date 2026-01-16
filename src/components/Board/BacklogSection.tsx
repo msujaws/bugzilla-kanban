@@ -226,11 +226,11 @@ export function BacklogSection({
           <span className="material-icons text-4xl">
             {hasActiveFilters ? 'filter_alt_off' : 'celebration'}
           </span>
-          <p className="text-sm">No bugs here! 🎉</p>
+          <p className="text-sm">Backlog bankruptcy!</p>
           {hasActiveFilters ? (
             <p className="text-xs">Try adjusting your filters to see more bugs.</p>
           ) : (
-            <p className="text-xs">Time to celebrate!</p>
+            <p className="text-xs">The best kind of bankruptcy.</p>
           )}
         </div>
       )}
