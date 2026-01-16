@@ -226,6 +226,75 @@ export function FilterBar({
           </button>
         </div>
       </div>
+
+      {/* Active filter badges */}
+      {hasFilters && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-bg-tertiary pt-3">
+          <span className="text-xs text-text-tertiary">Active filters:</span>
+          {whiteboardTag && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent-primary/20 px-2 py-1 text-xs text-accent-primary">
+              {whiteboardTag}
+              <button
+                type="button"
+                onClick={() => {
+                  onWhiteboardTagChange('')
+                }}
+                className="ml-1 rounded-full hover:bg-accent-primary/30 focus:outline-none focus:ring-1 focus:ring-accent-primary"
+                aria-label={`Remove ${whiteboardTag} filter`}
+              >
+                <span className="material-icons text-sm">close</span>
+              </button>
+            </span>
+          )}
+          {component && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent-primary/20 px-2 py-1 text-xs text-accent-primary">
+              {component}
+              <button
+                type="button"
+                onClick={() => {
+                  onComponentChange('')
+                }}
+                className="ml-1 rounded-full hover:bg-accent-primary/30 focus:outline-none focus:ring-1 focus:ring-accent-primary"
+                aria-label={`Remove ${component} filter`}
+              >
+                <span className="material-icons text-sm">close</span>
+              </button>
+            </span>
+          )}
+          {selectedAssignee && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent-primary/20 px-2 py-1 text-xs text-accent-primary">
+              {assignees.find((a) => a.email === selectedAssignee)?.displayName ?? selectedAssignee}
+              <button
+                type="button"
+                onClick={() => {
+                  if (onAssigneeChange) {
+                    onAssigneeChange(null)
+                  }
+                }}
+                className="ml-1 rounded-full hover:bg-accent-primary/30 focus:outline-none focus:ring-1 focus:ring-accent-primary"
+                aria-label={`Remove assignee filter`}
+              >
+                <span className="material-icons text-sm">close</span>
+              </button>
+            </span>
+          )}
+          {sortOrder !== 'priority' && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent-primary/20 px-2 py-1 text-xs text-accent-primary">
+              Last Changed
+              <button
+                type="button"
+                onClick={() => {
+                  onSortOrderChange('priority')
+                }}
+                className="ml-1 rounded-full hover:bg-accent-primary/30 focus:outline-none focus:ring-1 focus:ring-accent-primary"
+                aria-label={`Reset sort to priority`}
+              >
+                <span className="material-icons text-sm">close</span>
+              </button>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

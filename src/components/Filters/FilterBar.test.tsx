@@ -329,8 +329,10 @@ describe('FilterBar', () => {
     it('should show down arrow on last changed button when selected', () => {
       render(<FilterBar {...defaultProps} sortOrder="lastChanged" />)
 
-      const priorityButton = screen.getByRole('button', { name: /priority/i })
-      const lastChangedButton = screen.getByRole('button', { name: /last changed/i })
+      // Find the sort toggle buttons (they have aria-pressed attribute)
+      const sortGroup = screen.getByRole('group', { name: /sort order/i })
+      const priorityButton = sortGroup.querySelector('button[aria-pressed]') as HTMLElement
+      const lastChangedButton = sortGroup.querySelectorAll('button[aria-pressed]')[1] as HTMLElement
 
       expect(priorityButton).not.toHaveTextContent('↓')
       expect(lastChangedButton).toHaveTextContent('↓')
@@ -358,7 +360,9 @@ describe('FilterBar', () => {
         />,
       )
 
-      const priorityButton = screen.getByRole('button', { name: /priority/i })
+      // Find the sort toggle buttons (they have aria-pressed attribute)
+      const sortGroup = screen.getByRole('group', { name: /sort order/i })
+      const priorityButton = sortGroup.querySelector('button[aria-pressed]') as HTMLElement
       await user.click(priorityButton)
 
       expect(onSortOrderChange).toHaveBeenCalledWith('priority')
@@ -465,6 +469,156 @@ describe('FilterBar', () => {
       await user.click(clearButton)
 
       expect(onAssigneeChange).toHaveBeenCalledWith(null)
+    })
+  })
+
+  describe('active filter badges', () => {
+    it('should not show filter badges section when no filters applied', () => {
+      render(<FilterBar {...defaultProps} />)
+
+      expect(screen.queryByText(/active filters/i)).not.toBeInTheDocument()
+    })
+
+    it('should show whiteboard filter badge when whiteboard tag is set', () => {
+      render(<FilterBar {...defaultProps} whiteboardTag="[kanban]" />)
+
+      expect(screen.getByText(/active filters/i)).toBeInTheDocument()
+      expect(screen.getByText('[kanban]')).toBeInTheDocument()
+    })
+
+    it('should show component filter badge when component is set', () => {
+      render(<FilterBar {...defaultProps} component="Core" />)
+
+      expect(screen.getByText(/active filters/i)).toBeInTheDocument()
+      expect(screen.getByText('Core')).toBeInTheDocument()
+    })
+
+    it('should show assignee filter badge when assignee is selected', () => {
+      render(<FilterBar {...defaultProps} selectedAssignee="alice@example.com" />)
+
+      // Badge should show assignee display name
+      expect(screen.getByText(/active filters/i)).toBeInTheDocument()
+      // Look for Alice in the badges section (there's also a button with Alice)
+      const badges = screen.getByText(/active filters/i).parentElement
+      expect(badges).toHaveTextContent(/alice/i)
+    })
+
+    it('should show sort order badge when non-default sort is selected', () => {
+      render(<FilterBar {...defaultProps} sortOrder="lastChanged" />)
+
+      expect(screen.getByText(/active filters/i)).toBeInTheDocument()
+      expect(screen.getByText('Last Changed')).toBeInTheDocument()
+    })
+
+    it('should not show sort order badge when default sort is selected', () => {
+      render(<FilterBar {...defaultProps} sortOrder="priority" whiteboardTag="test" />)
+
+      expect(screen.getByText(/active filters/i)).toBeInTheDocument()
+      // Should show whiteboard badge but not priority (default)
+      expect(screen.getByText('test')).toBeInTheDocument()
+      const badges = screen.getByText(/active filters/i).parentElement
+      expect(badges).not.toHaveTextContent('Priority')
+    })
+
+    it('should remove whiteboard filter when badge is clicked', async () => {
+      const user = userEvent.setup()
+      const onWhiteboardTagChange = vi.fn()
+      render(
+        <FilterBar
+          {...defaultProps}
+          whiteboardTag="[kanban]"
+          onWhiteboardTagChange={onWhiteboardTagChange}
+        />,
+      )
+
+      // Find and click the remove button on the whiteboard badge
+      const badge = screen.getByText('[kanban]').closest('span')
+      const removeButton = badge?.querySelector('button')
+      if (removeButton) {
+        await user.click(removeButton)
+      }
+
+      expect(onWhiteboardTagChange).toHaveBeenCalledWith('')
+    })
+
+    it('should remove component filter when badge is clicked', async () => {
+      const user = userEvent.setup()
+      const onComponentChange = vi.fn()
+      render(<FilterBar {...defaultProps} component="Core" onComponentChange={onComponentChange} />)
+
+      // Find and click the remove button on the component badge
+      const badge = screen.getByText('Core').closest('span')
+      const removeButton = badge?.querySelector('button')
+      if (removeButton) {
+        await user.click(removeButton)
+      }
+
+      expect(onComponentChange).toHaveBeenCalledWith('')
+    })
+
+    it('should remove assignee filter when badge is clicked', async () => {
+      const user = userEvent.setup()
+      const onAssigneeChange = vi.fn()
+      render(
+        <FilterBar
+          {...defaultProps}
+          selectedAssignee="alice@example.com"
+          onAssigneeChange={onAssigneeChange}
+        />,
+      )
+
+      // Find the active filters section and the Alice badge
+      const badgesSection = screen.getByText(/active filters/i).parentElement
+      const badges = badgesSection?.querySelectorAll('span[class*="rounded-full"]')
+      const aliceBadge = [...(badges ?? [])].find((badge) => {
+        const text = badge.textContent
+        return text ? text.toLowerCase().includes('alice') : false
+      })
+      const removeButton = aliceBadge?.querySelector('button')
+      if (removeButton) {
+        await user.click(removeButton)
+      }
+
+      expect(onAssigneeChange).toHaveBeenCalledWith(null)
+    })
+
+    it('should reset sort order when badge is clicked', async () => {
+      const user = userEvent.setup()
+      const onSortOrderChange = vi.fn()
+      render(
+        <FilterBar
+          {...defaultProps}
+          sortOrder="lastChanged"
+          onSortOrderChange={onSortOrderChange}
+        />,
+      )
+
+      // Find and click the remove button on the sort order badge
+      const badge = screen.getByText('Last Changed').closest('span')
+      const removeButton = badge?.querySelector('button')
+      if (removeButton) {
+        await user.click(removeButton)
+      }
+
+      expect(onSortOrderChange).toHaveBeenCalledWith('priority')
+    })
+
+    it('should show multiple filter badges when multiple filters applied', () => {
+      render(
+        <FilterBar
+          {...defaultProps}
+          whiteboardTag="[kanban]"
+          component="Core"
+          sortOrder="lastChanged"
+          selectedAssignee="alice@example.com"
+        />,
+      )
+
+      const badgesSection = screen.getByText(/active filters/i).parentElement
+      expect(badgesSection).toHaveTextContent('[kanban]')
+      expect(badgesSection).toHaveTextContent('Core')
+      expect(badgesSection).toHaveTextContent('Last Changed')
+      expect(badgesSection).toHaveTextContent(/alice/i)
     })
   })
 })
