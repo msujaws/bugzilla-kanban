@@ -163,23 +163,13 @@ export function ApiKeyInput({ isOpen, onClose, onOpenFAQ }: ApiKeyInputProps) {
             </div>
           )}
 
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={isValidating || !apiKey.trim()}
-              className="flex-1 rounded bg-accent-primary px-4 py-2 font-bold text-white transition-colors hover:bg-accent-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isValidating}
-              className="flex-1 rounded border border-bg-tertiary bg-bg-tertiary px-4 py-2 font-bold text-text-primary transition-colors hover:bg-bg-tertiary/80 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isValidating || !apiKey.trim()}
+            className="w-full rounded bg-accent-primary px-4 py-2 font-bold text-white transition-colors hover:bg-accent-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Save
+          </button>
         </form>
       </div>
     </div>

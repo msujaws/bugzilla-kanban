@@ -37,7 +37,6 @@ describe('ApiKeyInput', () => {
       expect(screen.getByRole('dialog')).toBeInTheDocument()
       expect(screen.getByLabelText(/api key/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
     })
 
     it('should not render when isOpen is false', () => {
@@ -255,16 +254,6 @@ describe('ApiKeyInput', () => {
   })
 
   describe('cancel handling', () => {
-    it('should close modal when cancel button is clicked', async () => {
-      const user = userEvent.setup()
-      render(<ApiKeyInput isOpen={true} onClose={mockOnClose} />)
-
-      const cancelButton = screen.getByRole('button', { name: /cancel/i })
-      await user.click(cancelButton)
-
-      expect(mockOnClose).toHaveBeenCalled()
-    })
-
     it('should close modal on Escape key', async () => {
       const user = userEvent.setup()
       render(<ApiKeyInput isOpen={true} onClose={mockOnClose} />)
@@ -314,29 +303,29 @@ describe('ApiKeyInput', () => {
       render(<ApiKeyInput isOpen={true} onClose={mockOnClose} />)
 
       const input = screen.getByLabelText(/api key/i)
-      const cancelButton = screen.getByRole('button', { name: /cancel/i })
 
       // Type something to enable the save button
       await user.type(input, 'test-key')
 
       const saveButton = screen.getByRole('button', { name: /save/i })
 
-      // Tab through elements
+      // Tab to save button
       await user.tab()
       expect(saveButton).toHaveFocus()
-
-      await user.tab()
-      expect(cancelButton).toHaveFocus()
     })
 
     it('should trap focus within modal on Tab from last element', async () => {
       const user = userEvent.setup()
       render(<ApiKeyInput isOpen={true} onClose={mockOnClose} />)
 
-      // Focus the cancel button (last focusable element in default state)
-      const cancelButton = screen.getByRole('button', { name: /cancel/i })
-      cancelButton.focus()
-      expect(cancelButton).toHaveFocus()
+      // Type something to enable the save button
+      const input = screen.getByLabelText(/api key/i)
+      await user.type(input, 'test-key')
+
+      // Focus the save button (last focusable element)
+      const saveButton = screen.getByRole('button', { name: /save/i })
+      saveButton.focus()
+      expect(saveButton).toHaveFocus()
 
       // Tab should wrap to first focusable element
       await user.tab()
