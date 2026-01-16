@@ -333,6 +333,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary">
+      {/* Skip link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-accent-primary focus:px-4 focus:py-2 focus:text-white"
+      >
+        Skip to main content
+      </a>
+
       {/* Header */}
       <header className="border-b border-bg-tertiary bg-bg-secondary px-4 py-4">
         <div className="container mx-auto flex items-center justify-between">
@@ -344,7 +352,7 @@ function App() {
             />
             <div>
               <h1 className="text-2xl font-bold">BoardZilla</h1>
-              <div className="flex items-center gap-3 text-sm">
+              <nav aria-label="Site navigation" className="flex items-center gap-3 text-sm">
                 <span className="text-text-secondary">
                   Puttin' bugz in their place since '26 😎
                 </span>
@@ -366,7 +374,7 @@ function App() {
                 >
                   FAQ
                 </button>
-              </div>
+              </nav>
               {/* Keyboard hints */}
               <div className="mt-1 flex items-center gap-2 text-xs text-text-tertiary">
                 <span>Drag & Drop with mouse, or use</span>
@@ -384,7 +392,7 @@ function App() {
       </header>
 
       {/* Main content */}
-      <main className="container mx-auto py-6">
+      <main id="main-content" className="container mx-auto py-6">
         {/* Filter bar */}
         <div className="mb-6">
           <FilterBar

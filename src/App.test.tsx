@@ -263,6 +263,45 @@ describe('App', () => {
     })
   })
 
+  describe('accessibility', () => {
+    beforeEach(() => {
+      useStore.setState({
+        apiKey: 'test-api-key',
+        isValid: true,
+        isValidating: false,
+      })
+    })
+
+    it('should have a skip link that targets main content', () => {
+      render(<App />)
+
+      const skipLink = screen.getByRole('link', { name: /skip to main content/i })
+      expect(skipLink).toBeInTheDocument()
+      expect(skipLink).toHaveAttribute('href', '#main-content')
+    })
+
+    it('should have main element with id for skip link', () => {
+      const { container } = render(<App />)
+
+      const main = container.querySelector('main#main-content')
+      expect(main).toBeInTheDocument()
+    })
+
+    it('should have only one h1 element', () => {
+      const { container } = render(<App />)
+
+      const h1Elements = container.querySelectorAll('h1')
+      expect(h1Elements).toHaveLength(1)
+    })
+
+    it('should have nav element wrapping header navigation', () => {
+      const { container } = render(<App />)
+
+      const nav = container.querySelector('header nav')
+      expect(nav).toBeInTheDocument()
+    })
+  })
+
   describe('URL sync behavior', () => {
     let replaceStateMock: ReturnType<typeof vi.fn>
 
