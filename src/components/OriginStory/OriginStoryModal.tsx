@@ -54,10 +54,11 @@ export function OriginStoryModal({ isOpen, onClose }: OriginStoryModalProps) {
             aria-modal="true"
             aria-labelledby="origin-story-modal-title"
             className="max-h-[80vh] w-full max-w-2xl overflow-hidden rounded-lg bg-bg-secondary shadow-2xl"
+            style={{ fontFamily: '"VT323", monospace' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-bg-tertiary px-6 py-4">
-              <h2 id="origin-story-modal-title" className="text-xl font-bold text-text-primary">
+              <h2 id="origin-story-modal-title" className="text-2xl font-bold text-text-primary">
                 The Legend of Boardzilla
               </h2>
               <button
@@ -71,7 +72,7 @@ export function OriginStoryModal({ isOpen, onClose }: OriginStoryModalProps) {
 
             {/* Story Content */}
             <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
-              <div className="space-y-4 text-text-secondary">
+              <div className="space-y-4 text-lg text-text-secondary">
                 <p>
                   <img
                     src="/mascot.webp"
@@ -120,7 +121,7 @@ export function OriginStoryModal({ isOpen, onClose }: OriginStoryModalProps) {
                   Creep at bay.
                 </p>
 
-                <p className="pt-2 text-center text-sm italic text-text-tertiary">
+                <p className="pt-2 text-center text-base italic text-text-tertiary">
                   The end... or is it just the beginning?
                 </p>
               </div>
@@ -128,7 +129,7 @@ export function OriginStoryModal({ isOpen, onClose }: OriginStoryModalProps) {
 
             {/* Footer */}
             <div className="border-t border-bg-tertiary px-6 py-4">
-              <p className="text-center text-sm text-text-tertiary">
+              <p className="text-center text-base text-text-tertiary">
                 Shhh... you found the secret! Thanks for clicking on our mascot.
               </p>
             </div>

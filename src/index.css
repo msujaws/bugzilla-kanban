@@ -1,6 +1,9 @@
 /* Load Google Material Icons */
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
+/* Load VT323 retro font for origin story */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
