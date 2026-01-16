@@ -139,13 +139,19 @@ export function ApiKeyInput({ isOpen, onClose, onOpenFAQ }: ApiKeyInputProps) {
               }}
               onKeyDown={handleKeyDown}
               disabled={isValidating}
+              aria-describedby={validationError ? 'api-key-error' : undefined}
+              aria-invalid={validationError ? true : undefined}
               className="w-full rounded border border-bg-tertiary bg-bg-primary px-3 py-2 text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Enter your Bugzilla API key"
             />
           </div>
 
           {validationError && (
-            <div className="mb-4 rounded border border-accent-error/30 bg-accent-error/10 p-3 text-accent-error">
+            <div
+              id="api-key-error"
+              role="alert"
+              className="mb-4 rounded border border-accent-error/30 bg-accent-error/10 p-3 text-accent-error"
+            >
               <p className="font-bold">Oops! That didn&apos;t work 🤔</p>
               <p className="text-sm">{validationError}</p>
             </div>

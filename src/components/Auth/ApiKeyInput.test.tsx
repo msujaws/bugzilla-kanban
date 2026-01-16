@@ -212,6 +212,46 @@ describe('ApiKeyInput', () => {
 
       expect(screen.getByText(/oops!/i)).toBeInTheDocument()
     })
+
+    it('should have aria-describedby linking input to error message', () => {
+      vi.mocked(useStore).mockImplementation((selector) => {
+        const state = {
+          setApiKey: mockSetApiKey,
+          isValidating: false,
+          validationError: 'Invalid API key',
+        }
+        // @ts-expect-error - Simplified mock for testing
+        return selector(state)
+      })
+
+      render(<ApiKeyInput isOpen={true} onClose={mockOnClose} />)
+
+      const input = screen.getByLabelText(/api key/i)
+      const errorId = input.getAttribute('aria-describedby')
+      expect(errorId).toBeTruthy()
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const errorElement = document.querySelector(`#${errorId!}`)
+      expect(errorElement).toBeInTheDocument()
+      expect(errorElement).toHaveTextContent(/invalid api key/i)
+    })
+
+    it('should have aria-live on error for screen reader announcements', () => {
+      vi.mocked(useStore).mockImplementation((selector) => {
+        const state = {
+          setApiKey: mockSetApiKey,
+          isValidating: false,
+          validationError: 'Invalid API key',
+        }
+        // @ts-expect-error - Simplified mock for testing
+        return selector(state)
+      })
+
+      render(<ApiKeyInput isOpen={true} onClose={mockOnClose} />)
+
+      const errorElement = screen.getByRole('alert')
+      expect(errorElement).toBeInTheDocument()
+    })
   })
 
   describe('cancel handling', () => {
