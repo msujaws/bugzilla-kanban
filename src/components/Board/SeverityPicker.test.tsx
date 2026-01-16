@@ -87,7 +87,8 @@ describe('SeverityPicker', () => {
       const onClose = vi.fn()
       render(<SeverityPicker {...defaultProps} onClose={onClose} />)
 
-      fireEvent.keyDown(document, { key: 'Escape' })
+      const listbox = screen.getByRole('listbox')
+      fireEvent.keyDown(listbox, { key: 'Escape' })
 
       expect(onClose).toHaveBeenCalled()
     })
@@ -121,6 +122,35 @@ describe('SeverityPicker', () => {
 
       const options = screen.getAllByRole('option')
       expect(options).toHaveLength(5) // S1, S2, S3, S4, N/A
+    })
+
+    it('should have descriptive aria-label on each option', () => {
+      render(<SeverityPicker {...defaultProps} currentSeverity="S1" />)
+
+      const options = screen.getAllByRole('option')
+      expect(options[0]).toHaveAttribute(
+        'aria-label',
+        'Severity S1: Catastrophic, currently selected',
+      )
+      expect(options[1]).toHaveAttribute('aria-label', 'Severity S2: Serious')
+      expect(options[2]).toHaveAttribute('aria-label', 'Severity S3: Normal')
+      expect(options[3]).toHaveAttribute('aria-label', 'Severity S4: Minor')
+      expect(options[4]).toHaveAttribute('aria-label', 'Severity N/A: Not applicable')
+    })
+
+    it('should have aria-activedescendant on listbox', () => {
+      render(<SeverityPicker {...defaultProps} currentSeverity="S2" />)
+
+      const listbox = screen.getByRole('listbox')
+      expect(listbox).toHaveAttribute('aria-activedescendant')
+    })
+
+    it('should focus currently selected option on open', () => {
+      render(<SeverityPicker {...defaultProps} currentSeverity="S3" />)
+
+      // S3 is at index 2, should have focus ring
+      const options = screen.getAllByRole('option')
+      expect(options[2]).toHaveClass('ring-2')
     })
   })
 

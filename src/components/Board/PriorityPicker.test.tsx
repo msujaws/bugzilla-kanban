@@ -87,7 +87,8 @@ describe('PriorityPicker', () => {
       const onClose = vi.fn()
       render(<PriorityPicker {...defaultProps} onClose={onClose} />)
 
-      fireEvent.keyDown(document, { key: 'Escape' })
+      const listbox = screen.getByRole('listbox')
+      fireEvent.keyDown(listbox, { key: 'Escape' })
 
       expect(onClose).toHaveBeenCalled()
     })
@@ -121,6 +122,45 @@ describe('PriorityPicker', () => {
 
       const options = screen.getAllByRole('option')
       expect(options).toHaveLength(5) // P1-P5
+    })
+
+    it('should have descriptive aria-label on each option', () => {
+      render(<PriorityPicker {...defaultProps} currentPriority="P1" />)
+
+      const options = screen.getAllByRole('option')
+      expect(options[0]).toHaveAttribute('aria-label', 'Priority P1: Highest, currently selected')
+      expect(options[1]).toHaveAttribute('aria-label', 'Priority P2: High')
+      expect(options[2]).toHaveAttribute('aria-label', 'Priority P3: Normal')
+      expect(options[3]).toHaveAttribute('aria-label', 'Priority P4: Low')
+      expect(options[4]).toHaveAttribute('aria-label', 'Priority P5: Lowest')
+    })
+
+    it('should have aria-activedescendant on listbox', () => {
+      render(<PriorityPicker {...defaultProps} currentPriority="P2" />)
+
+      const listbox = screen.getByRole('listbox')
+      expect(listbox).toHaveAttribute('aria-activedescendant')
+    })
+  })
+
+  describe('keyboard navigation', () => {
+    // Note: Keyboard navigation logic is thoroughly tested in use-listbox-keyboard.test.ts
+    // These integration tests verify the hook is correctly wired to the component
+
+    it('should focus currently selected option on open', () => {
+      render(<PriorityPicker {...defaultProps} currentPriority="P3" />)
+
+      // P3 is at index 2, should have focus ring
+      const options = screen.getAllByRole('option')
+      expect(options[2]).toHaveClass('ring-2')
+    })
+
+    it('should show focus ring on first option when no current priority matches', () => {
+      render(<PriorityPicker {...defaultProps} currentPriority="invalid" />)
+
+      // Should default to first option (P1)
+      const options = screen.getAllByRole('option')
+      expect(options[0]).toHaveClass('ring-2')
     })
   })
 

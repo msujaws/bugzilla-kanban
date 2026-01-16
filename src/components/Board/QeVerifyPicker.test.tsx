@@ -105,7 +105,8 @@ describe('QeVerifyPicker', () => {
       const onClose = vi.fn()
       render(<QeVerifyPicker {...defaultProps} onClose={onClose} />)
 
-      fireEvent.keyDown(document, { key: 'Escape' })
+      const listbox = screen.getByRole('listbox')
+      fireEvent.keyDown(listbox, { key: 'Escape' })
 
       expect(onClose).toHaveBeenCalled()
     })
@@ -139,6 +140,30 @@ describe('QeVerifyPicker', () => {
 
       const options = screen.getAllByRole('option')
       expect(options).toHaveLength(3)
+    })
+
+    it('should have descriptive aria-label on each option', () => {
+      render(<QeVerifyPicker {...defaultProps} currentStatus="plus" />)
+
+      const options = screen.getAllByRole('option')
+      expect(options[0]).toHaveAttribute('aria-label', 'qe-verify: ---: Remove flag')
+      expect(options[1]).toHaveAttribute('aria-label', 'qe-verify: -: Not needed')
+      expect(options[2]).toHaveAttribute('aria-label', 'qe-verify: +: Verified, currently selected')
+    })
+
+    it('should have aria-activedescendant on listbox', () => {
+      render(<QeVerifyPicker {...defaultProps} currentStatus="minus" />)
+
+      const listbox = screen.getByRole('listbox')
+      expect(listbox).toHaveAttribute('aria-activedescendant')
+    })
+
+    it('should focus currently selected option on open', () => {
+      render(<QeVerifyPicker {...defaultProps} currentStatus="plus" />)
+
+      // plus is at index 2, should have focus ring
+      const options = screen.getAllByRole('option')
+      expect(options[2]).toHaveClass('ring-2')
     })
   })
 })

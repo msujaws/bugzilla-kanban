@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePopupPosition } from '@/hooks/use-popup-position'
+import { useListboxKeyboard } from '@/hooks/use-listbox-keyboard'
 
 interface AnchorPosition {
   x: number
@@ -45,24 +45,22 @@ export function PointsPicker({
     popupHeight: POPUP_HEIGHT,
   })
 
-  // Handle Escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isOpen, onClose])
-
   const handleSelect = (points: number | string | undefined) => {
     onSelect(points)
     onClose()
   }
+
+  // Use string labels as unique identifiers for the hook since values can be undefined
+  const { focusedIndex, getOptionId, listboxProps } = useListboxKeyboard({
+    options: POINTS_OPTIONS.map((opt) => ({ value: opt.label, label: opt.label })),
+    isOpen,
+    onSelect: (label) => {
+      const option = POINTS_OPTIONS.find((opt) => opt.label === label)
+      if (option) handleSelect(option.value)
+    },
+    onClose,
+    currentValue: POINTS_OPTIONS.find((opt) => opt.value === currentPoints)?.label,
+  })
 
   return (
     <AnimatePresence>
@@ -109,20 +107,32 @@ export function PointsPicker({
               role="listbox"
               aria-label="Select story points"
               className="max-h-64 overflow-y-auto"
+              {...listboxProps}
             >
-              {POINTS_OPTIONS.map((option) => {
+              {POINTS_OPTIONS.map((option, index) => {
                 const isSelected = currentPoints === option.value
+                const isFocused = focusedIndex === index
+                // Create descriptive aria-label based on option type
+                const getAriaLabel = () => {
+                  if (option.value === undefined)
+                    return `Clear points${isSelected ? ', currently selected' : ''}`
+                  if (option.value === '?')
+                    return `Unknown points${isSelected ? ', currently selected' : ''}`
+                  return `${String(option.value)} points${isSelected ? ', currently selected' : ''}`
+                }
                 return (
                   <li
                     key={option.label}
+                    id={getOptionId(index)}
                     role="option"
                     aria-selected={isSelected}
+                    aria-label={getAriaLabel()}
                     onClick={() => {
                       handleSelect(option.value)
                     }}
-                    className={`flex cursor-pointer items-center justify-between px-4 py-2 transition-colors hover:bg-bg-tertiary ${
+                    className={`flex cursor-pointer items-center justify-between px-4 py-2 transition-colors ${
                       isSelected ? 'bg-bg-tertiary/50' : ''
-                    }`}
+                    } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
                   >
                     <span className="text-sm font-medium text-text-primary">{option.label}</span>
 

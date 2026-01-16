@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { PointsPicker } from './PointsPicker'
 
@@ -109,7 +109,8 @@ describe('PointsPicker', () => {
       const onClose = vi.fn()
       render(<PointsPicker {...defaultProps} onClose={onClose} />)
 
-      fireEvent.keyDown(document, { key: 'Escape' })
+      const listbox = screen.getByRole('listbox')
+      fireEvent.keyDown(listbox, { key: 'Escape' })
 
       expect(onClose).toHaveBeenCalled()
     })
@@ -143,6 +144,36 @@ describe('PointsPicker', () => {
 
       const options = screen.getAllByRole('option')
       expect(options).toHaveLength(9) // ---, ?, 1, 2, 3, 5, 8, 13, 21
+    })
+
+    it('should have descriptive aria-label on each option', () => {
+      render(<PointsPicker {...defaultProps} currentPoints={5} />)
+
+      const options = screen.getAllByRole('option')
+      expect(options[0]).toHaveAttribute('aria-label', 'Clear points')
+      expect(options[1]).toHaveAttribute('aria-label', 'Unknown points')
+      expect(options[2]).toHaveAttribute('aria-label', '1 points')
+      expect(options[3]).toHaveAttribute('aria-label', '2 points')
+      expect(options[4]).toHaveAttribute('aria-label', '3 points')
+      expect(options[5]).toHaveAttribute('aria-label', '5 points, currently selected')
+      expect(options[6]).toHaveAttribute('aria-label', '8 points')
+      expect(options[7]).toHaveAttribute('aria-label', '13 points')
+      expect(options[8]).toHaveAttribute('aria-label', '21 points')
+    })
+
+    it('should have aria-activedescendant on listbox', () => {
+      render(<PointsPicker {...defaultProps} currentPoints={5} />)
+
+      const listbox = screen.getByRole('listbox')
+      expect(listbox).toHaveAttribute('aria-activedescendant')
+    })
+
+    it('should focus currently selected option on open', () => {
+      render(<PointsPicker {...defaultProps} currentPoints={8} />)
+
+      // 8 is at index 6, should have focus ring
+      const options = screen.getAllByRole('option')
+      expect(options[6]).toHaveClass('ring-2')
     })
   })
 })

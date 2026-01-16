@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import { usePopupPosition } from '@/hooks/use-popup-position'
+import { useListboxKeyboard } from '@/hooks/use-listbox-keyboard'
 
 interface AnchorPosition {
   x: number
@@ -36,24 +36,18 @@ export function AssigneePicker({
     popupHeight: POPUP_HEIGHT,
   })
 
-  // Handle Escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isOpen, onClose])
-
   const handleSelect = (email: string) => {
     onSelect(email)
     onClose()
   }
+
+  const { focusedIndex, getOptionId, listboxProps } = useListboxKeyboard({
+    options: assignees.map((a) => ({ value: a.email, label: a.displayName })),
+    isOpen,
+    onSelect: handleSelect,
+    onClose,
+    currentValue: currentAssignee,
+  })
 
   return (
     <AnimatePresence>
@@ -100,25 +94,30 @@ export function AssigneePicker({
               role="listbox"
               aria-label="Select assignee"
               className="max-h-48 overflow-y-auto"
+              {...listboxProps}
             >
               {assignees.length === 0 ? (
                 <li className="px-4 py-3 text-center text-sm text-text-tertiary">
                   No assignees found
                 </li>
               ) : (
-                assignees.map((assignee) => {
+                assignees.map((assignee, index) => {
                   const isSelected = assignee.email === currentAssignee
+                  const isFocused = focusedIndex === index
+                  const ariaLabel = `${assignee.displayName}${isSelected ? ', currently selected' : ''}`
                   return (
                     <li
                       key={assignee.email}
+                      id={getOptionId(index)}
                       role="option"
                       aria-selected={isSelected}
+                      aria-label={ariaLabel}
                       onClick={() => {
                         handleSelect(assignee.email)
                       }}
-                      className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors hover:bg-bg-tertiary ${
+                      className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors ${
                         isSelected ? 'bg-bg-tertiary/50' : ''
-                      }`}
+                      } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
                     >
                       {/* Account circle icon */}
                       <span className="material-icons text-text-tertiary">account_circle</span>

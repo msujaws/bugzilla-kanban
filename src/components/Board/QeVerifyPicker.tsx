@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 import { usePopupPosition } from '@/hooks/use-popup-position'
+import { useListboxKeyboard } from '@/hooks/use-listbox-keyboard'
 
 interface AnchorPosition {
   x: number
@@ -40,24 +40,18 @@ export function QeVerifyPicker({
     popupHeight: POPUP_HEIGHT,
   })
 
-  // Handle Escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isOpen, onClose])
-
   const handleSelect = (status: QeVerifyStatus) => {
     onSelect(status)
     onClose()
   }
+
+  const { focusedIndex, getOptionId, listboxProps } = useListboxKeyboard({
+    options: QE_VERIFY_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label })),
+    isOpen,
+    onSelect: handleSelect,
+    onClose,
+    currentValue: currentStatus,
+  })
 
   return (
     <AnimatePresence>
@@ -104,20 +98,25 @@ export function QeVerifyPicker({
               role="listbox"
               aria-label="Select QE verification"
               className="max-h-64 overflow-y-auto"
+              {...listboxProps}
             >
-              {QE_VERIFY_OPTIONS.map((option) => {
+              {QE_VERIFY_OPTIONS.map((option, index) => {
                 const isSelected = currentStatus === option.value
+                const isFocused = focusedIndex === index
+                const ariaLabel = `${option.label}: ${option.description}${isSelected ? ', currently selected' : ''}`
                 return (
                   <li
                     key={option.value}
+                    id={getOptionId(index)}
                     role="option"
                     aria-selected={isSelected}
+                    aria-label={ariaLabel}
                     onClick={() => {
                       handleSelect(option.value)
                     }}
-                    className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors hover:bg-bg-tertiary ${
+                    className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors ${
                       isSelected ? 'bg-bg-tertiary/50' : ''
-                    }`}
+                    } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
                   >
                     {/* Label and description */}
                     <div className="flex-1">

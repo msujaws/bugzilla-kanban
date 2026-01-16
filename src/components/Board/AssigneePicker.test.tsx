@@ -99,7 +99,8 @@ describe('AssigneePicker', () => {
       const onClose = vi.fn()
       render(<AssigneePicker {...defaultProps} onClose={onClose} />)
 
-      fireEvent.keyDown(document, { key: 'Escape' })
+      const listbox = screen.getByRole('listbox')
+      fireEvent.keyDown(listbox, { key: 'Escape' })
 
       expect(onClose).toHaveBeenCalled()
     })
@@ -156,6 +157,30 @@ describe('AssigneePicker', () => {
       render(<AssigneePicker {...defaultProps} />)
 
       expect(screen.getByRole('listbox')).toHaveAttribute('aria-label', 'Select assignee')
+    })
+
+    it('should have descriptive aria-label on each option', () => {
+      render(<AssigneePicker {...defaultProps} currentAssignee="bob@example.com" />)
+
+      const options = screen.getAllByRole('option')
+      expect(options[0]).toHaveAttribute('aria-label', 'Alice Johnson')
+      expect(options[1]).toHaveAttribute('aria-label', 'Bob Smith, currently selected')
+      expect(options[2]).toHaveAttribute('aria-label', 'charlie@example.com')
+    })
+
+    it('should have aria-activedescendant on listbox', () => {
+      render(<AssigneePicker {...defaultProps} />)
+
+      const listbox = screen.getByRole('listbox')
+      expect(listbox).toHaveAttribute('aria-activedescendant')
+    })
+
+    it('should focus currently selected option on open', () => {
+      render(<AssigneePicker {...defaultProps} currentAssignee="bob@example.com" />)
+
+      // Bob is at index 1, should have focus ring
+      const options = screen.getAllByRole('option')
+      expect(options[1]).toHaveClass('ring-2')
     })
   })
 

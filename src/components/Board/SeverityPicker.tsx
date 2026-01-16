@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePopupPosition } from '@/hooks/use-popup-position'
+import { useListboxKeyboard } from '@/hooks/use-listbox-keyboard'
 
 interface AnchorPosition {
   x: number
@@ -41,24 +41,18 @@ export function SeverityPicker({
     popupHeight: POPUP_HEIGHT,
   })
 
-  // Handle Escape key
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isOpen, onClose])
-
   const handleSelect = (severity: string) => {
     onSelect(severity)
     onClose()
   }
+
+  const { focusedIndex, getOptionId, listboxProps } = useListboxKeyboard({
+    options: SEVERITY_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label })),
+    isOpen,
+    onSelect: handleSelect,
+    onClose,
+    currentValue: currentSeverity,
+  })
 
   return (
     <AnimatePresence>
@@ -105,20 +99,25 @@ export function SeverityPicker({
               role="listbox"
               aria-label="Select severity"
               className="max-h-64 overflow-y-auto"
+              {...listboxProps}
             >
-              {SEVERITY_OPTIONS.map((option) => {
+              {SEVERITY_OPTIONS.map((option, index) => {
                 const isSelected = currentSeverity === option.value
+                const isFocused = focusedIndex === index
+                const ariaLabel = `Severity ${option.label}: ${option.description}${isSelected ? ', currently selected' : ''}`
                 return (
                   <li
                     key={option.value}
+                    id={getOptionId(index)}
                     role="option"
                     aria-selected={isSelected}
+                    aria-label={ariaLabel}
                     onClick={() => {
                       handleSelect(option.value)
                     }}
-                    className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors hover:bg-bg-tertiary ${
+                    className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors ${
                       isSelected ? 'bg-bg-tertiary/50' : ''
-                    }`}
+                    } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
                   >
                     {/* Color indicator */}
                     <span className={`h-3 w-3 rounded-full ${option.color}`} />
