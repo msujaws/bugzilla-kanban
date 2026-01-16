@@ -54,8 +54,7 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>, enabled: boolea
       if (focusable.length === 0) return
 
       const firstElement = focusable[0]
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const lastElement: HTMLElement | undefined = focusable.at(-1)
+      const lastElement = focusable.at(-1)
       if (!firstElement || !lastElement) return
 
       if (event.shiftKey) {
