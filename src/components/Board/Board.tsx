@@ -37,6 +37,7 @@ interface BoardProps {
   isLoading?: boolean
   onApplyChanges?: () => void
   onClearChanges?: () => void
+  hasActiveFilters?: boolean
 }
 
 interface SelectedPosition {
@@ -61,6 +62,7 @@ export function Board({
   isLoading = false,
   onApplyChanges,
   onClearChanges,
+  hasActiveFilters = false,
 }: BoardProps) {
   const sortOrder = useStore((state) => state.filters.sortOrder)
   const assigneeFilter = useStore((state) => state.assigneeFilter)
@@ -619,6 +621,7 @@ export function Board({
                 }
                 isGrabbing={selectedPosition?.columnIndex === columnIndex && isGrabbing}
                 isDropTarget={isGrabbing && targetColumnIndex === columnIndex}
+                hasActiveFilters={hasActiveFilters}
               />
             ))}
           </div>
@@ -635,6 +638,7 @@ export function Board({
           onSeverityChange={onSeverityChange}
           onQeVerifyChange={onQeVerifyChange}
           isLoading={isLoading}
+          hasActiveFilters={hasActiveFilters}
         />
       </main>
 

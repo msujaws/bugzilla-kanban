@@ -62,6 +62,10 @@ function App() {
   const assigneeFilter = useStore((state) => state.assigneeFilter)
   const setAssigneeFilter = useStore((state) => state.setAssigneeFilter)
 
+  // Compute if any filters are active (for empty state guidance)
+  const hasActiveFilters =
+    filters.whiteboardTag !== '' || filters.component !== '' || assigneeFilter !== null
+
   // Get all assignees from bugs for the filter dropdown
   const allAssignees = useBoardAssignees(bugs)
 
@@ -432,6 +436,7 @@ function App() {
           isLoading={isLoadingBugs}
           onApplyChanges={handleApplyChanges}
           onClearChanges={handleClearChanges}
+          hasActiveFilters={hasActiveFilters}
         />
       </main>
 

@@ -141,6 +141,27 @@ describe('Column', () => {
       const emptyState = screen.getByText(/no bugs here/i).parentElement
       expect(emptyState).toHaveClass('justify-start')
     })
+
+    it('should show filter guidance when filters are active and no bugs', () => {
+      render(<Column {...defaultProps} bugs={[]} hasActiveFilters={true} />)
+
+      expect(screen.getByText(/try adjusting your filters/i)).toBeInTheDocument()
+    })
+
+    it('should not show filter guidance when no filters active and no bugs', () => {
+      render(<Column {...defaultProps} bugs={[]} hasActiveFilters={false} />)
+
+      expect(screen.queryByText(/try adjusting your filters/i)).not.toBeInTheDocument()
+      expect(screen.getByText(/no bugs here/i)).toBeInTheDocument()
+    })
+
+    it('should show celebration message without filter guidance when filters active but bugs exist', () => {
+      render(<Column {...defaultProps} bugs={mockBugs} hasActiveFilters={true} />)
+
+      // Should show bugs, not empty state
+      expect(screen.queryByText(/no bugs here/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/try adjusting your filters/i)).not.toBeInTheDocument()
+    })
   })
 
   describe('column names', () => {

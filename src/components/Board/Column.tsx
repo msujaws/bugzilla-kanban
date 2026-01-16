@@ -45,6 +45,7 @@ interface ColumnProps {
   selectedIndex?: number
   isGrabbing?: boolean
   isDropTarget?: boolean
+  hasActiveFilters?: boolean
 }
 
 const columnIcons: Record<KanbanColumn, string> = {
@@ -87,6 +88,7 @@ export function Column({
   selectedIndex,
   isGrabbing = false,
   isDropTarget = false,
+  hasActiveFilters = false,
 }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column,
@@ -205,9 +207,15 @@ export function Column({
       {/* Empty State - aligned to top */}
       {!isLoading && bugs.length === 0 && (
         <div className="flex flex-1 flex-col items-center justify-start pt-8 gap-2 text-text-secondary">
-          <span className="material-icons text-4xl">celebration</span>
+          <span className="material-icons text-4xl">
+            {hasActiveFilters ? 'filter_alt_off' : 'celebration'}
+          </span>
           <p className="text-sm">No bugs here! 🎉</p>
-          <p className="text-xs">Time to celebrate!</p>
+          {hasActiveFilters ? (
+            <p className="text-xs">Try adjusting your filters to see more bugs.</p>
+          ) : (
+            <p className="text-xs">Time to celebrate!</p>
+          )}
         </div>
       )}
 
