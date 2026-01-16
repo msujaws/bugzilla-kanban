@@ -78,7 +78,7 @@ export function useListboxKeyboard<T>({
 
     const optionId = getOptionId(focusedIndex)
     const element = document.querySelector(`#${CSS.escape(optionId)}`)
-    if (element) {
+    if (element && typeof element.scrollIntoView === 'function') {
       element.scrollIntoView({ block: 'nearest' })
     }
   }, [isOpen, focusedIndex, getOptionId])
