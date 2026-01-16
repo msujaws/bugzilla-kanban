@@ -10,6 +10,21 @@ if (!globalThis.crypto?.subtle) {
   globalThis.crypto = webcrypto as Crypto
 }
 
+// Mock window.matchMedia for tests that use useReducedMotion hook
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: undefined,
+    addListener: () => {}, // deprecated
+    removeListener: () => {}, // deprecated
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }),
+})
+
 // Start MSW server before all tests
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' })

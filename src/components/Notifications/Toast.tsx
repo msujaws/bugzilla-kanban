@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { Toast as ToastType } from '@/types'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
 
 interface ToastProps {
   toast: ToastType
@@ -27,6 +28,7 @@ const toastConfig = {
 
 export function Toast({ toast, onClose }: ToastProps) {
   const config = toastConfig[toast.type]
+  const prefersReducedMotion = useReducedMotion()
 
   // Auto-close timer
   useEffect(() => {
@@ -48,10 +50,12 @@ export function Toast({ toast, onClose }: ToastProps) {
   return (
     <motion.div
       role="alert"
-      initial={{ x: 400, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 400, opacity: 0 }}
-      transition={{ type: 'spring', damping: 25, stiffness: 500 }}
+      initial={prefersReducedMotion ? { opacity: 0 } : { x: 400, opacity: 0 }}
+      animate={prefersReducedMotion ? { opacity: 1 } : { x: 0, opacity: 1 }}
+      exit={prefersReducedMotion ? { opacity: 0 } : { x: 400, opacity: 0 }}
+      transition={
+        prefersReducedMotion ? { duration: 0.01 } : { type: 'spring', damping: 25, stiffness: 500 }
+      }
       className={`
         flex items-start gap-3 w-full max-w-md
         bg-bg-secondary/95 backdrop-blur-sm

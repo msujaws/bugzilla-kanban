@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useFocusTrap } from '@/hooks/use-focus-trap'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
 
 interface FAQModalProps {
   isOpen: boolean
@@ -52,6 +53,7 @@ const faqs = [
 
 export function FAQModal({ isOpen, onClose }: FAQModalProps) {
   const dialogReference = useRef<HTMLDivElement>(null)
+  const prefersReducedMotion = useReducedMotion()
 
   // Trap focus within dialog when open
   useFocusTrap(dialogReference, isOpen)
@@ -77,6 +79,7 @@ export function FAQModal({ isOpen, onClose }: FAQModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : undefined}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
           onClick={(event) => {
             if (event.target === event.currentTarget) {
@@ -86,9 +89,10 @@ export function FAQModal({ isOpen, onClose }: FAQModalProps) {
         >
           <motion.div
             ref={dialogReference}
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
+            initial={prefersReducedMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0 }}
+            transition={prefersReducedMotion ? { duration: 0.01 } : undefined}
             role="dialog"
             aria-modal="true"
             aria-labelledby="faq-modal-title"
