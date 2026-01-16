@@ -102,6 +102,42 @@ describe('StagedSlice', () => {
       const { changes } = useStore.getState()
       expect(changes.has(123)).toBe(false)
     })
+
+    it('should remove change when dragging from staged position back to original', () => {
+      const { stageChange } = useStore.getState()
+
+      // First drag: backlog -> todo
+      stageChange(123, 'backlog', 'todo')
+      expect(useStore.getState().changes.get(123)?.status).toEqual({
+        from: 'backlog',
+        to: 'todo',
+      })
+
+      // Second drag: from staged position (todo) back to original (backlog)
+      // This simulates the actual drag flow where fromColumn is the staged column
+      stageChange(123, 'todo', 'backlog')
+
+      // Should remove the change since we're back to original
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should update to new column when dragging from staged position to third column', () => {
+      const { stageChange } = useStore.getState()
+
+      // First drag: backlog -> todo
+      stageChange(123, 'backlog', 'todo')
+
+      // Second drag: from staged position (todo) to in-progress
+      stageChange(123, 'todo', 'in-progress')
+
+      // Should preserve original "from" but update "to"
+      const change = useStore.getState().changes.get(123)
+      expect(change?.status).toEqual({
+        from: 'backlog',
+        to: 'in-progress',
+      })
+    })
   })
 
   describe('unstageChange', () => {

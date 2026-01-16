@@ -160,9 +160,9 @@ function App() {
     (bugId: number, fromColumn: string, toColumn: string) => {
       stageChange(bugId, fromColumn, toColumn)
 
-      // Handle sprint tag for backlog <-> todo moves
       const bug = bugs.find((b) => b.id === bugId)
       if (bug) {
+        // Handle sprint tag for backlog <-> todo moves
         const currentWhiteboard = bug.whiteboard
 
         // Moving from backlog to todo: add sprint tag
@@ -180,9 +180,18 @@ function App() {
             stageWhiteboardChange(bugId, currentWhiteboard, newWhiteboard)
           }
         }
+
+        // Handle qe-verify for moves to in-testing
+        // Bug needs qe-verify+ to stay in in-testing column
+        if (toColumn === 'in-testing') {
+          const currentQeVerify = getQeVerifyStatus(bug.flags)
+          if (currentQeVerify !== 'plus') {
+            stageQeVerifyChange(bugId, currentQeVerify, 'plus')
+          }
+        }
       }
     },
-    [stageChange, bugs, stageWhiteboardChange],
+    [stageChange, bugs, stageWhiteboardChange, stageQeVerifyChange],
   )
 
   // Handle assignee change

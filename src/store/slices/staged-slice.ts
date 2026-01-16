@@ -63,20 +63,25 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
       const newChanges = new Map(state.changes)
       const existing = newChanges.get(bugId)
 
+      // Preserve the original column from any existing staged change
+      const originalColumn = existing?.status?.from ?? fromColumn
+
       // If moving back to original column, remove the status change
-      if (fromColumn === toColumn) {
-        if (existing?.assignee) {
-          // Keep assignee change, remove status
-          newChanges.set(bugId, { assignee: existing.assignee })
-        } else {
-          // No other changes, remove the bug entry
-          newChanges.delete(bugId)
+      if (originalColumn === toColumn) {
+        if (existing) {
+          const { status: _removed, ...rest } = existing
+          // Check if there are other changes remaining
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
         }
       } else {
-        // Add/update status change, preserve assignee if exists
+        // Add/update status change, preserve other changes if exist
         newChanges.set(bugId, {
           ...existing,
-          status: { from: fromColumn, to: toColumn },
+          status: { from: originalColumn, to: toColumn },
         })
       }
 

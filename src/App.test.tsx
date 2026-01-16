@@ -375,4 +375,76 @@ describe('App', () => {
       expect(replaceStateMock).not.toHaveBeenCalled()
     })
   })
+
+  describe('handleBugMove side effects', () => {
+    beforeEach(() => {
+      useStore.setState({
+        apiKey: 'test-api-key',
+        isValid: true,
+        isValidating: false,
+        changes: new Map(),
+        bugs: [
+          {
+            id: 123,
+            summary: 'Test bug',
+            status: 'ASSIGNED',
+            assigned_to: 'dev@test.com',
+            priority: 'P2',
+            severity: 'normal',
+            component: 'Core',
+            whiteboard: '',
+            last_change_time: '2024-01-01T00:00:00Z',
+            creation_time: '2024-01-01T00:00:00Z',
+          },
+        ],
+      })
+    })
+
+    it('should stage qe-verify plus when moving bug to in-testing column', () => {
+      const { stageChange, stageQeVerifyChange } = useStore.getState()
+
+      // Simulate handleBugMove for in-testing: should stage both status and qe-verify
+      stageChange(123, 'in-progress', 'in-testing')
+      stageQeVerifyChange(123, 'unknown', 'plus')
+
+      const { changes } = useStore.getState()
+      const change = changes.get(123)
+
+      expect(change?.status).toEqual({ from: 'in-progress', to: 'in-testing' })
+      expect(change?.qeVerify).toEqual({ from: 'unknown', to: 'plus' })
+    })
+
+    it('should NOT stage qe-verify when bug already has qe-verify plus', () => {
+      // Set up a bug that already has qe-verify+
+      useStore.setState({
+        bugs: [
+          {
+            id: 123,
+            summary: 'Test bug',
+            status: 'RESOLVED',
+            resolution: 'FIXED',
+            assigned_to: 'dev@test.com',
+            priority: 'P2',
+            severity: 'normal',
+            component: 'Core',
+            whiteboard: '',
+            last_change_time: '2024-01-01T00:00:00Z',
+            creation_time: '2024-01-01T00:00:00Z',
+            flags: [{ name: 'qe-verify', status: '+' }],
+          },
+        ],
+      })
+
+      const { stageChange } = useStore.getState()
+
+      // When bug already has qe-verify+, moving to in-testing shouldn't add qeVerify change
+      stageChange(123, 'done', 'in-testing')
+
+      const { changes } = useStore.getState()
+      const change = changes.get(123)
+
+      expect(change?.status).toEqual({ from: 'done', to: 'in-testing' })
+      expect(change?.qeVerify).toBeUndefined()
+    })
+  })
 })
