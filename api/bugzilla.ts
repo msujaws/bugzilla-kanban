@@ -2,9 +2,57 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const BUGZILLA_BASE_URL = 'https://bugzilla.mozilla.org/rest'
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://bugzilla-kanban.vercel.app',
+  'https://boardzilla.vercel.app',
+  // Allow localhost for development
+  /^http:\/\/localhost:\d+$/,
+  /^http:\/\/127\.0\.0\.1:\d+$/,
+]
+
+// Allowed endpoint prefixes - whitelist only safe endpoints
+const ALLOWED_ENDPOINTS = new Set(['bug', 'user'])
+
+function isOriginAllowed(origin: string | undefined): boolean {
+  // Same-origin requests (no origin header) are allowed
+  if (!origin) return true
+
+  for (const allowed of ALLOWED_ORIGINS) {
+    if (typeof allowed === 'string') {
+      if (origin === allowed) return true
+    } else if (allowed.test(origin)) {
+      return true
+    }
+  }
+  return false
+}
+
+function isEndpointAllowed(path: string): boolean {
+  // Reject path traversal attempts
+  if (path.includes('..')) return false
+
+  // Get the first path segment (endpoint)
+  const firstSegment = path.split('/')[0]
+  if (!firstSegment) return false
+  return ALLOWED_ENDPOINTS.has(firstSegment)
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers for all responses
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  const origin = req.headers.origin
+
+  // Validate origin
+  if (!isOriginAllowed(origin)) {
+    res.status(403).json({
+      error: true,
+      message: 'Origin not allowed',
+    })
+    return
+  }
+
+  // Set CORS headers with specific origin (not wildcard)
+  const allowedOrigin = origin ?? '*'
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-BUGZILLA-API-KEY')
   res.setHeader('Access-Control-Max-Age', '86400')
@@ -31,6 +79,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (match?.[1]) {
       bugzillaPath = match[1]
     }
+  }
+
+  // Validate endpoint whitelist
+  if (!isEndpointAllowed(bugzillaPath)) {
+    res.status(403).json({
+      error: true,
+      message: 'Endpoint not allowed',
+    })
+    return
   }
 
   // Build the Bugzilla URL
@@ -74,12 +131,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       data = JSON.parse(responseText)
     } catch {
-      // If response isn't JSON, return an error with the raw text
+      // If response isn't JSON, return an error
+      // Only include details in development for debugging
       console.error('Non-JSON response from Bugzilla:', responseText.slice(0, 500))
+      const isProduction = process.env.NODE_ENV === 'production'
       res.status(502).json({
         error: true,
         message: 'Invalid response from Bugzilla API',
-        details: responseText.slice(0, 200),
+        ...(isProduction ? {} : { details: responseText.slice(0, 200) }),
       })
       return
     }
