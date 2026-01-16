@@ -335,6 +335,13 @@ describe('Column', () => {
       expect(stagedBadge).toHaveAttribute('aria-live', 'polite')
       expect(stagedBadge).toHaveAttribute('aria-atomic', 'true')
     })
+
+    it('should have visible focus indicator on info button', () => {
+      render(<Column {...defaultProps} />)
+
+      const infoButton = screen.getByLabelText('Column info')
+      expect(infoButton.className).toContain('focus:ring')
+    })
   })
 
   describe('loading state', () => {

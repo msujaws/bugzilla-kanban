@@ -145,7 +145,7 @@ export function Column({
             type="button"
             aria-label="Column info"
             onClick={handleInfoClick}
-            className="text-text-tertiary transition-colors hover:text-text-secondary"
+            className="rounded text-text-tertiary transition-colors hover:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-1 focus:ring-offset-bg-secondary"
           >
             <span className="material-icons text-base">info_outline</span>
           </button>

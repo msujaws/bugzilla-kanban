@@ -105,7 +105,7 @@ export function FAQModal({ isOpen, onClose }: FAQModalProps) {
               </h2>
               <button
                 onClick={onClose}
-                className="rounded p-1 text-text-tertiary transition-colors hover:bg-bg-tertiary hover:text-text-primary"
+                className="rounded p-1 text-text-tertiary transition-colors hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary"
                 aria-label="Close FAQ"
               >
                 <span className="material-icons">close</span>
