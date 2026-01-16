@@ -158,6 +158,9 @@ function App() {
   // Handle bug move (drag and drop)
   const handleBugMove = useCallback(
     (bugId: number, fromColumn: string, toColumn: string) => {
+      // Capture existing staged change before stageChange modifies the store
+      const existingChange = changes.get(bugId)
+
       stageChange(bugId, fromColumn, toColumn)
 
       const bug = bugs.find((b) => b.id === bugId)
@@ -188,10 +191,18 @@ function App() {
           if (currentQeVerify !== 'plus') {
             stageQeVerifyChange(bugId, currentQeVerify, 'plus')
           }
+        } else if (existingChange?.qeVerify) {
+          // Revert auto-staged qe-verify+ when moving away from in-testing
+          // Check if status was also reverted (back to original column)
+          const updatedChange = useStore.getState().changes.get(bugId)
+          if (!updatedChange?.status) {
+            const currentQeVerify = getQeVerifyStatus(bug.flags)
+            stageQeVerifyChange(bugId, currentQeVerify, currentQeVerify)
+          }
         }
       }
     },
-    [stageChange, bugs, stageWhiteboardChange, stageQeVerifyChange],
+    [stageChange, bugs, stageWhiteboardChange, stageQeVerifyChange, changes],
   )
 
   // Handle assignee change

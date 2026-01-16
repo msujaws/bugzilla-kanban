@@ -446,5 +446,56 @@ describe('App', () => {
       expect(change?.status).toEqual({ from: 'done', to: 'in-testing' })
       expect(change?.qeVerify).toBeUndefined()
     })
+
+    it('should revert qe-verify when dragging from in-testing back to original column', () => {
+      // This test simulates handleBugMove flow:
+      // 1. User drags bug from 'todo' to 'in-testing' (auto-stages qe-verify+)
+      // 2. User drags bug back to 'todo' (should revert ALL staged changes)
+      const { stageChange, stageQeVerifyChange } = useStore.getState()
+
+      // Step 1: Simulate handleBugMove(123, 'todo', 'in-testing')
+      // This stages status and auto-stages qe-verify+
+      stageChange(123, 'todo', 'in-testing')
+      stageQeVerifyChange(123, 'unknown', 'plus')
+
+      // Verify intermediate state
+      let changes = useStore.getState().changes
+      expect(changes.get(123)?.status).toEqual({ from: 'todo', to: 'in-testing' })
+      expect(changes.get(123)?.qeVerify).toEqual({ from: 'unknown', to: 'plus' })
+
+      // Step 2: Simulate handleBugMove(123, 'in-testing', 'todo')
+      // Capture existing change before stageChange (as handleBugMove does)
+      const existingChange = useStore.getState().changes.get(123)
+      stageChange(123, 'in-testing', 'todo')
+
+      // handleBugMove detects status was reverted and also reverts qeVerify
+      const updatedChange = useStore.getState().changes.get(123)
+      if (existingChange?.qeVerify && !updatedChange?.status) {
+        stageQeVerifyChange(123, 'unknown', 'unknown')
+      }
+
+      // Expected: no changes should remain (both status and qeVerify reverted)
+      changes = useStore.getState().changes
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should keep qe-verify when moving from in-testing to a different column (not original)', () => {
+      // Flow: todo -> in-testing -> done
+      // qe-verify+ should persist since we're not reverting to original
+      const { stageChange, stageQeVerifyChange } = useStore.getState()
+
+      // Step 1: todo -> in-testing
+      stageChange(123, 'todo', 'in-testing')
+      stageQeVerifyChange(123, 'unknown', 'plus')
+
+      // Step 2: in-testing -> done (different from original 'todo')
+      stageChange(123, 'in-testing', 'done')
+
+      // qe-verify should still be staged (we want it applied)
+      const changes = useStore.getState().changes
+      const change = changes.get(123)
+      expect(change?.status).toEqual({ from: 'todo', to: 'done' })
+      expect(change?.qeVerify).toEqual({ from: 'unknown', to: 'plus' })
+    })
   })
 })
