@@ -160,7 +160,11 @@ export function Column({
         </div>
         <div className="flex items-center gap-2">
           {stagedCount > 0 && (
-            <span className="rounded bg-accent-primary/20 px-2 py-0.5 text-xs text-accent-primary">
+            <span
+              aria-live="polite"
+              aria-atomic="true"
+              className="rounded bg-accent-primary/20 px-2 py-0.5 text-xs text-accent-primary"
+            >
               {stagedCount} staged
             </span>
           )}

@@ -326,6 +326,15 @@ describe('Column', () => {
       const region = screen.getByRole('region')
       expect(region).toHaveAttribute('aria-describedby')
     })
+
+    it('should have aria-live on staged count for screen reader announcements', () => {
+      const stagedBugIds = new Set([12_345])
+      render(<Column {...defaultProps} stagedBugIds={stagedBugIds} />)
+
+      const stagedBadge = screen.getByText(/staged/i)
+      expect(stagedBadge).toHaveAttribute('aria-live', 'polite')
+      expect(stagedBadge).toHaveAttribute('aria-atomic', 'true')
+    })
   })
 
   describe('loading state', () => {
