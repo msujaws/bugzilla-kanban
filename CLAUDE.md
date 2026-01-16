@@ -38,7 +38,7 @@ Slices are composed in `src/store/index.ts`. Devtools disabled in production to 
 
 - `src/lib/bugzilla/client.ts`: BugzillaClient class for API calls
 - `src/lib/bugzilla/status-mapper.ts`: Maps Bugzilla statuses ↔ Kanban columns
-- `api/bugzilla/[...path].ts`: Vercel serverless CORS proxy to bugzilla.mozilla.org
+- `api/bugzilla.ts`: Vercel serverless CORS proxy to bugzilla.mozilla.org
 
 ### Branded Types
 

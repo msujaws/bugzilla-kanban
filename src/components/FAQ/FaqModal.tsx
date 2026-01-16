@@ -26,8 +26,22 @@ const faqs = [
   },
   {
     question: 'Is my API key secure?',
-    answer:
-      'Your API key is encrypted and stored locally in your browser. API requests pass through our open-source CORS proxy to reach Bugzilla (required due to browser security restrictions). We do not log or store your key. You can review the proxy code on GitHub.',
+    answer: (
+      <>
+        Your API key is encrypted and stored locally in your browser. API requests pass through our
+        open-source CORS proxy to reach Bugzilla (required due to browser security restrictions). We
+        do not log or store your key. You can review the{' '}
+        <a
+          href="https://github.com/msujaws/bugzilla-kanban/blob/9feb76a280193ce43ba55c841b3071fb996513e6/api/bugzilla.ts"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent-primary hover:underline"
+        >
+          proxy code on GitHub
+        </a>
+        .
+      </>
+    ),
   },
   {
     question: 'What do the columns mean?',
