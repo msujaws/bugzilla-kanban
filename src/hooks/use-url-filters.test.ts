@@ -95,6 +95,40 @@ describe('useUrlFilters', () => {
 
       expect(result.current.initialFilters.sortOrder).toBe('priority')
     })
+
+    it('should truncate whiteboard tag exceeding max length', () => {
+      const longValue = 'a'.repeat(300)
+      window.location.search = `?whiteboard=${longValue}`
+
+      const { result } = renderHook(() => useUrlFilters())
+
+      expect(result.current.initialFilters.whiteboardTag.length).toBeLessThanOrEqual(200)
+    })
+
+    it('should truncate component exceeding max length', () => {
+      const longValue = 'b'.repeat(300)
+      window.location.search = `?component=${longValue}`
+
+      const { result } = renderHook(() => useUrlFilters())
+
+      expect(result.current.initialFilters.component.length).toBeLessThanOrEqual(200)
+    })
+
+    it('should handle empty whiteboard param gracefully', () => {
+      window.location.search = '?whiteboard='
+
+      const { result } = renderHook(() => useUrlFilters())
+
+      expect(result.current.initialFilters.whiteboardTag).toBe('')
+    })
+
+    it('should handle empty component param gracefully', () => {
+      window.location.search = '?component='
+
+      const { result } = renderHook(() => useUrlFilters())
+
+      expect(result.current.initialFilters.component).toBe('')
+    })
   })
 
   describe('updating URL with filters', () => {

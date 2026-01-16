@@ -34,13 +34,27 @@ const URL_PARAMS = {
 const VALID_SORT_ORDERS = new Set<SortOrder>(['priority', 'lastChanged'])
 
 /**
+ * Maximum length for URL filter parameters (security measure)
+ */
+const MAX_PARAM_LENGTH = 200
+
+/**
+ * Sanitize a URL parameter value by truncating to max length
+ */
+function sanitizeParam(value: string | null): string {
+  if (!value) return ''
+  return value.slice(0, MAX_PARAM_LENGTH)
+}
+
+/**
  * Parse filters from URL search params
  */
 function parseFiltersFromUrl(): UrlFilters {
   const params = new URLSearchParams(window.location.search)
 
-  const whiteboardTag = params.get(URL_PARAMS.whiteboard) ?? ''
-  const component = params.get(URL_PARAMS.component) ?? ''
+  // Sanitize string params to prevent excessively long values
+  const whiteboardTag = sanitizeParam(params.get(URL_PARAMS.whiteboard))
+  const component = sanitizeParam(params.get(URL_PARAMS.component))
   const sortParam = params.get(URL_PARAMS.sort)
   const sortOrder: SortOrder = VALID_SORT_ORDERS.has(sortParam as SortOrder)
     ? (sortParam as SortOrder)
