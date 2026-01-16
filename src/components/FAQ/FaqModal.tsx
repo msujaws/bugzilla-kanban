@@ -15,6 +15,11 @@ const faqs = [
       'BoardZilla is a visual board for managing Mozilla Bugzilla bugs. It lets you drag and drop bugs between status columns and batch-update them in Bugzilla.',
   },
   {
+    question: 'Is this an official Mozilla or Bugzilla project?',
+    answer:
+      'No, this is not an official Mozilla or Bugzilla project. BoardZilla is an independent, community-built tool that integrates with the Bugzilla API.',
+  },
+  {
     question: 'How do I get a Bugzilla API key?',
     answer:
       'Log into bugzilla.mozilla.org, go to Preferences → API Keys, and generate a new key. Copy it and paste it here.',
