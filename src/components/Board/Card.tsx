@@ -285,6 +285,13 @@ export function Card({
             Staged
           </span>
         )}
+        {/* Grab hint when selected but not grabbed */}
+        {isSelected && !isGrabbed && (
+          <span className="flex items-center gap-1 rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary">
+            <span className="material-icons text-sm">keyboard</span>
+            Shift to grab
+          </span>
+        )}
         {/* Story Points - top right */}
         {displayedPoints !== undefined &&
           displayedPoints !== 0 &&

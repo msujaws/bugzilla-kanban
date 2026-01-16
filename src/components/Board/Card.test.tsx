@@ -405,6 +405,24 @@ describe('Card', () => {
       expect(card.className).toContain('ring-accent-primary')
       expect(card.className).toContain('shadow-xl')
     })
+
+    it('should show grab hint when card is selected', () => {
+      render(<Card bug={mockBug} isSelected={true} />)
+
+      expect(screen.getByText(/shift.*grab/i)).toBeInTheDocument()
+    })
+
+    it('should not show grab hint when card is not selected', () => {
+      render(<Card bug={mockBug} isSelected={false} />)
+
+      expect(screen.queryByText(/shift.*grab/i)).not.toBeInTheDocument()
+    })
+
+    it('should not show grab hint when card is grabbed (already in grab mode)', () => {
+      render(<Card bug={mockBug} isSelected={true} isGrabbed={true} />)
+
+      expect(screen.queryByText(/shift.*grab/i)).not.toBeInTheDocument()
+    })
   })
 
   describe('assignee picker', () => {
