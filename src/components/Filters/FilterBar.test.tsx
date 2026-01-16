@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FilterBar } from './FilterBar'
 
@@ -218,7 +218,7 @@ describe('FilterBar', () => {
   })
 
   describe('debouncing', () => {
-    it('should debounce whiteboard input changes', async () => {
+    it('should call onChange immediately for controlled input', async () => {
       const user = userEvent.setup()
       const onWhiteboardTagChange = vi.fn()
 
@@ -228,9 +228,82 @@ describe('FilterBar', () => {
       await user.type(input, 'test')
 
       // Should be called for each keystroke in controlled component
-      await waitFor(() => {
-        expect(onWhiteboardTagChange).toHaveBeenCalled()
+      expect(onWhiteboardTagChange).toHaveBeenCalledTimes(4) // t-e-s-t
+    })
+
+    it('should auto-apply filters after debounce delay when typing', async () => {
+      const onApplyFilters = vi.fn()
+
+      render(<FilterBar {...defaultProps} onApplyFilters={onApplyFilters} enableAutoApply />)
+
+      const input = screen.getByLabelText(/whiteboard/i)
+
+      // Trigger input change using fireEvent
+      fireEvent.change(input, { target: { value: 'test' } })
+
+      // Should not have auto-applied immediately
+      expect(onApplyFilters).not.toHaveBeenCalled()
+
+      // Wait for debounce delay (300ms)
+      await waitFor(
+        () => {
+          expect(onApplyFilters).toHaveBeenCalledTimes(1)
+        },
+        { timeout: 500 },
+      )
+    })
+
+    it('should apply immediately on Enter key', async () => {
+      const user = userEvent.setup()
+      const onApplyFilters = vi.fn()
+
+      render(<FilterBar {...defaultProps} onApplyFilters={onApplyFilters} enableAutoApply />)
+
+      const input = screen.getByLabelText(/whiteboard/i)
+      await user.type(input, 'test{Enter}')
+
+      // Should have applied at least once (Enter key triggers immediate apply)
+      expect(onApplyFilters).toHaveBeenCalled()
+    })
+
+    it('should not auto-apply when enableAutoApply is false', async () => {
+      const onApplyFilters = vi.fn()
+
+      render(
+        <FilterBar {...defaultProps} onApplyFilters={onApplyFilters} enableAutoApply={false} />,
+      )
+
+      const input = screen.getByLabelText(/whiteboard/i)
+
+      // Trigger input change using fireEvent
+      fireEvent.change(input, { target: { value: 'test' } })
+
+      // Wait for potential debounce (should not trigger)
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 400))
       })
+
+      // Should not have auto-applied
+      expect(onApplyFilters).not.toHaveBeenCalled()
+    })
+
+    it('should auto-apply when component input changes', async () => {
+      const onApplyFilters = vi.fn()
+
+      render(<FilterBar {...defaultProps} onApplyFilters={onApplyFilters} enableAutoApply />)
+
+      const input = screen.getByLabelText(/component/i)
+
+      // Trigger input change using fireEvent
+      fireEvent.change(input, { target: { value: 'Core' } })
+
+      // Wait for debounce delay
+      await waitFor(
+        () => {
+          expect(onApplyFilters).toHaveBeenCalledTimes(1)
+        },
+        { timeout: 500 },
+      )
     })
   })
 

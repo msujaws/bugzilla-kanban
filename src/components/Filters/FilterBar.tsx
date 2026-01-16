@@ -1,7 +1,9 @@
-import type { KeyboardEvent } from 'react'
+import { type KeyboardEvent, useRef, useEffect, useCallback } from 'react'
 import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import { AssigneeFilter } from './AssigneeFilter'
+
+const DEBOUNCE_DELAY = 300
 
 interface FilterBarProps {
   whiteboardTag: string
@@ -15,6 +17,7 @@ interface FilterBarProps {
   assignees?: Assignee[]
   selectedAssignee?: string | null
   onAssigneeChange?: (email: string | null) => void
+  enableAutoApply?: boolean
 }
 
 export function FilterBar({
@@ -29,17 +32,57 @@ export function FilterBar({
   assignees = [],
   selectedAssignee = null,
   onAssigneeChange,
+  enableAutoApply = false,
 }: FilterBarProps) {
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>()
+
   const hasFilters =
     whiteboardTag !== '' ||
     component !== '' ||
     sortOrder !== 'priority' ||
     selectedAssignee !== null
 
+  // Debounced auto-apply
+  const debouncedApply = useCallback(() => {
+    if (!enableAutoApply) return
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      onApplyFilters()
+    }, DEBOUNCE_DELAY)
+  }, [enableAutoApply, onApplyFilters])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
+
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Enter') {
+      // Cancel any pending debounced apply and apply immediately
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
       onApplyFilters()
     }
+  }
+
+  // Handle text input changes with debouncing
+  const handleWhiteboardChange = (value: string) => {
+    onWhiteboardTagChange(value)
+    debouncedApply()
+  }
+
+  const handleComponentInputChange = (value: string) => {
+    onComponentChange(value)
+    debouncedApply()
   }
 
   const handleClear = () => {
@@ -71,7 +114,7 @@ export function FilterBar({
             type="text"
             value={whiteboardTag}
             onChange={(e) => {
-              onWhiteboardTagChange(e.target.value)
+              handleWhiteboardChange(e.target.value)
             }}
             onKeyDown={handleKeyDown}
             placeholder="e.g., [kanban] or bug-triage"
@@ -90,7 +133,7 @@ export function FilterBar({
             type="text"
             value={component}
             onChange={(e) => {
-              onComponentChange(e.target.value)
+              handleComponentInputChange(e.target.value)
             }}
             onKeyDown={handleKeyDown}
             placeholder="e.g., Core, UI, Backend"
