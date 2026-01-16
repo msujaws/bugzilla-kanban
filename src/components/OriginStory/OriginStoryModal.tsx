@@ -100,6 +100,11 @@ export function OriginStoryModal({ isOpen, onClose }: OriginStoryModalProps) {
                 </p>
 
                 <p>
+                  <img
+                    src="/mascot-enemy.png"
+                    alt="Scope Creep, the nefarious villain"
+                    className="ml-4 mb-2 float-right w-32"
+                  />
                   At first, Boardzilla felt lost. But then they noticed developers struggling. Bugs
                   scattered everywhere, no clear workflow, chaos reigning supreme. And lurking in
                   the shadows was the nefarious Scope Creep, a sneaky villain who kept adding bugs
