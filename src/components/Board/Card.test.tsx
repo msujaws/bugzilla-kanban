@@ -411,7 +411,7 @@ describe('Card', () => {
     it('should make person icon clickable when allAssignees is provided', () => {
       render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
 
-      expect(screen.getByLabelText('Change assignee')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Change assignee/)).toBeInTheDocument()
       // Should be person icon, not account_circle
       expect(screen.getByText('person')).toBeInTheDocument()
       expect(screen.queryByText('account_circle')).not.toBeInTheDocument()
@@ -422,14 +422,14 @@ describe('Card', () => {
 
       // Person icon should still be there but not as a button
       expect(screen.getByText('person')).toBeInTheDocument()
-      expect(screen.queryByLabelText('Change assignee')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText(/Change assignee/)).not.toBeInTheDocument()
     })
 
     it('should open picker when person icon is clicked', async () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change assignee'))
+      await user.click(screen.getByLabelText(/Change assignee/))
 
       expect(screen.getByRole('listbox')).toBeInTheDocument()
     })
@@ -441,7 +441,7 @@ describe('Card', () => {
         <Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={onAssigneeChange} />,
       )
 
-      await user.click(screen.getByLabelText('Change assignee'))
+      await user.click(screen.getByLabelText(/Change assignee/))
       await user.click(screen.getByText('Alice Johnson'))
 
       expect(onAssigneeChange).toHaveBeenCalledWith(mockBug.id, 'alice@example.com')
@@ -451,7 +451,7 @@ describe('Card', () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change assignee'))
+      await user.click(screen.getByLabelText(/Change assignee/))
       await user.click(screen.getByText('Alice Johnson'))
 
       expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
@@ -469,7 +469,7 @@ describe('Card', () => {
         />,
       )
 
-      await user.click(screen.getByLabelText('Change assignee'))
+      await user.click(screen.getByLabelText(/Change assignee/))
 
       expect(onClick).not.toHaveBeenCalled()
     })
@@ -485,7 +485,7 @@ describe('Card', () => {
       )
 
       // The person icon button should have accent-staged border
-      const button = screen.getByLabelText('Change assignee')
+      const button = screen.getByLabelText(/Change assignee/)
       expect(button.className).toContain('ring-accent-staged')
     })
 
@@ -499,7 +499,7 @@ describe('Card', () => {
         />,
       )
 
-      const button = screen.getByLabelText('Change assignee')
+      const button = screen.getByLabelText(/Change assignee/)
       expect(button.className).not.toContain('ring-accent-staged')
     })
 
@@ -606,20 +606,20 @@ describe('Card', () => {
     it('should make points badge clickable when onPointsChange is provided', () => {
       render(<Card bug={bugWithPoints} onPointsChange={vi.fn()} />)
 
-      expect(screen.getByLabelText('Change story points')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Change story points/)).toBeInTheDocument()
     })
 
     it('should not make points badge clickable when onPointsChange is not provided', () => {
       render(<Card bug={bugWithPoints} />)
 
-      expect(screen.queryByLabelText('Change story points')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText(/Change story points/)).not.toBeInTheDocument()
     })
 
     it('should open picker when points badge is clicked', async () => {
       const user = userEvent.setup()
       render(<Card bug={bugWithPoints} onPointsChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change story points'))
+      await user.click(screen.getByLabelText(/Change story points/))
 
       expect(screen.getByRole('listbox', { name: /story points/i })).toBeInTheDocument()
     })
@@ -629,7 +629,7 @@ describe('Card', () => {
       const onPointsChange = vi.fn()
       render(<Card bug={bugWithPoints} onPointsChange={onPointsChange} />)
 
-      await user.click(screen.getByLabelText('Change story points'))
+      await user.click(screen.getByLabelText(/Change story points/))
       await user.click(screen.getByText('8'))
 
       expect(onPointsChange).toHaveBeenCalledWith(mockBug.id, 8)
@@ -638,7 +638,7 @@ describe('Card', () => {
     it('should show isPointsStaged indicator when points are staged', () => {
       render(<Card bug={bugWithPoints} onPointsChange={vi.fn()} isPointsStaged={true} />)
 
-      const button = screen.getByLabelText('Change story points')
+      const button = screen.getByLabelText(/Change story points/)
       expect(button.className).toContain('ring-accent-staged')
     })
 
@@ -660,20 +660,20 @@ describe('Card', () => {
     it('should make priority badge clickable when onPriorityChange is provided', () => {
       render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
 
-      expect(screen.getByLabelText('Change priority')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Change priority/)).toBeInTheDocument()
     })
 
     it('should not make priority badge clickable when onPriorityChange is not provided', () => {
       render(<Card bug={mockBug} />)
 
-      expect(screen.queryByLabelText('Change priority')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText(/Change priority/)).not.toBeInTheDocument()
     })
 
     it('should open picker when priority badge is clicked', async () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change priority'))
+      await user.click(screen.getByLabelText(/Change priority/))
 
       expect(screen.getByRole('listbox', { name: /priority/i })).toBeInTheDocument()
     })
@@ -683,7 +683,7 @@ describe('Card', () => {
       const onPriorityChange = vi.fn()
       render(<Card bug={mockBug} onPriorityChange={onPriorityChange} />)
 
-      await user.click(screen.getByLabelText('Change priority'))
+      await user.click(screen.getByLabelText(/Change priority/))
       await user.click(screen.getByText('P1'))
 
       expect(onPriorityChange).toHaveBeenCalledWith(mockBug.id, 'P1')
@@ -692,7 +692,7 @@ describe('Card', () => {
     it('should show isPriorityStaged indicator when priority is staged', () => {
       render(<Card bug={mockBug} onPriorityChange={vi.fn()} isPriorityStaged={true} />)
 
-      const button = screen.getByLabelText('Change priority')
+      const button = screen.getByLabelText(/Change priority/)
       expect(button.className).toContain('ring-accent-staged')
     })
 
@@ -716,20 +716,20 @@ describe('Card', () => {
     it('should make severity badge clickable when onSeverityChange is provided', () => {
       render(<Card bug={mockBug} onSeverityChange={vi.fn()} />)
 
-      expect(screen.getByLabelText('Change severity')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Change severity/)).toBeInTheDocument()
     })
 
     it('should not make severity badge clickable when onSeverityChange is not provided', () => {
       render(<Card bug={mockBug} />)
 
-      expect(screen.queryByLabelText('Change severity')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText(/Change severity/)).not.toBeInTheDocument()
     })
 
     it('should open picker when severity badge is clicked', async () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} onSeverityChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change severity'))
+      await user.click(screen.getByLabelText(/Change severity/))
 
       expect(screen.getByRole('listbox', { name: /severity/i })).toBeInTheDocument()
     })
@@ -739,7 +739,7 @@ describe('Card', () => {
       const onSeverityChange = vi.fn()
       render(<Card bug={mockBug} onSeverityChange={onSeverityChange} />)
 
-      await user.click(screen.getByLabelText('Change severity'))
+      await user.click(screen.getByLabelText(/Change severity/))
       await user.click(screen.getByText('S1'))
 
       expect(onSeverityChange).toHaveBeenCalledWith(mockBug.id, 'S1')
@@ -748,7 +748,7 @@ describe('Card', () => {
     it('should show isSeverityStaged indicator when severity is staged', () => {
       render(<Card bug={mockBug} onSeverityChange={vi.fn()} isSeverityStaged={true} />)
 
-      const button = screen.getByLabelText('Change severity')
+      const button = screen.getByLabelText(/Change severity/)
       expect(button.className).toContain('ring-accent-staged')
     })
 
@@ -772,7 +772,7 @@ describe('Card', () => {
       const onClick = vi.fn()
       render(<Card bug={mockBug} onClick={onClick} onSeverityChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change severity'))
+      await user.click(screen.getByLabelText(/Change severity/))
 
       expect(onClick).not.toHaveBeenCalled()
     })
@@ -858,20 +858,20 @@ describe('Card', () => {
     it('should make qe indicator clickable when onQeVerifyChange is provided', () => {
       render(<Card bug={mockBug} onQeVerifyChange={vi.fn()} />)
 
-      expect(screen.getByLabelText('Change QE verification')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Change QE verification/)).toBeInTheDocument()
     })
 
     it('should not make qe indicator clickable when onQeVerifyChange is not provided', () => {
       render(<Card bug={mockBug} />)
 
-      expect(screen.queryByLabelText('Change QE verification')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText(/Change QE verification/)).not.toBeInTheDocument()
     })
 
     it('should open picker when qe indicator is clicked', async () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} onQeVerifyChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change QE verification'))
+      await user.click(screen.getByLabelText(/Change QE verification/))
 
       expect(screen.getByRole('listbox', { name: /qe verification/i })).toBeInTheDocument()
     })
@@ -881,7 +881,7 @@ describe('Card', () => {
       const onQeVerifyChange = vi.fn()
       render(<Card bug={mockBug} onQeVerifyChange={onQeVerifyChange} />)
 
-      await user.click(screen.getByLabelText('Change QE verification'))
+      await user.click(screen.getByLabelText(/Change QE verification/))
       await user.click(screen.getByText('qe-verify: -'))
 
       expect(onQeVerifyChange).toHaveBeenCalledWith(mockBug.id, 'minus')
@@ -890,7 +890,7 @@ describe('Card', () => {
     it('should show isQeVerifyStaged indicator when qe-verify is staged', () => {
       render(<Card bug={mockBug} onQeVerifyChange={vi.fn()} isQeVerifyStaged={true} />)
 
-      const button = screen.getByLabelText('Change QE verification')
+      const button = screen.getByLabelText(/Change QE verification/)
       expect(button.className).toContain('ring-accent-staged')
     })
 
@@ -913,7 +913,7 @@ describe('Card', () => {
       const onClick = vi.fn()
       render(<Card bug={mockBug} onClick={onClick} onQeVerifyChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change QE verification'))
+      await user.click(screen.getByLabelText(/Change QE verification/))
 
       expect(onClick).not.toHaveBeenCalled()
     })
@@ -923,7 +923,7 @@ describe('Card', () => {
     it('should have aria-expanded=false on priority button when picker is closed', () => {
       render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
 
-      const button = screen.getByLabelText('Change priority')
+      const button = screen.getByLabelText(/Change priority/)
       expect(button).toHaveAttribute('aria-expanded', 'false')
     })
 
@@ -931,9 +931,9 @@ describe('Card', () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change priority'))
+      await user.click(screen.getByLabelText(/Change priority/))
 
-      const button = screen.getByLabelText('Change priority')
+      const button = screen.getByLabelText(/Change priority/)
       expect(button).toHaveAttribute('aria-expanded', 'true')
     })
 
@@ -941,9 +941,9 @@ describe('Card', () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
 
-      await user.click(screen.getByLabelText('Change priority'))
+      await user.click(screen.getByLabelText(/Change priority/))
 
-      const button = screen.getByLabelText('Change priority')
+      const button = screen.getByLabelText(/Change priority/)
       const listbox = screen.getByRole('listbox', { name: /priority/i })
       expect(button).toHaveAttribute('aria-controls', listbox.id)
     })
@@ -951,7 +951,7 @@ describe('Card', () => {
     it('should have aria-haspopup=listbox on priority button', () => {
       render(<Card bug={mockBug} onPriorityChange={vi.fn()} />)
 
-      const button = screen.getByLabelText('Change priority')
+      const button = screen.getByLabelText(/Change priority/)
       expect(button).toHaveAttribute('aria-haspopup', 'listbox')
     })
 
@@ -959,7 +959,7 @@ describe('Card', () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} onSeverityChange={vi.fn()} />)
 
-      const button = screen.getByLabelText('Change severity')
+      const button = screen.getByLabelText(/Change severity/)
       expect(button).toHaveAttribute('aria-expanded', 'false')
 
       await user.click(button)
@@ -970,7 +970,7 @@ describe('Card', () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} allAssignees={mockAssignees} onAssigneeChange={vi.fn()} />)
 
-      const button = screen.getByLabelText('Change assignee')
+      const button = screen.getByLabelText(/Change assignee/)
       expect(button).toHaveAttribute('aria-expanded', 'false')
 
       await user.click(button)
@@ -981,7 +981,7 @@ describe('Card', () => {
       const user = userEvent.setup()
       render(<Card bug={{ ...mockBug, cf_fx_points: 5 }} onPointsChange={vi.fn()} />)
 
-      const button = screen.getByLabelText('Change story points')
+      const button = screen.getByLabelText(/Change story points/)
       expect(button).toHaveAttribute('aria-expanded', 'false')
 
       await user.click(button)
@@ -992,11 +992,43 @@ describe('Card', () => {
       const user = userEvent.setup()
       render(<Card bug={mockBug} onQeVerifyChange={vi.fn()} />)
 
-      const button = screen.getByLabelText('Change QE verification')
+      const button = screen.getByLabelText(/Change QE verification/)
       expect(button).toHaveAttribute('aria-expanded', 'false')
 
       await user.click(button)
       expect(button).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('should include current value in priority button aria-label', () => {
+      render(<Card bug={{ ...mockBug, priority: 'P1' }} onPriorityChange={vi.fn()} />)
+
+      expect(screen.getByLabelText(/Change priority, current: P1/)).toBeInTheDocument()
+    })
+
+    it('should include current value in severity button aria-label', () => {
+      render(<Card bug={{ ...mockBug, severity: 'S2' }} onSeverityChange={vi.fn()} />)
+
+      expect(screen.getByLabelText(/Change severity, current: S2/)).toBeInTheDocument()
+    })
+
+    it('should include current value in points button aria-label', () => {
+      render(<Card bug={{ ...mockBug, cf_fx_points: 5 }} onPointsChange={vi.fn()} />)
+
+      expect(screen.getByLabelText(/Change story points, current: 5/)).toBeInTheDocument()
+    })
+
+    it('should include current assignee in assignee button aria-label', () => {
+      render(
+        <Card
+          bug={{ ...mockBug, assigned_to: 'alice@example.com' }}
+          allAssignees={mockAssignees}
+          onAssigneeChange={vi.fn()}
+        />,
+      )
+
+      expect(
+        screen.getByLabelText(/Change assignee, current: alice@example.com/),
+      ).toBeInTheDocument()
     })
   })
 })

@@ -294,7 +294,7 @@ export function Card({
             <button
               ref={pointsButtonRef}
               type="button"
-              aria-label="Change story points"
+              aria-label={`Change story points, current: ${String(displayedPoints)}`}
               aria-expanded={isPointsPickerOpen}
               aria-haspopup="listbox"
               aria-controls={pointsListboxId}
@@ -327,7 +327,7 @@ export function Card({
           <button
             ref={priorityButtonRef}
             type="button"
-            aria-label="Change priority"
+            aria-label={`Change priority, current: ${displayedPriority}`}
             aria-expanded={isPriorityPickerOpen}
             aria-haspopup="listbox"
             aria-controls={priorityListboxId}
@@ -349,7 +349,7 @@ export function Card({
           <button
             ref={severityButtonRef}
             type="button"
-            aria-label="Change severity"
+            aria-label={`Change severity, current: ${displayedSeverity}`}
             aria-expanded={isSeverityPickerOpen}
             aria-haspopup="listbox"
             aria-controls={severityListboxId}
@@ -380,7 +380,7 @@ export function Card({
           <button
             ref={assigneeButtonRef}
             type="button"
-            aria-label="Change assignee"
+            aria-label={`Change assignee, current: ${displayedAssignee}`}
             aria-expanded={isAssigneePickerOpen}
             aria-haspopup="listbox"
             aria-controls={assigneeListboxId}
