@@ -89,7 +89,9 @@ export function OriginStoryModal({ isOpen, onClose }: OriginStoryModalProps) {
                 <p>
                   Day after day, Boardzilla helped organize millions of bugs, fueled only by an
                   endless supply of sugar free Red Bull (the official beverage of bug wranglers
-                  everywhere). Life was good, if a bit chaotic.
+                  everywhere). Life was good, if a bit chaotic. But deep down, our hero was...
+                  well... <em>bored</em>. Some even called them "Bored-zilla" behind their back.
+                  Simply cataloguing bugs felt so <em>last century</em>.
                 </p>
 
                 <p>
