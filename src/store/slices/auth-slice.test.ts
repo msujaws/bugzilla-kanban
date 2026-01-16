@@ -103,12 +103,12 @@ describe('AuthSlice', () => {
       expect(isValid).toBe(true)
     })
 
-    it('should fetch and store username on successful validation', async () => {
+    it('should fetch and store email on successful validation', async () => {
       const { setApiKey } = useStore.getState()
       await setApiKey('test-api-key-123')
 
       const { username } = useStore.getState()
-      expect(username).toBe('Test User')
+      expect(username).toBe('test@mozilla.com')
       expect(mockWhoAmI).toHaveBeenCalled()
     })
 
@@ -204,7 +204,7 @@ describe('AuthSlice', () => {
       await setApiKey('test-api-key-123')
 
       const { username: usernameBefore } = useStore.getState()
-      expect(usernameBefore).toBe('Test User')
+      expect(usernameBefore).toBe('test@mozilla.com')
 
       clearApiKey()
 

@@ -60,7 +60,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
         isValid: true,
         isValidating: false,
         validationError: null,
-        username: userInfo.real_name || userInfo.name,
+        username: userInfo.name,
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -104,7 +104,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
         isValid: true,
         isValidating: false,
         validationError: null,
-        username: userInfo.real_name || userInfo.name,
+        username: userInfo.name,
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

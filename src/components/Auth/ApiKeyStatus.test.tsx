@@ -68,7 +68,7 @@ describe('ApiKeyStatus', () => {
           isValid: true,
           isValidating: false,
           clearApiKey: mockClearApiKey,
-          username: 'Test User',
+          username: 'testuser@mozilla.com',
         }
         // @ts-expect-error - Simplified mock for testing
         return selector(state)
@@ -81,10 +81,10 @@ describe('ApiKeyStatus', () => {
       expect(screen.getByText(/connected/i)).toBeInTheDocument()
     })
 
-    it('should show username in connected message', () => {
+    it('should show email address in connected message', () => {
       render(<ApiKeyStatus onOpenModal={mockOnOpenModal} />)
 
-      expect(screen.getByText(/test user/i)).toBeInTheDocument()
+      expect(screen.getByText(/testuser@mozilla\.com/i)).toBeInTheDocument()
     })
 
     it('should show playful authenticated message', () => {
