@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef, lazy, Suspense } from 'react'
 import { ToastContainer } from './components/Notifications/ToastContainer'
 import { ApiKeyInput } from './components/Auth/ApiKeyInput'
 import { ApiKeyStatus } from './components/Auth/ApiKeyStatus'
@@ -6,8 +6,16 @@ import { FilterBar } from './components/Filters/FilterBar'
 import { Board } from './components/Board/Board'
 import { EmptyBoardWelcome } from './components/Board/EmptyBoardWelcome'
 import { ApplyChangesButton } from './components/Board/ApplyChangesButton'
-import { FAQModal } from './components/FAQ/FaqModal'
-import { OriginStoryModal } from './components/OriginStory/OriginStoryModal'
+
+// Lazy load modals to improve initial bundle size
+const FAQModal = lazy(() =>
+  import('./components/FAQ/FaqModal').then((m) => ({ default: m.FAQModal })),
+)
+const OriginStoryModal = lazy(() =>
+  import('./components/OriginStory/OriginStoryModal').then((m) => ({
+    default: m.OriginStoryModal,
+  })),
+)
 import { useStore } from './store'
 import { useUrlFilters } from './hooks/use-url-filters'
 import { saveFilters, getFilters } from './lib/storage/filter-storage'
@@ -388,12 +396,14 @@ function App() {
         <ApiKeyInput isOpen={true} onClose={() => {}} onOpenFAQ={handleOpenFAQ} />
 
         {/* FAQ Modal */}
-        <FAQModal
-          isOpen={showFAQModal}
-          onClose={() => {
-            setShowFAQModal(false)
-          }}
-        />
+        <Suspense fallback={null}>
+          <FAQModal
+            isOpen={showFAQModal}
+            onClose={() => {
+              setShowFAQModal(false)
+            }}
+          />
+        </Suspense>
 
         <ToastContainer toasts={toasts} removeToast={removeToast} />
       </div>
@@ -553,20 +563,24 @@ function App() {
       <ApiKeyInput isOpen={showApiKeyModal} onClose={handleCloseModal} onOpenFAQ={handleOpenFAQ} />
 
       {/* FAQ Modal */}
-      <FAQModal
-        isOpen={showFAQModal}
-        onClose={() => {
-          setShowFAQModal(false)
-        }}
-      />
+      <Suspense fallback={null}>
+        <FAQModal
+          isOpen={showFAQModal}
+          onClose={() => {
+            setShowFAQModal(false)
+          }}
+        />
+      </Suspense>
 
       {/* Origin Story Modal (easter egg) */}
-      <OriginStoryModal
-        isOpen={showOriginStoryModal}
-        onClose={() => {
-          setShowOriginStoryModal(false)
-        }}
-      />
+      <Suspense fallback={null}>
+        <OriginStoryModal
+          isOpen={showOriginStoryModal}
+          onClose={() => {
+            setShowOriginStoryModal(false)
+          }}
+        />
+      </Suspense>
     </div>
   )
 }
