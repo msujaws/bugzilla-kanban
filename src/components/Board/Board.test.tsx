@@ -15,6 +15,20 @@ afterAll(() => {
   vi.useRealTimers()
 })
 
+// Mock @tanstack/react-virtual to render all items in tests
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: ({ count }: { count: number }) => ({
+    getVirtualItems: () =>
+      Array.from({ length: count }, (_, index) => ({
+        index,
+        start: index * 160,
+        size: 160,
+        key: index,
+      })),
+    getTotalSize: () => count * 160,
+  }),
+}))
+
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {

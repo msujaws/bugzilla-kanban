@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { Card } from './Card'
 import { ColumnInfoPopover } from './ColumnInfoPopover'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
@@ -7,6 +8,11 @@ import type { KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 import { COLUMN_NAMES } from '@/types'
+
+// Estimated height of each card in pixels (used for virtual scrolling)
+const ESTIMATED_CARD_HEIGHT = 160
+// Gap between cards in pixels
+const CARD_GAP = 12
 
 const NOBODY_EMAIL = 'nobody@mozilla.org'
 
@@ -126,6 +132,15 @@ export function Column({
     return allAssignees.filter((assignee) => assignee.email !== NOBODY_EMAIL)
   }, [allAssignees, column])
 
+  // Virtual scrolling for large bug lists
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const virtualizer = useVirtualizer({
+    count: bugs.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => ESTIMATED_CARD_HEIGHT,
+    gap: CARD_GAP,
+  })
+
   // Determine column styling based on state
   const getColumnClassName = () => {
     const base = 'flex min-h-[500px] w-72 flex-shrink-0 flex-col rounded-lg p-4 transition-colors'
@@ -227,34 +242,57 @@ export function Column({
         </div>
       )}
 
-      {/* Bug Cards */}
+      {/* Bug Cards with Virtual Scrolling */}
       {!isLoading && bugs.length > 0 && (
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
-          {bugs.map((bug, index) => (
-            <Card
-              key={bug.id}
-              bug={bug}
-              isStaged={stagedBugIds.has(bug.id)}
-              isAssigneeStaged={stagedAssigneeBugIds?.has(bug.id)}
-              stagedAssignee={stagedAssignees?.get(bug.id)}
-              isPointsStaged={stagedPointsBugIds?.has(bug.id)}
-              stagedPoints={stagedPoints?.get(bug.id)}
-              isPriorityStaged={stagedPriorityBugIds?.has(bug.id)}
-              stagedPriority={stagedPriorities?.get(bug.id)}
-              isSeverityStaged={stagedSeverityBugIds?.has(bug.id)}
-              stagedSeverity={stagedSeverities?.get(bug.id)}
-              isQeVerifyStaged={stagedQeVerifyBugIds?.has(bug.id)}
-              stagedQeVerify={stagedQeVerifies?.get(bug.id)}
-              isSelected={selectedIndex === index}
-              isGrabbed={selectedIndex === index && isGrabbing}
-              allAssignees={filteredAssignees}
-              onAssigneeChange={onAssigneeChange}
-              onPointsChange={onPointsChange}
-              onPriorityChange={onPriorityChange}
-              onSeverityChange={onSeverityChange}
-              onQeVerifyChange={onQeVerifyChange}
-            />
-          ))}
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize().toString()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const bug = bugs[virtualItem.index]
+              if (!bug) return null
+              const index = virtualItem.index
+              return (
+                <div
+                  key={bug.id}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start.toString()}px)`,
+                  }}
+                >
+                  <Card
+                    bug={bug}
+                    isStaged={stagedBugIds.has(bug.id)}
+                    isAssigneeStaged={stagedAssigneeBugIds?.has(bug.id)}
+                    stagedAssignee={stagedAssignees?.get(bug.id)}
+                    isPointsStaged={stagedPointsBugIds?.has(bug.id)}
+                    stagedPoints={stagedPoints?.get(bug.id)}
+                    isPriorityStaged={stagedPriorityBugIds?.has(bug.id)}
+                    stagedPriority={stagedPriorities?.get(bug.id)}
+                    isSeverityStaged={stagedSeverityBugIds?.has(bug.id)}
+                    stagedSeverity={stagedSeverities?.get(bug.id)}
+                    isQeVerifyStaged={stagedQeVerifyBugIds?.has(bug.id)}
+                    stagedQeVerify={stagedQeVerifies?.get(bug.id)}
+                    isSelected={selectedIndex === index}
+                    isGrabbed={selectedIndex === index && isGrabbing}
+                    allAssignees={filteredAssignees}
+                    onAssigneeChange={onAssigneeChange}
+                    onPointsChange={onPointsChange}
+                    onPriorityChange={onPriorityChange}
+                    onSeverityChange={onSeverityChange}
+                    onQeVerifyChange={onQeVerifyChange}
+                  />
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
