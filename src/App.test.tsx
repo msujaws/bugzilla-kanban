@@ -101,12 +101,11 @@ describe('App', () => {
       expect(screen.getByLabelText(/whiteboard/i)).toBeInTheDocument()
     })
 
-    it('should show board columns', () => {
+    it('should show welcome instructions when no filters are set', () => {
       render(<App />)
 
-      expect(screen.getByText('Backlog')).toBeInTheDocument()
-      expect(screen.getByText('Todo')).toBeInTheDocument()
-      expect(screen.getByText('In Progress')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /get started/i })).toBeInTheDocument()
+      expect(screen.getByText(/enter your filters/i)).toBeInTheDocument()
     })
 
     it('should show API key status', () => {

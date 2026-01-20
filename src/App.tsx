@@ -4,11 +4,13 @@ import { ApiKeyInput } from './components/Auth/ApiKeyInput'
 import { ApiKeyStatus } from './components/Auth/ApiKeyStatus'
 import { FilterBar } from './components/Filters/FilterBar'
 import { Board } from './components/Board/Board'
+import { EmptyBoardWelcome } from './components/Board/EmptyBoardWelcome'
 import { ApplyChangesButton } from './components/Board/ApplyChangesButton'
 import { FAQModal } from './components/FAQ/FaqModal'
 import { OriginStoryModal } from './components/OriginStory/OriginStoryModal'
 import { useStore } from './store'
 import { useUrlFilters } from './hooks/use-url-filters'
+import { saveFilters, getFilters } from './lib/storage/filter-storage'
 import { useBoardAssignees } from './hooks/use-board-assignees'
 import { addSprintTag, removeSprintTag } from './lib/bugzilla/sprint-tag'
 import { getQeVerifyStatus, type QeVerifyStatus } from './lib/bugzilla/qe-verify'
@@ -85,16 +87,22 @@ function App() {
     }
   }, [changes.size])
 
-  // Initialize filters from URL on mount
+  // Initialize filters from URL or localStorage on mount
   useEffect(() => {
     if (hasInitializedFilters.current) {
       return
     }
     hasInitializedFilters.current = true
 
-    // Apply filters from URL
+    // Apply filters from URL (takes precedence over localStorage)
     if (hasUrlFilters) {
       setFilters(initialFilters)
+    } else {
+      // Fall back to localStorage if no URL params
+      const storedFilters = getFilters()
+      if (storedFilters) {
+        setFilters(storedFilters)
+      }
     }
   }, [hasUrlFilters, initialFilters, setFilters])
 
@@ -106,6 +114,15 @@ function App() {
     hasAutoFetched.current = true
     void fetchBugs(apiKey)
   }, [hasUrlFilters, apiKey, fetchBugs])
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    // Only save after initial load is complete
+    if (!hasInitializedFilters.current) {
+      return
+    }
+    saveFilters(filters)
+  }, [filters])
 
   // Handle close modal
   const handleCloseModal = useCallback(() => {
@@ -450,22 +467,26 @@ function App() {
           </div>
         )}
 
-        {/* Board */}
-        <Board
-          bugs={bugs}
-          stagedChanges={changes}
-          onBugMove={handleBugMove}
-          onAssigneeChange={handleAssigneeChange}
-          onPointsChange={handlePointsChange}
-          onPriorityChange={handlePriorityChange}
-          onSeverityChange={handleSeverityChange}
-          onQeVerifyChange={handleQeVerifyChange}
-          onInvalidMove={handleInvalidMove}
-          isLoading={isLoadingBugs}
-          onApplyChanges={handleApplyChanges}
-          onClearChanges={handleClearChanges}
-          hasActiveFilters={hasActiveFilters}
-        />
+        {/* Board or Welcome */}
+        {bugs.length === 0 && !isLoadingBugs && !hasActiveFilters && !bugsError ? (
+          <EmptyBoardWelcome />
+        ) : (
+          <Board
+            bugs={bugs}
+            stagedChanges={changes}
+            onBugMove={handleBugMove}
+            onAssigneeChange={handleAssigneeChange}
+            onPointsChange={handlePointsChange}
+            onPriorityChange={handlePriorityChange}
+            onSeverityChange={handleSeverityChange}
+            onQeVerifyChange={handleQeVerifyChange}
+            onInvalidMove={handleInvalidMove}
+            isLoading={isLoadingBugs}
+            onApplyChanges={handleApplyChanges}
+            onClearChanges={handleClearChanges}
+            hasActiveFilters={hasActiveFilters}
+          />
+        )}
       </main>
 
       {/* Apply changes button */}
