@@ -101,7 +101,7 @@ export function AssigneeFilter({
                   handleSelect(null)
                 }}
                 className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors hover:bg-bg-tertiary ${
-                  selectedAssignee === null ? 'bg-bg-tertiary/50' : ''
+                  selectedAssignee === null ? 'bg-bg-tertiary-50' : ''
                 }`}
               >
                 <span className="material-icons text-text-tertiary">group</span>
@@ -126,7 +126,7 @@ export function AssigneeFilter({
                       handleSelect(assignee.email)
                     }}
                     className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors hover:bg-bg-tertiary ${
-                      isSelected ? 'bg-bg-tertiary/50' : ''
+                      isSelected ? 'bg-bg-tertiary-50' : ''
                     }`}
                   >
                     <span className="material-icons text-text-tertiary">account_circle</span>

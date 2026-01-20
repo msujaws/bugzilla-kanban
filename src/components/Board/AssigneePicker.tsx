@@ -116,7 +116,7 @@ export function AssigneePicker({
                         handleSelect(assignee.email)
                       }}
                       className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors ${
-                        isSelected ? 'bg-bg-tertiary/50' : ''
+                        isSelected ? 'bg-bg-tertiary-50' : ''
                       } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
                     >
                       {/* Account circle icon */}

@@ -131,7 +131,7 @@ export function PointsPicker({
                       handleSelect(option.value)
                     }}
                     className={`flex cursor-pointer items-center justify-between px-4 py-2 transition-colors ${
-                      isSelected ? 'bg-bg-tertiary/50' : ''
+                      isSelected ? 'bg-bg-tertiary-50' : ''
                     } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
                   >
                     <span className="text-sm font-medium text-text-primary">{option.label}</span>

@@ -15,7 +15,9 @@
   /* Background layers */
   --color-bg-primary: #0a0a0a;
   --color-bg-secondary: #141414;
+  --color-bg-secondary-50: #14141480;
   --color-bg-tertiary: #1e1e1e;
+  --color-bg-tertiary-50: #1e1e1e80;
 
   /* Text colors */
   --color-text-primary: #f5f5f5;
@@ -53,7 +55,9 @@
   /* Background layers */
   --color-bg-primary: #fff;
   --color-bg-secondary: #f5f5f5;
+  --color-bg-secondary-50: #f5f5f580;
   --color-bg-tertiary: #e5e5e5;
+  --color-bg-tertiary-50: #e5e5e580;
 
   /* Text colors */
   --color-text-primary: #171717;

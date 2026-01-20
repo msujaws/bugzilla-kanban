@@ -135,7 +135,7 @@ export function FAQModal({ isOpen, onClose }: FAQModalProps) {
             <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
               <div className="space-y-4">
                 {faqs.map((faq, index) => (
-                  <div key={index} className="rounded-lg bg-bg-tertiary/50 p-4">
+                  <div key={index} className="rounded-lg bg-bg-tertiary-50 p-4">
                     <h3 className="mb-2 flex items-start gap-2 font-bold text-text-primary">
                       <span className="material-icons text-accent-primary">help</span>
                       {faq.question}

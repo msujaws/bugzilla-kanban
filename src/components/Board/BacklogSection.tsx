@@ -172,7 +172,7 @@ export function BacklogSection({
     if (isDropTarget) {
       return `${base} bg-accent-warning/10 ring-2 ring-dashed ring-accent-warning`
     }
-    return `${base} bg-bg-secondary/50`
+    return `${base} bg-bg-secondary-50`
   }
 
   return (

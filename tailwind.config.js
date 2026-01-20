@@ -7,7 +7,9 @@ export default {
         // Background layers (CSS variables for theming)
         'bg-primary': 'var(--color-bg-primary)',
         'bg-secondary': 'var(--color-bg-secondary)',
+        'bg-secondary-50': 'var(--color-bg-secondary-50)',
         'bg-tertiary': 'var(--color-bg-tertiary)',
+        'bg-tertiary-50': 'var(--color-bg-tertiary-50)',
 
         // Accent colors (CSS variables for theming)
         'accent-primary': 'var(--color-accent-primary)',
