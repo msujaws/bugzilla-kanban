@@ -4,10 +4,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Background layers (CSS variables for theming)
-        'bg-primary': 'var(--color-bg-primary)',
-        'bg-secondary': 'var(--color-bg-secondary)',
-        'bg-tertiary': 'var(--color-bg-tertiary)',
+        // Background layers (RGB format for opacity support)
+        'bg-primary': 'rgb(var(--color-bg-primary) / <alpha-value>)',
+        'bg-secondary': 'rgb(var(--color-bg-secondary) / <alpha-value>)',
+        'bg-tertiary': 'rgb(var(--color-bg-tertiary) / <alpha-value>)',
 
         // Accent colors (CSS variables for theming)
         'accent-primary': 'var(--color-accent-primary)',
