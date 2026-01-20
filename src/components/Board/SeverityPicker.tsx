@@ -20,11 +20,11 @@ interface SeverityPickerProps {
 }
 
 const SEVERITY_OPTIONS = [
-  { value: 'S1', label: 'S1', description: 'Catastrophic', color: 'bg-red-500' },
-  { value: 'S2', label: 'S2', description: 'Serious', color: 'bg-orange-500' },
-  { value: 'S3', label: 'S3', description: 'Normal', color: 'bg-yellow-500' },
-  { value: 'S4', label: 'S4', description: 'Minor', color: 'bg-blue-500' },
-  { value: 'N/A', label: 'N/A', description: 'Not applicable', color: 'bg-gray-500' },
+  { value: 'S1', label: 'S1', description: 'Catastrophic', color: 'bg-severity-s1' },
+  { value: 'S2', label: 'S2', description: 'Serious', color: 'bg-severity-s2' },
+  { value: 'S3', label: 'S3', description: 'Normal', color: 'bg-severity-s3' },
+  { value: 'S4', label: 'S4', description: 'Minor', color: 'bg-severity-s4' },
+  { value: 'N/A', label: 'N/A', description: 'Not applicable', color: 'bg-severity-na' },
 ] as const
 
 export function SeverityPicker({

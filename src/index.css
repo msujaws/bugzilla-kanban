@@ -8,6 +8,83 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme CSS variables */
+:root {
+  /* Dark theme (default) */
+
+  /* Background layers */
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #141414;
+  --color-bg-tertiary: #1e1e1e;
+
+  /* Text colors */
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #a3a3a3;
+  --color-text-tertiary: #737373;
+
+  /* Border */
+  --color-border: #2d2d2d;
+
+  /* Accent colors */
+  --color-accent-primary: #3b82f6;
+  --color-accent-success: #10b981;
+  --color-accent-error: #ef4444;
+  --color-accent-warning: #f59e0b;
+  --color-accent-staged: #f28f16;
+
+  /* Priority colors */
+  --color-priority-p1: #dc2626;
+  --color-priority-p2: #ea580c;
+  --color-priority-p3: #ca8a04;
+  --color-priority-p4: #65a30d;
+  --color-priority-p5: #6b7280;
+
+  /* Severity indicator colors */
+  --color-severity-s1: #ef4444;
+  --color-severity-s2: #f97316;
+  --color-severity-s3: #eab308;
+  --color-severity-s4: #3b82f6;
+  --color-severity-na: #6b7280;
+}
+
+:root.light {
+  /* Light theme */
+
+  /* Background layers */
+  --color-bg-primary: #fff;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #e5e5e5;
+
+  /* Text colors */
+  --color-text-primary: #171717;
+  --color-text-secondary: #525252;
+  --color-text-tertiary: #737373;
+
+  /* Border */
+  --color-border: #d4d4d4;
+
+  /* Accent colors (slightly darker for light backgrounds) */
+  --color-accent-primary: #2563eb;
+  --color-accent-success: #059669;
+  --color-accent-error: #dc2626;
+  --color-accent-warning: #d97706;
+  --color-accent-staged: #ea580c;
+
+  /* Priority colors (slightly darker for light backgrounds) */
+  --color-priority-p1: #b91c1c;
+  --color-priority-p2: #c2410c;
+  --color-priority-p3: #a16207;
+  --color-priority-p4: #4d7c0f;
+  --color-priority-p5: #4b5563;
+
+  /* Severity indicator colors (slightly darker for light backgrounds) */
+  --color-severity-s1: #dc2626;
+  --color-severity-s2: #ea580c;
+  --color-severity-s3: #ca8a04;
+  --color-severity-s4: #2563eb;
+  --color-severity-na: #4b5563;
+}
+
 @layer base {
   * {
     @apply border-border;

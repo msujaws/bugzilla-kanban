@@ -11,6 +11,7 @@ import { OriginStoryModal } from './components/OriginStory/OriginStoryModal'
 import { useStore } from './store'
 import { useUrlFilters } from './hooks/use-url-filters'
 import { saveFilters, getFilters } from './lib/storage/filter-storage'
+import { saveTheme, getTheme, type Theme } from './lib/storage/theme-storage'
 import { useBoardAssignees } from './hooks/use-board-assignees'
 import { addSprintTag, removeSprintTag } from './lib/bugzilla/sprint-tag'
 import { getQeVerifyStatus, type QeVerifyStatus } from './lib/bugzilla/qe-verify'
@@ -20,6 +21,7 @@ function App() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(false)
   const [showFAQModal, setShowFAQModal] = useState(false)
   const [showOriginStoryModal, setShowOriginStoryModal] = useState(false)
+  const [theme, setTheme] = useState<Theme>('dark')
 
   // Auth state
   const apiKey = useStore((state) => state.apiKey)
@@ -29,6 +31,25 @@ function App() {
   useEffect(() => {
     void loadApiKey()
   }, [loadApiKey])
+
+  // Load and apply theme on mount
+  useEffect(() => {
+    const savedTheme = getTheme()
+    setTheme(savedTheme)
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light')
+    }
+  }, [])
+
+  // Apply theme changes and persist
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light')
+    } else {
+      document.documentElement.classList.remove('light')
+    }
+    saveTheme(theme)
+  }, [theme])
 
   // URL filter persistence
   const { initialFilters, hasUrlFilters, updateUrl } = useUrlFilters()
@@ -423,6 +444,34 @@ function App() {
                 >
                   FAQ
                 </button>
+                <span className="text-text-tertiary">•</span>
+                <span className="flex items-center gap-1">
+                  {theme === 'light' ? (
+                    <span className="font-bold text-text-primary">☀️ Light</span>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setTheme('light')
+                      }}
+                      className="text-text-tertiary transition-colors hover:text-accent-primary"
+                    >
+                      ☀️ Light
+                    </button>
+                  )}
+                  <span className="text-text-tertiary">|</span>
+                  {theme === 'dark' ? (
+                    <span className="font-bold text-text-primary">🌙 Dark</span>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setTheme('dark')
+                      }}
+                      className="text-text-tertiary transition-colors hover:text-accent-primary"
+                    >
+                      🌙 Dark
+                    </button>
+                  )}
+                </span>
               </nav>
               {/* Keyboard hints */}
               <div className="mt-1 flex items-center gap-2 text-xs text-text-tertiary">

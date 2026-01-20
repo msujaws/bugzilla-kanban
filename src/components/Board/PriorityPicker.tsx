@@ -20,11 +20,11 @@ interface PriorityPickerProps {
 }
 
 const PRIORITY_OPTIONS = [
-  { value: 'P1', label: 'P1', description: 'Highest', color: 'bg-red-500' },
-  { value: 'P2', label: 'P2', description: 'High', color: 'bg-orange-500' },
-  { value: 'P3', label: 'P3', description: 'Normal', color: 'bg-yellow-500' },
-  { value: 'P4', label: 'P4', description: 'Low', color: 'bg-blue-500' },
-  { value: 'P5', label: 'P5', description: 'Lowest', color: 'bg-gray-500' },
+  { value: 'P1', label: 'P1', description: 'Highest', color: 'bg-priority-p1' },
+  { value: 'P2', label: 'P2', description: 'High', color: 'bg-priority-p2' },
+  { value: 'P3', label: 'P3', description: 'Normal', color: 'bg-priority-p3' },
+  { value: 'P4', label: 'P4', description: 'Low', color: 'bg-priority-p4' },
+  { value: 'P5', label: 'P5', description: 'Lowest', color: 'bg-priority-p5' },
 ] as const
 
 export function PriorityPicker({

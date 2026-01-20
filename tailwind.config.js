@@ -4,32 +4,39 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Background layers
-        'bg-primary': '#0a0a0a',
-        'bg-secondary': '#141414',
-        'bg-tertiary': '#1e1e1e',
+        // Background layers (CSS variables for theming)
+        'bg-primary': 'var(--color-bg-primary)',
+        'bg-secondary': 'var(--color-bg-secondary)',
+        'bg-tertiary': 'var(--color-bg-tertiary)',
 
-        // Accent colors
-        'accent-primary': '#3b82f6',
-        'accent-success': '#10b981',
-        'accent-error': '#ef4444',
-        'accent-warning': '#f59e0b',
-        'accent-staged': '#F28F16',
+        // Accent colors (CSS variables for theming)
+        'accent-primary': 'var(--color-accent-primary)',
+        'accent-success': 'var(--color-accent-success)',
+        'accent-error': 'var(--color-accent-error)',
+        'accent-warning': 'var(--color-accent-warning)',
+        'accent-staged': 'var(--color-accent-staged)',
 
-        // Text colors
-        'text-primary': '#f5f5f5',
-        'text-secondary': '#a3a3a3',
-        'text-tertiary': '#737373',
+        // Text colors (CSS variables for theming)
+        'text-primary': 'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-secondary)',
+        'text-tertiary': 'var(--color-text-tertiary)',
 
-        // Priority colors (for bug cards)
-        'priority-p1': '#dc2626',
-        'priority-p2': '#ea580c',
-        'priority-p3': '#ca8a04',
-        'priority-p4': '#65a30d',
-        'priority-p5': '#6b7280',
+        // Priority colors (CSS variables for theming)
+        'priority-p1': 'var(--color-priority-p1)',
+        'priority-p2': 'var(--color-priority-p2)',
+        'priority-p3': 'var(--color-priority-p3)',
+        'priority-p4': 'var(--color-priority-p4)',
+        'priority-p5': 'var(--color-priority-p5)',
 
-        // Border color
-        border: '#2d2d2d',
+        // Severity indicator colors (CSS variables for theming)
+        'severity-s1': 'var(--color-severity-s1)',
+        'severity-s2': 'var(--color-severity-s2)',
+        'severity-s3': 'var(--color-severity-s3)',
+        'severity-s4': 'var(--color-severity-s4)',
+        'severity-na': 'var(--color-severity-na)',
+
+        // Border color (CSS variable for theming)
+        border: 'var(--color-border)',
       },
       animation: {
         'slide-in': 'slideIn 0.3s ease-out',
