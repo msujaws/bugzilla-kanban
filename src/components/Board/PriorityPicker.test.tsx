@@ -166,10 +166,11 @@ describe('PriorityPicker', () => {
 
   describe('color indicators', () => {
     it('should show color indicator for each priority', () => {
-      const { container } = render(<PriorityPicker {...defaultProps} />)
+      render(<PriorityPicker {...defaultProps} />)
 
       // Each priority should have a colored indicator dot
-      const colorDots = container.querySelectorAll('[class*="rounded-full"][class*="w-3"]')
+      // Query from document.body since picker uses portal
+      const colorDots = document.body.querySelectorAll('[class*="rounded-full"][class*="w-3"]')
       expect(colorDots).toHaveLength(5)
     })
   })

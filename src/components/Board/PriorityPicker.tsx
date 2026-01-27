@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePopupPosition } from '@/hooks/use-popup-position'
 import { useListboxKeyboard } from '@/hooks/use-listbox-keyboard'
+import { PickerPortal } from './PickerPortal'
 
 interface AnchorPosition {
   x: number
@@ -55,90 +56,96 @@ export function PriorityPicker({
   })
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          data-testid="priority-picker-backdrop"
-          className="fixed inset-0 z-40"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              onClose()
-            }
-          }}
-        >
+    <PickerPortal>
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className={`absolute z-50 w-48 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary ${
-              adjustedPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
-            }`}
-            style={
-              adjustedPosition
-                ? {
-                    left: `${adjustedPosition.x.toString()}px`,
-                    top: `${adjustedPosition.y.toString()}px`,
-                  }
-                : undefined
-            }
-            onClick={(e) => {
-              e.stopPropagation()
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            data-testid="priority-picker-backdrop"
+            className="fixed inset-0 z-40"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                onClose()
+              }
             }}
           >
-            {/* Header */}
-            <div className="border-b border-bg-tertiary px-4 py-2">
-              <p className="text-xs text-text-tertiary">Priority</p>
-            </div>
-
-            {/* Priority list */}
-            <ul
-              id={listboxId}
-              role="listbox"
-              aria-label="Select priority"
-              className="max-h-64 overflow-y-auto"
-              {...listboxProps}
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className={`absolute z-50 w-48 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary ${
+                adjustedPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
+              }`}
+              style={
+                adjustedPosition
+                  ? {
+                      left: `${adjustedPosition.x.toString()}px`,
+                      top: `${adjustedPosition.y.toString()}px`,
+                    }
+                  : undefined
+              }
+              onClick={(e) => {
+                e.stopPropagation()
+              }}
             >
-              {PRIORITY_OPTIONS.map((option, index) => {
-                const isSelected = currentPriority === option.value
-                const isFocused = focusedIndex === index
-                const ariaLabel = `Priority ${option.label}: ${option.description}${isSelected ? ', currently selected' : ''}`
-                return (
-                  <li
-                    key={option.value}
-                    id={getOptionId(index)}
-                    role="option"
-                    aria-selected={isSelected}
-                    aria-label={ariaLabel}
-                    onClick={() => {
-                      handleSelect(option.value)
-                    }}
-                    className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors ${
-                      isSelected ? 'bg-bg-tertiary-50' : ''
-                    } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
-                  >
-                    {/* Color indicator */}
-                    <span className={`h-3 w-3 rounded-full ${option.color}`} />
+              {/* Header */}
+              <div className="border-b border-bg-tertiary px-4 py-2">
+                <p className="text-xs text-text-tertiary">Priority</p>
+              </div>
 
-                    {/* Label and description */}
-                    <div className="flex-1">
-                      <span className="text-sm font-medium text-text-primary">{option.label}</span>
-                      <span className="ml-2 text-xs text-text-tertiary">{option.description}</span>
-                    </div>
+              {/* Priority list */}
+              <ul
+                id={listboxId}
+                role="listbox"
+                aria-label="Select priority"
+                className="max-h-64 overflow-y-auto"
+                {...listboxProps}
+              >
+                {PRIORITY_OPTIONS.map((option, index) => {
+                  const isSelected = currentPriority === option.value
+                  const isFocused = focusedIndex === index
+                  const ariaLabel = `Priority ${option.label}: ${option.description}${isSelected ? ', currently selected' : ''}`
+                  return (
+                    <li
+                      key={option.value}
+                      id={getOptionId(index)}
+                      role="option"
+                      aria-selected={isSelected}
+                      aria-label={ariaLabel}
+                      onClick={() => {
+                        handleSelect(option.value)
+                      }}
+                      className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors ${
+                        isSelected ? 'bg-bg-tertiary-50' : ''
+                      } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
+                    >
+                      {/* Color indicator */}
+                      <span className={`h-3 w-3 rounded-full ${option.color}`} />
 
-                    {/* Checkmark for current */}
-                    {isSelected && (
-                      <span className="material-icons text-accent-success">check</span>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
+                      {/* Label and description */}
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-text-primary">
+                          {option.label}
+                        </span>
+                        <span className="ml-2 text-xs text-text-tertiary">
+                          {option.description}
+                        </span>
+                      </div>
+
+                      {/* Checkmark for current */}
+                      {isSelected && (
+                        <span className="material-icons text-accent-success">check</span>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </PickerPortal>
   )
 }

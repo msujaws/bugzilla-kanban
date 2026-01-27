@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePopupPosition } from '@/hooks/use-popup-position'
 import { useListboxKeyboard } from '@/hooks/use-listbox-keyboard'
+import { PickerPortal } from './PickerPortal'
 
 interface AnchorPosition {
   x: number
@@ -63,90 +64,92 @@ export function PointsPicker({
   })
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          data-testid="points-picker-backdrop"
-          className="fixed inset-0 z-40"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              onClose()
-            }
-          }}
-        >
+    <PickerPortal>
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className={`absolute z-50 w-48 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary ${
-              adjustedPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
-            }`}
-            style={
-              adjustedPosition
-                ? {
-                    left: `${adjustedPosition.x.toString()}px`,
-                    top: `${adjustedPosition.y.toString()}px`,
-                  }
-                : undefined
-            }
-            onClick={(e) => {
-              e.stopPropagation()
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            data-testid="points-picker-backdrop"
+            className="fixed inset-0 z-40"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                onClose()
+              }
             }}
           >
-            {/* Header */}
-            <div className="border-b border-bg-tertiary px-4 py-2">
-              <p className="text-xs text-text-tertiary">Story Points</p>
-            </div>
-
-            {/* Points list */}
-            <ul
-              id={listboxId}
-              role="listbox"
-              aria-label="Select story points"
-              className="max-h-64 overflow-y-auto"
-              {...listboxProps}
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className={`absolute z-50 w-48 overflow-hidden rounded-lg bg-bg-secondary shadow-2xl ring-1 ring-bg-tertiary ${
+                adjustedPosition ? '' : 'left-4 right-4 top-16 sm:left-auto sm:right-4'
+              }`}
+              style={
+                adjustedPosition
+                  ? {
+                      left: `${adjustedPosition.x.toString()}px`,
+                      top: `${adjustedPosition.y.toString()}px`,
+                    }
+                  : undefined
+              }
+              onClick={(e) => {
+                e.stopPropagation()
+              }}
             >
-              {POINTS_OPTIONS.map((option, index) => {
-                const isSelected = currentPoints === option.value
-                const isFocused = focusedIndex === index
-                // Create descriptive aria-label based on option type
-                const getAriaLabel = () => {
-                  if (option.value === undefined)
-                    return `Clear points${isSelected ? ', currently selected' : ''}`
-                  if (option.value === '?')
-                    return `Unknown points${isSelected ? ', currently selected' : ''}`
-                  return `${String(option.value)} points${isSelected ? ', currently selected' : ''}`
-                }
-                return (
-                  <li
-                    key={option.label}
-                    id={getOptionId(index)}
-                    role="option"
-                    aria-selected={isSelected}
-                    aria-label={getAriaLabel()}
-                    onClick={() => {
-                      handleSelect(option.value)
-                    }}
-                    className={`flex cursor-pointer items-center justify-between px-4 py-2 transition-colors ${
-                      isSelected ? 'bg-bg-tertiary-50' : ''
-                    } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
-                  >
-                    <span className="text-sm font-medium text-text-primary">{option.label}</span>
+              {/* Header */}
+              <div className="border-b border-bg-tertiary px-4 py-2">
+                <p className="text-xs text-text-tertiary">Story Points</p>
+              </div>
 
-                    {/* Checkmark for current */}
-                    {isSelected && (
-                      <span className="material-icons text-accent-success">check</span>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
+              {/* Points list */}
+              <ul
+                id={listboxId}
+                role="listbox"
+                aria-label="Select story points"
+                className="max-h-64 overflow-y-auto"
+                {...listboxProps}
+              >
+                {POINTS_OPTIONS.map((option, index) => {
+                  const isSelected = currentPoints === option.value
+                  const isFocused = focusedIndex === index
+                  // Create descriptive aria-label based on option type
+                  const getAriaLabel = () => {
+                    if (option.value === undefined)
+                      return `Clear points${isSelected ? ', currently selected' : ''}`
+                    if (option.value === '?')
+                      return `Unknown points${isSelected ? ', currently selected' : ''}`
+                    return `${String(option.value)} points${isSelected ? ', currently selected' : ''}`
+                  }
+                  return (
+                    <li
+                      key={option.label}
+                      id={getOptionId(index)}
+                      role="option"
+                      aria-selected={isSelected}
+                      aria-label={getAriaLabel()}
+                      onClick={() => {
+                        handleSelect(option.value)
+                      }}
+                      className={`flex cursor-pointer items-center justify-between px-4 py-2 transition-colors ${
+                        isSelected ? 'bg-bg-tertiary-50' : ''
+                      } ${isFocused ? 'ring-2 ring-inset ring-accent-primary' : 'hover:bg-bg-tertiary'}`}
+                    >
+                      <span className="text-sm font-medium text-text-primary">{option.label}</span>
+
+                      {/* Checkmark for current */}
+                      {isSelected && (
+                        <span className="material-icons text-accent-success">check</span>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </PickerPortal>
   )
 }
