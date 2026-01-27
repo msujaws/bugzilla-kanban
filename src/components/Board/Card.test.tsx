@@ -578,6 +578,30 @@ describe('Card', () => {
 
       expect(screen.getByText('developer@example.com')).toBeInTheDocument()
     })
+
+    it('should pass staged assignee to picker as current value', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={mockBug}
+          allAssignees={mockAssignees}
+          onAssigneeChange={vi.fn()}
+          isAssigneeStaged={true}
+          stagedAssignee="alice@example.com"
+        />,
+      )
+
+      // Open the picker
+      await user.click(screen.getByLabelText(/Change assignee/))
+
+      // The staged assignee should be shown as selected in the picker
+      const aliceOption = screen.getByRole('option', { name: /alice johnson/i })
+      expect(aliceOption).toHaveAttribute('aria-selected', 'true')
+
+      // The original assignee should NOT be selected
+      const developerOption = screen.getByRole('option', { name: /developer/i })
+      expect(developerOption).toHaveAttribute('aria-selected', 'false')
+    })
   })
 
   describe('story points', () => {
@@ -672,6 +696,29 @@ describe('Card', () => {
 
       expect(screen.getByText('13')).toBeInTheDocument()
     })
+
+    it('should pass staged points to picker as current value', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={bugWithPoints}
+          onPointsChange={vi.fn()}
+          isPointsStaged={true}
+          stagedPoints={13}
+        />,
+      )
+
+      // Open the picker
+      await user.click(screen.getByLabelText(/Change story points/))
+
+      // The staged points (13) should be shown as selected in the picker
+      const thirteenOption = screen.getByRole('option', { name: /13 points/i })
+      expect(thirteenOption).toHaveAttribute('aria-selected', 'true')
+
+      // The original points (5) should NOT be selected
+      const fiveOption = screen.getByRole('option', { name: /^5 points$/i })
+      expect(fiveOption).toHaveAttribute('aria-selected', 'false')
+    })
   })
 
   describe('priority picker', () => {
@@ -728,6 +775,29 @@ describe('Card', () => {
       const priorityBadges = screen.getAllByText(/P[1-5]/)
       expect(priorityBadges[0]).toHaveTextContent('P1')
     })
+
+    it('should pass staged priority to picker as current value', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={mockBug}
+          onPriorityChange={vi.fn()}
+          isPriorityStaged={true}
+          stagedPriority="P1"
+        />,
+      )
+
+      // Open the picker
+      await user.click(screen.getByLabelText(/Change priority/))
+
+      // The staged priority (P1) should be shown as selected in the picker
+      const p1Option = screen.getByRole('option', { name: /P1/i })
+      expect(p1Option).toHaveAttribute('aria-selected', 'true')
+
+      // The original priority (P2) should NOT be selected
+      const p2Option = screen.getByRole('option', { name: /P2/i })
+      expect(p2Option).toHaveAttribute('aria-selected', 'false')
+    })
   })
 
   describe('severity picker', () => {
@@ -783,6 +853,29 @@ describe('Card', () => {
       // Should show staged severity, not original S3
       const severityBadges = screen.getAllByText(/S1|S2|S3|S4|N\/A/)
       expect(severityBadges[0]).toHaveTextContent('S1')
+    })
+
+    it('should pass staged severity to picker as current value', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={mockBug}
+          onSeverityChange={vi.fn()}
+          isSeverityStaged={true}
+          stagedSeverity="S1"
+        />,
+      )
+
+      // Open the picker
+      await user.click(screen.getByLabelText(/Change severity/))
+
+      // The staged severity (S1) should be shown as selected in the picker
+      const s1Option = screen.getByRole('option', { name: /S1/i })
+      expect(s1Option).toHaveAttribute('aria-selected', 'true')
+
+      // The original severity (S3) should NOT be selected
+      const s3Option = screen.getByRole('option', { name: /S3/i })
+      expect(s3Option).toHaveAttribute('aria-selected', 'false')
     })
 
     it('should not trigger card onClick when clicking severity button', async () => {
@@ -934,6 +1027,29 @@ describe('Card', () => {
       await user.click(screen.getByLabelText(/Change QE verification/))
 
       expect(onClick).not.toHaveBeenCalled()
+    })
+
+    it('should pass staged qe status to picker as current value', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={mockBug}
+          onQeVerifyChange={vi.fn()}
+          isQeVerifyStaged={true}
+          stagedQeVerify="plus"
+        />,
+      )
+
+      // Open the picker
+      await user.click(screen.getByLabelText(/Change QE verification/))
+
+      // The staged value (plus) should be shown as selected in the picker
+      const plusOption = screen.getByRole('option', { name: /qe-verify: \+.*verified/i })
+      expect(plusOption).toHaveAttribute('aria-selected', 'true')
+
+      // The original value (unknown/---) should NOT be selected
+      const unknownOption = screen.getByRole('option', { name: /qe-verify: ---.*remove/i })
+      expect(unknownOption).toHaveAttribute('aria-selected', 'false')
     })
   })
 

@@ -206,6 +206,8 @@ export function Card({
     isPointsStaged && stagedPoints !== undefined ? stagedPoints : bug.cf_fx_points
   const displayedPriority = isPriorityStaged && stagedPriority ? stagedPriority : bug.priority
   const displayedSeverity = isSeverityStaged && stagedSeverity ? stagedSeverity : bug.severity
+  const originalQeStatus = getQeVerifyStatus(bug.flags)
+  const displayedQeStatus = isQeVerifyStaged && stagedQeVerify ? stagedQeVerify : originalQeStatus
 
   const priorityColor = priorityColors[displayedPriority] ?? 'bg-priority-p5'
   const severityColor = severityColors[displayedSeverity] ?? 'text-text-tertiary'
@@ -410,9 +412,6 @@ export function Card({
 
         {/* QE Verification Indicator */}
         {(() => {
-          const currentQeStatus = getQeVerifyStatus(bug.flags)
-          const displayedQeStatus =
-            isQeVerifyStaged && stagedQeVerify ? stagedQeVerify : currentQeStatus
           const displayText =
             displayedQeStatus === 'unknown' ? 'qe?' : displayedQeStatus === 'minus' ? 'qe-' : 'qe+'
           const isUnknown = displayedQeStatus === 'unknown'
@@ -452,7 +451,7 @@ export function Card({
           }}
           onSelect={handleAssigneeSelect}
           assignees={allAssignees}
-          currentAssignee={bug.assigned_to}
+          currentAssignee={displayedAssignee}
           anchorPosition={anchorPosition}
           listboxId={assigneeListboxId}
         />
@@ -466,7 +465,7 @@ export function Card({
             setIsPointsPickerOpen(false)
           }}
           onSelect={handlePointsSelect}
-          currentPoints={bug.cf_fx_points}
+          currentPoints={displayedPoints}
           anchorPosition={anchorPosition}
           listboxId={pointsListboxId}
         />
@@ -480,7 +479,7 @@ export function Card({
             setIsPriorityPickerOpen(false)
           }}
           onSelect={handlePrioritySelect}
-          currentPriority={bug.priority}
+          currentPriority={displayedPriority}
           anchorPosition={anchorPosition}
           listboxId={priorityListboxId}
         />
@@ -494,7 +493,7 @@ export function Card({
             setIsSeverityPickerOpen(false)
           }}
           onSelect={handleSeveritySelect}
-          currentSeverity={bug.severity}
+          currentSeverity={displayedSeverity}
           anchorPosition={anchorPosition}
           listboxId={severityListboxId}
         />
@@ -508,7 +507,7 @@ export function Card({
             setIsQeVerifyPickerOpen(false)
           }}
           onSelect={handleQeVerifySelect}
-          currentStatus={getQeVerifyStatus(bug.flags)}
+          currentStatus={displayedQeStatus}
           anchorPosition={anchorPosition}
           listboxId={qeVerifyListboxId}
         />
