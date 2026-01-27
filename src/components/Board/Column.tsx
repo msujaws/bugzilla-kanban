@@ -259,6 +259,8 @@ export function Column({
               return (
                 <div
                   key={bug.id}
+                  ref={virtualizer.measureElement}
+                  data-index={virtualItem.index}
                   style={{
                     position: 'absolute',
                     top: 0,
