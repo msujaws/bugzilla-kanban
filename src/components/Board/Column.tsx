@@ -143,7 +143,7 @@ export function Column({
 
   // Determine column styling based on state
   const getColumnClassName = () => {
-    const base = 'flex min-h-[500px] w-72 flex-shrink-0 flex-col rounded-lg p-4 transition-colors'
+    const base = 'flex min-h-[500px] min-w-[200px] flex-1 flex-col rounded-lg p-4 transition-colors'
     if (isOver) {
       return `${base} bg-accent-primary/20 ring-2 ring-accent-primary`
     }
