@@ -11,8 +11,8 @@ import { COLUMN_NAMES } from '@/types'
 
 // Estimated height of each card in pixels (used for virtual scrolling)
 const ESTIMATED_CARD_HEIGHT = 160
-// Gap between cards in pixels
-const CARD_GAP = 12
+// Gap between cards in pixels (1rem)
+const CARD_GAP = 16
 
 const NOBODY_EMAIL = 'nobody@mozilla.org'
 

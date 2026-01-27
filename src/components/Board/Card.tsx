@@ -335,7 +335,7 @@ export function Card({
       </p>
 
       {/* Badges row */}
-      <div className="mb-2 flex flex-wrap gap-2">
+      <div className="mb-2 flex min-w-0 gap-2">
         {/* Priority badge */}
         {onPriorityChange ? (
           <button
@@ -383,7 +383,7 @@ export function Card({
         )}
 
         {/* Component badge */}
-        <span className="rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary">
+        <span className="min-w-0 truncate rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary">
           {bug.component}
         </span>
       </div>
