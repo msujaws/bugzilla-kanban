@@ -639,6 +639,41 @@ describe('StagedSlice', () => {
       expect(changes.has(123)).toBe(false)
     })
 
+    it('should remove points change when reverting even with type mismatch (string vs number)', () => {
+      const { stagePointsChange } = useStore.getState()
+
+      // Simulates: API returns string "3", picker returns number 5, then number 3
+      stagePointsChange(123, '3', 5)
+      stagePointsChange(123, '3', 3)
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should remove points change when original was number and reverted with same number', () => {
+      const { stagePointsChange } = useStore.getState()
+
+      // Original is number 3, changed to 5, then back to 3 (all numbers)
+      stagePointsChange(123, 3, 5)
+      stagePointsChange(123, 3, 3)
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should preserve original from value when changing multiple times', () => {
+      const { stagePointsChange } = useStore.getState()
+
+      // Original is "3" (string from API)
+      stagePointsChange(123, '3', 5) // Change to 5
+      stagePointsChange(123, '3', 8) // Change to 8
+
+      const change = useStore.getState().changes.get(123)
+      // Original should be preserved as "3"
+      expect(change?.points?.from).toBe('3')
+      expect(change?.points?.to).toBe(8)
+    })
+
     it('should preserve other changes when adding points change', () => {
       const { stageAssigneeChange, stagePointsChange } = useStore.getState()
 

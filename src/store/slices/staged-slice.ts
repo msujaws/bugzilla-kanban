@@ -11,6 +11,29 @@ import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
 
 const statusMapper = new StatusMapper()
 
+/**
+ * Compare two points values for equality, handling type coercion between string and number.
+ * E.g., "3" and 3 should be considered equal when reverting a change.
+ */
+function pointsEqual(a: number | string | undefined, b: number | string | undefined): boolean {
+  // Handle undefined/null cases
+  if (a === undefined && b === undefined) return true
+  if (a === undefined || b === undefined) return false
+
+  // If both are the same type and value, they're equal
+  if (a === b) return true
+
+  // Handle string '?' specially - only equal if both are '?'
+  if (a === '?' || b === '?') return a === b
+
+  // Convert to numbers for comparison if both can be parsed as numbers
+  const numA = typeof a === 'string' ? Number(a) : a
+  const numB = typeof b === 'string' ? Number(b) : b
+
+  // Check if both are valid numbers and equal
+  return !Number.isNaN(numA) && !Number.isNaN(numB) && numA === numB
+}
+
 export interface StagedChange {
   status?: { from: string; to: string }
   assignee?: { from: string; to: string }
@@ -155,8 +178,12 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
       const newChanges = new Map(state.changes)
       const existing = newChanges.get(bugId)
 
+      // Preserve the original points from any existing staged change
+      const originalPoints = existing?.points?.from ?? fromPoints
+
       // If moving back to original points, remove the points change
-      if (fromPoints === toPoints) {
+      // Use pointsEqual to handle type coercion (e.g., "3" vs 3)
+      if (pointsEqual(originalPoints, toPoints)) {
         if (existing) {
           const { points: _removed, ...rest } = existing
           // Check if there are other changes remaining
@@ -170,7 +197,7 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
         // Add/update points change, preserve other changes
         newChanges.set(bugId, {
           ...existing,
-          points: { from: fromPoints, to: toPoints },
+          points: { from: originalPoints, to: toPoints },
         })
       }
 
