@@ -563,8 +563,8 @@ export function Board({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <main
-        role="main"
+      <section
+        role="region"
         aria-label="Kanban Board"
         aria-busy={isLoading}
         className="min-h-screen bg-bg-primary py-6"
@@ -640,7 +640,7 @@ export function Board({
           isLoading={isLoading}
           hasActiveFilters={hasActiveFilters}
         />
-      </main>
+      </section>
 
       {/* Drag overlay - shows the card being dragged */}
       <DragOverlay>

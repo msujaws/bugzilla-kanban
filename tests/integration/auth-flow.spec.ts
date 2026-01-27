@@ -84,8 +84,9 @@ test.describe('Auth Flow', () => {
 
     // Modal should close
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 })
-    // Board should be visible
-    await expect(page.getByRole('main', { name: 'Kanban Board' })).toBeVisible()
+    // Main content should be visible (EmptyBoardWelcome is shown before filters are applied)
+    await expect(page.getByRole('main')).toBeVisible()
+    await expect(page.getByText('Get Started')).toBeVisible()
   })
 
   // Skip: API key persistence relies on Web Crypto API encryption which may not
@@ -123,8 +124,9 @@ test.describe('Auth Flow', () => {
 
     // Modal should NOT appear (key is persisted)
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 10000 })
-    // Board should be visible
-    await expect(page.getByRole('main', { name: 'Kanban Board' })).toBeVisible()
+    // Main content should be visible
+    await expect(page.getByRole('main')).toBeVisible()
+    await expect(page.getByText('Get Started')).toBeVisible()
   })
 
   test('should allow clearing API key and show modal again', async ({ page }) => {

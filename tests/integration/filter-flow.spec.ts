@@ -205,14 +205,16 @@ test.describe('Filter Flow', () => {
 
     await whiteboardInput.fill('kanban')
     await componentInput.fill('Frontend')
-    await page.getByRole('button', { name: 'Apply Filters' }).click()
 
-    // Wait for request with both filters
-    await page.waitForResponse(
-      (response) =>
-        response.url().includes('whiteboard=kanban') &&
-        response.url().includes('component=Frontend'),
-    )
+    // Wait for request with both filters (start waiting before clicking to avoid race condition)
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().includes('whiteboard=kanban') &&
+          response.url().includes('component=Frontend'),
+      ),
+      page.getByRole('button', { name: 'Apply Filters' }).click(),
+    ])
 
     // Should show only the matching bug
     await expect(page.getByText('Frontend bug with kanban tag')).toBeVisible({ timeout: 10000 })
@@ -280,13 +282,17 @@ test.describe('Filter Flow', () => {
     // Apply filter
     const whiteboardInput = page.getByPlaceholder('e.g., [kanban] or bug-triage')
     await whiteboardInput.fill('kanban')
-    await page.getByRole('button', { name: 'Apply Filters' }).click()
-    await page.waitForResponse('**/api/bugzilla/**')
+    await Promise.all([
+      page.waitForResponse('**/api/bugzilla/**'),
+      page.getByRole('button', { name: 'Apply Filters' }).click(),
+    ])
 
     // Clear filter
     await page.getByRole('button', { name: 'Clear' }).click()
-    await page.getByRole('button', { name: 'Apply Filters' }).click()
-    await page.waitForResponse('**/api/bugzilla/**')
+    await Promise.all([
+      page.waitForResponse('**/api/bugzilla/**'),
+      page.getByRole('button', { name: 'Apply Filters' }).click(),
+    ])
 
     // Both types of requests should have been made
     expect(requestWithFilter).toBe(true)

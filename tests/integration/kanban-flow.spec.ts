@@ -246,12 +246,14 @@ test.describe('Kanban Flow', () => {
     // Click Apply Changes
     const applyButton = page.getByRole('button', { name: /Apply 1 change/i })
     await expect(applyButton).toBeVisible({ timeout: 5000 })
-    await applyButton.click()
 
-    // Wait for the update request
-    await page.waitForResponse(
-      (response) => response.request().method() === 'PUT' && response.url().includes('/bug/'),
-    )
+    // Wait for the update request (start waiting before clicking to avoid race condition)
+    await Promise.all([
+      page.waitForResponse(
+        (response) => response.request().method() === 'PUT' && response.url().includes('/bug/'),
+      ),
+      applyButton.click(),
+    ])
 
     // Verify the update request was made (backlog->todo adds sprint tag to whiteboard)
     expect(updateRequestMade).toBe(true)

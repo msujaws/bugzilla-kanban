@@ -446,24 +446,24 @@ describe('Board', () => {
   })
 
   describe('accessibility', () => {
-    it('should have main landmark role', () => {
+    it('should have region landmark role', () => {
       render(<Board {...defaultProps} />)
 
-      expect(screen.getByRole('main')).toBeInTheDocument()
+      expect(screen.getByRole('region', { name: 'Kanban Board' })).toBeInTheDocument()
     })
 
     it('should have aria-label for the board', () => {
       render(<Board {...defaultProps} />)
 
-      const main = screen.getByRole('main')
-      expect(main).toHaveAttribute('aria-label', expect.stringContaining('Kanban'))
+      const board = screen.getByRole('region', { name: 'Kanban Board' })
+      expect(board).toHaveAttribute('aria-label', expect.stringContaining('Kanban'))
     })
 
     it('should have aria-busy when loading', () => {
       render(<Board {...defaultProps} isLoading={true} />)
 
-      const main = screen.getByRole('main')
-      expect(main).toHaveAttribute('aria-busy', 'true')
+      const board = screen.getByRole('region', { name: 'Kanban Board' })
+      expect(board).toHaveAttribute('aria-busy', 'true')
     })
   })
 
