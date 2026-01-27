@@ -84,7 +84,6 @@ function App() {
   const stageQeVerifyChange = useStore((state) => state.stageQeVerifyChange)
   const applyChanges = useStore((state) => state.applyChanges)
   const clearAllChanges = useStore((state) => state.clearAllChanges)
-  const getChangeCount = useStore((state) => state.getChangeCount)
 
   // Notifications state
   const toasts = useStore((state) => state.toasts)
@@ -550,7 +549,8 @@ function App() {
 
       {/* Apply changes button */}
       <ApplyChangesButton
-        changeCount={getChangeCount()}
+        changes={changes}
+        bugs={bugs}
         isApplying={isApplying}
         onApply={handleApplyChanges}
         onClear={handleClearChanges}
