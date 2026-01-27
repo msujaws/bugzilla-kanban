@@ -26,7 +26,7 @@ const mockAssignees = [
 describe('AssigneeFilter', () => {
   const defaultProps = {
     assignees: mockAssignees,
-    selectedAssignee: null as string | null,
+    selectedAssignee: undefined as string | undefined,
     onSelect: vi.fn(),
   }
 
@@ -81,7 +81,7 @@ describe('AssigneeFilter', () => {
     await user.click(screen.getByRole('button'))
     await user.click(screen.getByText('All Assignees'))
 
-    expect(onSelect).toHaveBeenCalledWith(null)
+    expect(onSelect).toHaveBeenCalledWith()
   })
 
   it('should close dropdown after selection', async () => {

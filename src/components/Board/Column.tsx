@@ -254,7 +254,7 @@ export function Column({
           >
             {virtualizer.getVirtualItems().map((virtualItem) => {
               const bug = bugs[virtualItem.index]
-              if (!bug) return null
+              if (!bug) return
               const index = virtualItem.index
               return (
                 <div

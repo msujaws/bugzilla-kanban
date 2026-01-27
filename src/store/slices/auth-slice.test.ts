@@ -38,6 +38,7 @@ describe('AuthSlice', () => {
     vi.clearAllMocks()
     // Reset mock implementations to defaults
     mockSaveApiKey.mockResolvedValue()
+    // eslint-disable-next-line unicorn/no-null -- auth-slice uses null for missing API key
     mockGetApiKey.mockResolvedValue(null)
     mockGetBugs.mockResolvedValue([])
     mockWhoAmI.mockResolvedValue({ id: 12345, real_name: 'Test User', name: 'test@mozilla.com' })
@@ -236,8 +237,7 @@ describe('AuthSlice', () => {
     })
 
     it('should handle missing API key gracefully', async () => {
-      // eslint-disable-next-line unicorn/no-null
-      mockGetApiKey.mockResolvedValueOnce(null)
+      mockGetApiKey.mockResolvedValueOnce()
 
       const { loadApiKey } = useStore.getState()
       await loadApiKey()

@@ -19,8 +19,8 @@ describe('UISlice', () => {
   })
 
   describe('initial state', () => {
-    it('should have null assignee filter by default', () => {
-      expect(slice.assigneeFilter).toBeNull()
+    it('should have undefined assignee filter by default', () => {
+      expect(slice.assigneeFilter).toBeUndefined()
     })
   })
 
@@ -31,10 +31,10 @@ describe('UISlice', () => {
       expect(setState).toHaveBeenCalledWith({ assigneeFilter: 'dev@mozilla.com' })
     })
 
-    it('should clear assignee filter when set to null', () => {
-      slice.setAssigneeFilter(null)
+    it('should clear assignee filter when set to undefined', () => {
+      slice.setAssigneeFilter(undefined)
 
-      expect(setState).toHaveBeenCalledWith({ assigneeFilter: null })
+      expect(setState).toHaveBeenCalledWith({ assigneeFilter: undefined })
     })
   })
 })

@@ -15,8 +15,8 @@ interface FilterBarProps {
   onApplyFilters: () => void
   isLoading: boolean
   assignees?: Assignee[]
-  selectedAssignee?: string | null
-  onAssigneeChange?: (email: string | null) => void
+  selectedAssignee?: string
+  onAssigneeChange?: (email?: string) => void
   enableAutoApply?: boolean
 }
 
@@ -30,7 +30,7 @@ export function FilterBar({
   onApplyFilters,
   isLoading,
   assignees = [],
-  selectedAssignee = null,
+  selectedAssignee,
   onAssigneeChange,
   enableAutoApply = false,
 }: FilterBarProps) {
@@ -40,7 +40,7 @@ export function FilterBar({
     whiteboardTag !== '' ||
     component !== '' ||
     sortOrder !== 'priority' ||
-    selectedAssignee !== null
+    selectedAssignee !== undefined
 
   // Debounced auto-apply
   const debouncedApply = useCallback(() => {
@@ -89,9 +89,7 @@ export function FilterBar({
     onWhiteboardTagChange('')
     onComponentChange('')
     onSortOrderChange('priority')
-    if (onAssigneeChange) {
-      onAssigneeChange(null)
-    }
+    onAssigneeChange?.()
   }
 
   return (
@@ -267,9 +265,7 @@ export function FilterBar({
               <button
                 type="button"
                 onClick={() => {
-                  if (onAssigneeChange) {
-                    onAssigneeChange(null)
-                  }
+                  onAssigneeChange?.()
                 }}
                 className="ml-1 rounded-full hover:bg-accent-primary/30 focus:outline-none focus:ring-1 focus:ring-accent-primary"
                 aria-label={`Remove assignee filter`}

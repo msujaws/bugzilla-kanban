@@ -44,8 +44,9 @@ describe('Branded Types', () => {
         expect(key).toBeUndefined()
       })
 
-      it('should return undefined for null', () => {
-        const key = tryCreateApiKey(null)
+      it('should return undefined for nullish values', () => {
+        // eslint-disable-next-line unicorn/no-useless-undefined
+        const key = tryCreateApiKey(undefined)
         expect(key).toBeUndefined()
       })
 
@@ -159,8 +160,9 @@ describe('Branded Types', () => {
         expect(id).toBeUndefined()
       })
 
-      it('should return undefined for null', () => {
-        const id = tryCreateBugId(null)
+      it('should return undefined for nullish values', () => {
+        // eslint-disable-next-line unicorn/no-useless-undefined
+        const id = tryCreateBugId(undefined)
         expect(id).toBeUndefined()
       })
 

@@ -1,14 +1,14 @@
 import type { StateCreator } from 'zustand'
 
 export interface UISlice {
-  assigneeFilter: string | null
-  setAssigneeFilter: (email: string | null) => void
+  assigneeFilter?: string
+  setAssigneeFilter: (email?: string) => void
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
-  assigneeFilter: null,
+  assigneeFilter: undefined,
 
-  setAssigneeFilter: (email: string | null) => {
+  setAssigneeFilter: (email?: string) => {
     set({ assigneeFilter: email })
   },
 })

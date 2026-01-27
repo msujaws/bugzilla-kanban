@@ -74,7 +74,7 @@ export function ApiKeyInput({ isOpen, onClose, onOpenFAQ }: ApiKeyInputProps) {
   }
 
   if (!isOpen) {
-    return null
+    return
   }
 
   return (

@@ -105,5 +105,5 @@ export function ApiKeyStatus({ onOpenModal }: ApiKeyStatusProps) {
     )
   }
 
-  return null
+  return
 }

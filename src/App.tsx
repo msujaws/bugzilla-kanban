@@ -96,7 +96,7 @@ function App() {
 
   // Compute if any filters are active (for empty state guidance)
   const hasActiveFilters =
-    filters.whiteboardTag !== '' || filters.component !== '' || assigneeFilter !== null
+    filters.whiteboardTag !== '' || filters.component !== '' || Boolean(assigneeFilter)
 
   // Get all assignees from bugs for the filter dropdown
   const allAssignees = useBoardAssignees(bugs)
@@ -395,7 +395,7 @@ function App() {
         <ApiKeyInput isOpen={true} onClose={() => {}} onOpenFAQ={handleOpenFAQ} />
 
         {/* FAQ Modal */}
-        <Suspense fallback={null}>
+        <Suspense fallback={undefined}>
           <FAQModal
             isOpen={showFAQModal}
             onClose={() => {
@@ -563,7 +563,7 @@ function App() {
       <ApiKeyInput isOpen={showApiKeyModal} onClose={handleCloseModal} onOpenFAQ={handleOpenFAQ} />
 
       {/* FAQ Modal */}
-      <Suspense fallback={null}>
+      <Suspense fallback={undefined}>
         <FAQModal
           isOpen={showFAQModal}
           onClose={() => {
@@ -573,7 +573,7 @@ function App() {
       </Suspense>
 
       {/* Origin Story Modal (easter egg) */}
-      <Suspense fallback={null}>
+      <Suspense fallback={undefined}>
         <OriginStoryModal
           isOpen={showOriginStoryModal}
           onClose={() => {

@@ -33,7 +33,7 @@ describe('FilterBar', () => {
     onApplyFilters: vi.fn(),
     isLoading: false,
     assignees: mockAssignees,
-    selectedAssignee: null as string | null,
+    selectedAssignee: undefined as string | undefined,
     onAssigneeChange: vi.fn(),
   }
 
@@ -437,7 +437,7 @@ describe('FilterBar', () => {
       // Select "All Assignees"
       await user.click(screen.getByText('All Assignees'))
 
-      expect(onAssigneeChange).toHaveBeenCalledWith(null)
+      expect(onAssigneeChange).toHaveBeenCalledWith()
     })
 
     it('should disable assignee filter when loading', () => {
@@ -468,7 +468,7 @@ describe('FilterBar', () => {
       const clearButton = screen.getByRole('button', { name: /clear/i })
       await user.click(clearButton)
 
-      expect(onAssigneeChange).toHaveBeenCalledWith(null)
+      expect(onAssigneeChange).toHaveBeenCalledWith()
     })
   })
 
@@ -579,7 +579,7 @@ describe('FilterBar', () => {
         await user.click(removeButton)
       }
 
-      expect(onAssigneeChange).toHaveBeenCalledWith(null)
+      expect(onAssigneeChange).toHaveBeenCalledWith()
     })
 
     it('should reset sort order when badge is clicked', async () => {

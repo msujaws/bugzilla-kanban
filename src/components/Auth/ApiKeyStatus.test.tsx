@@ -21,7 +21,7 @@ describe('ApiKeyStatus', () => {
     beforeEach(() => {
       vi.mocked(useStore).mockImplementation((selector) => {
         const state = {
-          apiKey: null,
+          apiKey: undefined,
           isValid: false,
           isValidating: false,
           clearApiKey: mockClearApiKey,
@@ -265,7 +265,7 @@ describe('ApiKeyStatus', () => {
     it('should have descriptive button labels', () => {
       vi.mocked(useStore).mockImplementation((selector) => {
         const state = {
-          apiKey: null,
+          apiKey: undefined,
           isValid: false,
           isValidating: false,
           clearApiKey: mockClearApiKey,

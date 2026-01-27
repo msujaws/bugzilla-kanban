@@ -4,8 +4,8 @@ import type { Assignee } from '@/hooks/use-board-assignees'
 
 interface AssigneeFilterProps {
   assignees: Assignee[]
-  selectedAssignee: string | null
-  onSelect: (email: string | null) => void
+  selectedAssignee?: string
+  onSelect: (email?: string) => void
   disabled?: boolean
 }
 
@@ -54,8 +54,12 @@ export function AssigneeFilter({
     }
   }, [isOpen])
 
-  const handleSelect = (email: string | null) => {
-    onSelect(email)
+  const handleSelect = (email?: string) => {
+    if (email) {
+      onSelect(email)
+    } else {
+      onSelect()
+    }
     setIsOpen(false)
   }
 
@@ -96,17 +100,17 @@ export function AssigneeFilter({
               {/* All Assignees option */}
               <li
                 role="option"
-                aria-selected={selectedAssignee === null}
+                aria-selected={!selectedAssignee}
                 onClick={() => {
-                  handleSelect(null)
+                  handleSelect()
                 }}
                 className={`flex cursor-pointer items-center gap-3 px-4 py-2 transition-colors hover:bg-bg-tertiary ${
-                  selectedAssignee === null ? 'bg-bg-tertiary-50' : ''
+                  selectedAssignee ? '' : 'bg-bg-tertiary-50'
                 }`}
               >
                 <span className="material-icons text-text-tertiary">group</span>
                 <span className="flex-1 text-sm font-medium text-text-primary">All Assignees</span>
-                {selectedAssignee === null && (
+                {!selectedAssignee && (
                   <span className="material-icons text-accent-success">check</span>
                 )}
               </li>

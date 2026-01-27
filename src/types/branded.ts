@@ -53,7 +53,7 @@ export function createApiKey(key: string): ApiKey {
 /**
  * Safely attempt to create an ApiKey, returning undefined if invalid.
  */
-export function tryCreateApiKey(key: string | undefined | null): ApiKey | undefined {
+export function tryCreateApiKey(key?: string): ApiKey | undefined {
   if (!key) {
     return undefined
   }
@@ -125,8 +125,8 @@ export function createBugId(id: number): BugId {
 /**
  * Safely attempt to create a BugId, returning undefined if invalid.
  */
-export function tryCreateBugId(id: number | undefined | null): BugId | undefined {
-  if (id === undefined || id === null) {
+export function tryCreateBugId(id?: number): BugId | undefined {
+  if (id === undefined) {
     return undefined
   }
   try {

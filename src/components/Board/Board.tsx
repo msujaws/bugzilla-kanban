@@ -66,12 +66,12 @@ export function Board({
 }: BoardProps) {
   const sortOrder = useStore((state) => state.filters.sortOrder)
   const assigneeFilter = useStore((state) => state.assigneeFilter)
-  const [activeBug, setActiveBug] = useState<BugzillaBug | null>(null)
-  const [selectedPosition, setSelectedPosition] = useState<SelectedPosition | null>(null)
+  const [activeBug, setActiveBug] = useState<BugzillaBug>()
+  const [selectedPosition, setSelectedPosition] = useState<SelectedPosition>()
   const [isGrabbing, setIsGrabbing] = useState(false)
-  const [grabStartColumn, setGrabStartColumn] = useState<number | null>(null)
-  const [grabbedBugId, setGrabbedBugId] = useState<number | null>(null)
-  const [targetColumnIndex, setTargetColumnIndex] = useState<number | null>(null)
+  const [grabStartColumn, setGrabStartColumn] = useState<number>()
+  const [grabbedBugId, setGrabbedBugId] = useState<number>()
+  const [targetColumnIndex, setTargetColumnIndex] = useState<number>()
   const [showClearConfirmation, setShowClearConfirmation] = useState(false)
 
   // Configure sensors for drag detection
@@ -298,12 +298,12 @@ export function Board({
   )
 
   // Get selected bug based on position
-  const getSelectedBug = useCallback((): BugzillaBug | null => {
-    if (!selectedPosition) return null
+  const getSelectedBug = useCallback((): BugzillaBug | undefined => {
+    if (!selectedPosition) return undefined
     const column = columns[selectedPosition.columnIndex]
-    if (!column) return null
+    if (!column) return undefined
     const columnBugs = bugsByColumn.get(column) ?? []
-    return columnBugs[selectedPosition.bugIndex] ?? null
+    return columnBugs[selectedPosition.bugIndex]
   }, [selectedPosition, bugsByColumn])
 
   // Keyboard event handlers
@@ -340,9 +340,9 @@ export function Board({
           return
         }
         // Otherwise just clear selection
-        setSelectedPosition(null)
+        setSelectedPosition(undefined)
         setIsGrabbing(false)
-        setGrabStartColumn(null)
+        setGrabStartColumn(undefined)
         return
       }
 
@@ -395,7 +395,7 @@ export function Board({
             break
           }
           case 'ArrowLeft': {
-            if (isGrabbing && targetColumnIndex !== null) {
+            if (isGrabbing && targetColumnIndex !== undefined) {
               // During grab mode, just track target column
               if (targetColumnIndex > 0) {
                 setTargetColumnIndex(targetColumnIndex - 1)
@@ -420,7 +420,7 @@ export function Board({
             break
           }
           case 'ArrowRight': {
-            if (isGrabbing && targetColumnIndex !== null) {
+            if (isGrabbing && targetColumnIndex !== undefined) {
               // During grab mode, just track target column
               if (targetColumnIndex < columns.length - 1) {
                 setTargetColumnIndex(targetColumnIndex + 1)
@@ -471,9 +471,9 @@ export function Board({
 
         // Stage the move if column changed
         if (
-          grabbedBugId !== null &&
-          grabStartColumn !== null &&
-          targetColumnIndex !== null &&
+          grabbedBugId !== undefined &&
+          grabStartColumn !== undefined &&
+          targetColumnIndex !== undefined &&
           targetColumnIndex !== grabStartColumn
         ) {
           const fromColumn = columns[grabStartColumn]
@@ -488,9 +488,9 @@ export function Board({
             }
           }
         }
-        setGrabStartColumn(null)
-        setGrabbedBugId(null)
-        setTargetColumnIndex(null)
+        setGrabStartColumn(undefined)
+        setGrabbedBugId(undefined)
+        setTargetColumnIndex(undefined)
       }
     },
     [
@@ -526,7 +526,7 @@ export function Board({
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    setActiveBug(null)
+    setActiveBug(undefined)
 
     if (!over) return
 
@@ -646,7 +646,7 @@ export function Board({
       <DragOverlay>
         {activeBug ? (
           <Card bug={activeBug} isStaged={stagedBugIds.has(activeBug.id)} isDragging />
-        ) : null}
+        ) : undefined}
       </DragOverlay>
     </DndContext>
   )

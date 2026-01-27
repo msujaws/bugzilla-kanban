@@ -1110,7 +1110,7 @@ describe('Board', () => {
       expect(screen.queryByText('Bug by Bob')).not.toBeInTheDocument()
 
       // Clean up: reset filter
-      useStore.getState().setAssigneeFilter(null)
+      useStore.getState().setAssigneeFilter(undefined)
     })
 
     it('should show empty columns when no bugs match the filter', async () => {
@@ -1126,7 +1126,7 @@ describe('Board', () => {
       expect(screen.queryByText('Bug by Bob')).not.toBeInTheDocument()
 
       // Clean up
-      useStore.getState().setAssigneeFilter(null)
+      useStore.getState().setAssigneeFilter(undefined)
     })
   })
 })
