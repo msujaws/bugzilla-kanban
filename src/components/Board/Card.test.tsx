@@ -719,6 +719,59 @@ describe('Card', () => {
       const fiveOption = screen.getByRole('option', { name: /^5 points$/i })
       expect(fiveOption).toHaveAttribute('aria-selected', 'false')
     })
+
+    it('should display --- when points are staged to be cleared (undefined)', () => {
+      render(
+        <Card
+          bug={bugWithPoints}
+          onPointsChange={vi.fn()}
+          isPointsStaged={true}
+          stagedPoints={undefined}
+        />,
+      )
+
+      // Should show '---' to indicate points are being cleared, not the original value
+      expect(screen.getByText('---')).toBeInTheDocument()
+      // Original value (5) should NOT be displayed
+      expect(screen.queryByText('5')).not.toBeInTheDocument()
+    })
+
+    it('should show staged indicator when points are staged to be cleared', () => {
+      render(
+        <Card
+          bug={bugWithPoints}
+          onPointsChange={vi.fn()}
+          isPointsStaged={true}
+          stagedPoints={undefined}
+        />,
+      )
+
+      const button = screen.getByLabelText(/Change story points/)
+      expect(button.className).toContain('ring-accent-staged')
+    })
+
+    it('should pass undefined to picker when points are staged to be cleared', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={bugWithPoints}
+          onPointsChange={vi.fn()}
+          isPointsStaged={true}
+          stagedPoints={undefined}
+        />,
+      )
+
+      // Open the picker
+      await user.click(screen.getByLabelText(/Change story points/))
+
+      // The '---' option should be selected
+      const clearOption = screen.getByRole('option', { name: /Clear points/i })
+      expect(clearOption).toHaveAttribute('aria-selected', 'true')
+
+      // The original points (5) should NOT be selected
+      const fiveOption = screen.getByRole('option', { name: /^5 points$/i })
+      expect(fiveOption).toHaveAttribute('aria-selected', 'false')
+    })
   })
 
   describe('priority picker', () => {

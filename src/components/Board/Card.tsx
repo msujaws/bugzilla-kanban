@@ -22,7 +22,7 @@ interface CardProps {
   isAssigneeStaged?: boolean
   stagedAssignee?: string
   isPointsStaged?: boolean
-  stagedPoints?: number | string
+  stagedPoints?: number | string | undefined
   isPriorityStaged?: boolean
   stagedPriority?: string
   isSeverityStaged?: boolean
@@ -202,8 +202,11 @@ export function Card({
 
   // Display staged values if available, otherwise original
   const displayedAssignee = isAssigneeStaged && stagedAssignee ? stagedAssignee : bug.assigned_to
-  const displayedPoints =
-    isPointsStaged && stagedPoints !== undefined ? stagedPoints : bug.cf_fx_points
+  // Use staged value if points are staged (even if undefined, meaning "cleared")
+  const displayedPoints = isPointsStaged ? stagedPoints : bug.cf_fx_points
+  // For display purposes, show '---' when points are staged to be cleared
+  const displayedPointsLabel =
+    isPointsStaged && displayedPoints === undefined ? '---' : displayedPoints
   const displayedPriority = isPriorityStaged && stagedPriority ? stagedPriority : bug.priority
   const displayedSeverity = isSeverityStaged && stagedSeverity ? stagedSeverity : bug.severity
   const originalQeStatus = getQeVerifyStatus(bug.flags)
@@ -295,15 +298,17 @@ export function Card({
           </span>
         )}
         {/* Story Points - top right */}
-        {displayedPoints !== undefined &&
+        {/* Show if: has valid points, OR points are staged to be cleared (show '---') */}
+        {((displayedPoints !== undefined &&
           displayedPoints !== 0 &&
           displayedPoints !== '0' &&
-          displayedPoints !== '' &&
+          displayedPoints !== '') ||
+          (isPointsStaged && displayedPoints === undefined)) &&
           (onPointsChange ? (
             <button
               ref={pointsButtonRef}
               type="button"
-              aria-label={`Change story points, current: ${String(displayedPoints)}`}
+              aria-label={`Change story points, current: ${String(displayedPointsLabel)}`}
               aria-expanded={isPointsPickerOpen}
               aria-haspopup="listbox"
               aria-controls={pointsListboxId}
@@ -312,14 +317,14 @@ export function Card({
                 isPointsStaged ? 'ring-2 ring-accent-staged' : ''
               }`}
             >
-              {displayedPoints}
+              {displayedPointsLabel}
             </button>
           ) : (
             <span
               aria-label="story points"
               className="ml-auto rounded-full bg-accent-primary/20 px-2 py-0.5 text-xs font-bold text-accent-primary"
             >
-              {displayedPoints}
+              {displayedPointsLabel}
             </span>
           ))}
       </div>
