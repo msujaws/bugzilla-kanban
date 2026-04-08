@@ -113,6 +113,20 @@ export function StagedChangesPreview({ changes, bugs }: StagedChangesPreviewProp
                     {formatQeVerifyStatus(change.qeVerify.to)}
                   </div>
                 )}
+
+                {change.betaStatus && (
+                  <div className="text-text-tertiary">
+                    <span className="font-medium text-text-secondary">Beta Status:</span>{' '}
+                    {change.betaStatus.from} → {change.betaStatus.to}
+                  </div>
+                )}
+
+                {change.betaTracking && (
+                  <div className="text-text-tertiary">
+                    <span className="font-medium text-text-secondary">Beta Tracking:</span>{' '}
+                    {change.betaTracking.from} → {change.betaTracking.to}
+                  </div>
+                )}
               </div>
             </li>
           )

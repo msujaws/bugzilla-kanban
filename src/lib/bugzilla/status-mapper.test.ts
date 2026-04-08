@@ -80,7 +80,7 @@ describe('StatusMapper', () => {
     it('should return all available columns', () => {
       const columns = mapper.getAvailableColumns()
 
-      expect(columns).toEqual(['backlog', 'todo', 'in-progress', 'in-testing', 'done'])
+      expect(columns).toEqual(['backlog', 'todo', 'in-progress', 'in-testing', 'done', 'uplift'])
     })
 
     it('should return a new array each time', () => {

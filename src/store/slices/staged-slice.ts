@@ -42,6 +42,8 @@ export interface StagedChange {
   priority?: { from: string; to: string }
   severity?: { from: string; to: string }
   qeVerify?: { from: QeVerifyStatus; to: QeVerifyStatus }
+  betaStatus?: { from: string; to: string; field: string }
+  betaTracking?: { from: string; to: string; field: string }
 }
 
 export interface ApplyResult {
@@ -67,6 +69,8 @@ export interface StagedSlice {
   stagePriorityChange: (bugId: number, fromPriority: string, toPriority: string) => void
   stageSeverityChange: (bugId: number, fromSeverity: string, toSeverity: string) => void
   stageQeVerifyChange: (bugId: number, fromStatus: QeVerifyStatus, toStatus: QeVerifyStatus) => void
+  stageBetaStatusChange: (bugId: number, from: string, to: string, field: string) => void
+  stageBetaTrackingChange: (bugId: number, from: string, to: string, field: string) => void
   unstageChange: (bugId: number) => void
   clearAllChanges: () => void
   applyChanges: (apiKey: ApiKey) => Promise<ApplyResult>
@@ -292,6 +296,58 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
     })
   },
 
+  // Stage a beta status tracking flag change for a bug
+  stageBetaStatusChange: (bugId: number, from: string, to: string, field: string) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      if (from === to) {
+        if (existing) {
+          const { betaStatus: _removed, ...rest } = existing
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        newChanges.set(bugId, {
+          ...existing,
+          betaStatus: { from, to, field },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
+  // Stage a beta tracking flag change for a bug
+  stageBetaTrackingChange: (bugId: number, from: string, to: string, field: string) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      if (from === to) {
+        if (existing) {
+          const { betaTracking: _removed, ...rest } = existing
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        newChanges.set(bugId, {
+          ...existing,
+          betaTracking: { from, to, field },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
   // Remove a staged change
   unstageChange: (bugId: number) => {
     set((state) => {
@@ -358,6 +414,16 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
           const flagStatus =
             change.qeVerify.to === 'plus' ? '+' : change.qeVerify.to === 'minus' ? '-' : 'X'
           update.flags = [{ name: 'qe-verify', status: flagStatus }]
+        }
+
+        if (change.betaStatus) {
+          ;(update as unknown as Record<string, unknown>)[change.betaStatus.field] =
+            change.betaStatus.to
+        }
+
+        if (change.betaTracking) {
+          ;(update as unknown as Record<string, unknown>)[change.betaTracking.field] =
+            change.betaTracking.to
         }
 
         updates.push(update)

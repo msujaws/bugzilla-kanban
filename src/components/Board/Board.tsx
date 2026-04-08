@@ -21,6 +21,7 @@ import type { StagedChange } from '@/store/slices/staged-slice'
 import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 import { useBoardAssignees } from '@/hooks/use-board-assignees'
 import { useStore } from '@/store'
+import type { FirefoxBetaVersion } from '@/types/branded'
 
 const NOBODY_EMAIL = 'nobody@mozilla.org'
 
@@ -38,6 +39,7 @@ interface BoardProps {
   onApplyChanges?: () => void
   onClearChanges?: () => void
   hasActiveFilters?: boolean
+  betaVersion?: FirefoxBetaVersion
 }
 
 interface SelectedPosition {
@@ -47,7 +49,10 @@ interface SelectedPosition {
 
 const statusMapper = new StatusMapper()
 // Board columns exclude backlog (backlog is rendered separately below the board)
-const columns = statusMapper.getAvailableColumns().filter((col) => col !== 'backlog')
+// Also exclude uplift here - it's conditionally added based on betaVersion
+const BASE_COLUMNS = statusMapper
+  .getAvailableColumns()
+  .filter((col) => col !== 'backlog' && col !== 'uplift')
 
 export function Board({
   bugs,
@@ -63,7 +68,14 @@ export function Board({
   onApplyChanges,
   onClearChanges,
   hasActiveFilters = false,
+  betaVersion,
 }: BoardProps) {
+  // Conditionally include uplift column when beta version is known
+  const columns = useMemo(
+    () => (betaVersion === undefined ? BASE_COLUMNS : [...BASE_COLUMNS, 'uplift' as KanbanColumn]),
+    [betaVersion],
+  )
+
   const sortOrder = useStore((state) => state.filters.sortOrder)
   const assigneeFilter = useStore((state) => state.assigneeFilter)
   const [activeBug, setActiveBug] = useState<BugzillaBug>()
@@ -107,7 +119,7 @@ export function Board({
       // If bug has a staged status change, show it in the target column
       const column = stagedChange?.status
         ? (stagedChange.status.to as KanbanColumn)
-        : assignBugToColumn(bug)
+        : assignBugToColumn(bug, betaVersion)
       const columnBugs = grouped.get(column) ?? []
       columnBugs.push(bug)
       grouped.set(column, columnBugs)
@@ -125,7 +137,7 @@ export function Board({
     }
 
     return grouped
-  }, [filteredBugs, stagedChanges, sortOrder, allColumns])
+  }, [filteredBugs, stagedChanges, sortOrder, allColumns, betaVersion])
 
   // Get all staged bug IDs for highlighting
   const stagedBugIds = useMemo(() => {
@@ -253,6 +265,11 @@ export function Board({
   // Returns error message if invalid, undefined if valid
   const validateMove = useCallback(
     (bugId: number, fromColumn: KanbanColumn, toColumn: KanbanColumn): string | undefined => {
+      // Only allow Done or In Testing bugs to move to uplift
+      if (toColumn === 'uplift' && fromColumn !== 'done' && fromColumn !== 'in-testing') {
+        return 'Only bugs from Done or In Testing can be moved to Needing Uplift.'
+      }
+
       // Only validate moves OUT of backlog (except to todo, which allows unassigned bugs)
       if (fromColumn === 'backlog' && toColumn !== 'backlog' && toColumn !== 'todo') {
         const bug = bugs.find((b) => b.id === bugId)
@@ -279,7 +296,7 @@ export function Board({
       }
     }
     return -1
-  }, [bugsByColumn])
+  }, [bugsByColumn, columns])
 
   // Find next non-empty column in direction
   const findNextNonEmptyColumn = useCallback(
@@ -294,7 +311,7 @@ export function Board({
       }
       return currentIndex // Stay at current if no non-empty column found
     },
-    [bugsByColumn],
+    [bugsByColumn, columns],
   )
 
   // Get selected bug based on position
@@ -304,7 +321,7 @@ export function Board({
     if (!column) return undefined
     const columnBugs = bugsByColumn.get(column) ?? []
     return columnBugs[selectedPosition.bugIndex]
-  }, [selectedPosition, bugsByColumn])
+  }, [selectedPosition, bugsByColumn, columns])
 
   // Keyboard event handlers
   const handleKeyDown = useCallback(
@@ -461,6 +478,7 @@ export function Board({
       targetColumnIndex,
       showClearConfirmation,
       stagedChanges.size,
+      columns,
     ],
   )
 
@@ -501,6 +519,7 @@ export function Board({
       onBugMove,
       validateMove,
       onInvalidMove,
+      columns,
     ],
   )
 
@@ -542,7 +561,7 @@ export function Board({
     // Use assignBugToColumn for consistent column assignment (handles sprint tags)
     const currentColumn = stagedChange?.status
       ? (stagedChange.status.to as KanbanColumn)
-      : assignBugToColumn(bug)
+      : assignBugToColumn(bug, betaVersion)
 
     // Only trigger move if dropping on a different column
     if (currentColumn !== targetColumn) {
@@ -622,6 +641,7 @@ export function Board({
                 isGrabbing={selectedPosition?.columnIndex === columnIndex && isGrabbing}
                 isDropTarget={isGrabbing && targetColumnIndex === columnIndex}
                 hasActiveFilters={hasActiveFilters}
+                betaVersion={betaVersion}
               />
             ))}
           </div>

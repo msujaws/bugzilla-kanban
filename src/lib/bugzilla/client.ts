@@ -47,6 +47,9 @@ export class BugzillaClient {
       'keywords',
       'cf_fx_points',
     ]
+    if (filters.extraFields) {
+      includeFields.push(...filters.extraFields)
+    }
     params.append('include_fields', includeFields.join(','))
 
     if (filters.whiteboardTag) {
@@ -65,6 +68,10 @@ export class BugzillaClient {
 
     if (filters.limit !== undefined) {
       params.append('limit', filters.limit.toString())
+    }
+
+    if (filters.order) {
+      params.append('order', filters.order)
     }
 
     const queryString = params.toString()
@@ -132,6 +139,14 @@ export class BugzillaClient {
         }
         if (update.flags !== undefined) {
           changes.flags = update.flags
+        }
+        // Forward dynamic tracking flag fields (cf_status_firefox*, cf_tracking_firefox*)
+        for (const key of Object.keys(update)) {
+          if (key.startsWith('cf_status_firefox') || key.startsWith('cf_tracking_firefox')) {
+            ;(changes as unknown as Record<string, unknown>)[key] = (
+              update as unknown as Record<string, unknown>
+            )[key]
+          }
         }
         await this.updateBug(bugId, changes)
         result.successful.push(update.id)

@@ -7,4 +7,5 @@ export const COLUMN_NAMES: Record<string, string> = {
   'in-progress': 'In Progress',
   'in-testing': 'In Testing',
   done: 'Done',
+  uplift: 'Uplift?',
 }

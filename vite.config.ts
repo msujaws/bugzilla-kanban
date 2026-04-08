@@ -47,6 +47,10 @@ export default defineConfig({
         },
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq, req) => {
+            // Strip cookies — auth is via API key, not cookies.
+            // Browser cookies for localhost confuse Bugzilla's backend.
+            proxyReq.removeHeader('cookie')
+
             // Forward the API key header
             const apiKey = req.headers['x-bugzilla-api-key']
             if (apiKey) {

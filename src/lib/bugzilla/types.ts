@@ -34,6 +34,10 @@ export interface BugzillaBug {
   keywords?: string[]
   /** Story points (Firefox custom field) */
   cf_fx_points?: number | string
+  /** Dynamic status tracking flags for Firefox versions (e.g., cf_status_firefox150) */
+  [key: `cf_status_firefox${number}`]: string | undefined
+  /** Dynamic tracking flags for Firefox versions (e.g., cf_tracking_firefox150) */
+  [key: `cf_tracking_firefox${number}`]: string | undefined
 }
 
 export interface BugzillaSearchResponse {
@@ -51,6 +55,10 @@ export interface BugFilters {
   component?: string
   status?: string[]
   limit?: number
+  /** Bugzilla sort order (e.g., 'changeddate DESC') */
+  order?: string
+  /** Additional fields to include in the API response (e.g., tracking flag fields) */
+  extraFields?: string[]
 }
 
 export interface BugUpdateFlag {
@@ -68,6 +76,10 @@ export interface BugUpdate {
   priority?: string
   severity?: string
   flags?: BugUpdateFlag[]
+  /** Dynamic status tracking flags for Firefox versions */
+  [key: `cf_status_firefox${number}`]: string | undefined
+  /** Dynamic tracking flags for Firefox versions */
+  [key: `cf_tracking_firefox${number}`]: string | undefined
 }
 
 export interface BatchUpdateResult {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef, lazy, Suspense } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef, lazy, Suspense } from 'react'
 import { ToastContainer } from './components/Notifications/ToastContainer'
 import { ApiKeyInput } from './components/Auth/ApiKeyInput'
 import { ApiKeyStatus } from './components/Auth/ApiKeyStatus'
@@ -23,8 +23,18 @@ import { saveTheme, getTheme, type Theme } from './lib/storage/theme-storage'
 import { useBoardAssignees } from './hooks/use-board-assignees'
 import { addSprintTag, removeSprintTag } from './lib/bugzilla/sprint-tag'
 import { getQeVerifyStatus, type QeVerifyStatus } from './lib/bugzilla/qe-verify'
+import {
+  getCurrentBetaVersion,
+  getBetaStatusField,
+  getBetaTrackingField,
+  getBugBetaStatus,
+  getBugBetaTracking,
+} from './lib/firefox/beta-version'
 
 function App() {
+  // Compute Firefox Beta version once on mount
+  const betaVersion = useMemo(() => getCurrentBetaVersion(), [])
+
   // Local UI state
   const [showApiKeyModal, setShowApiKeyModal] = useState(false)
   const [showFAQModal, setShowFAQModal] = useState(false)
@@ -68,6 +78,7 @@ function App() {
   const bugs = useStore((state) => state.bugs)
   const isLoadingBugs = useStore((state) => state.isLoading)
   const bugsError = useStore((state) => state.error)
+  const isTruncated = useStore((state) => state.isTruncated)
   const filters = useStore((state) => state.filters)
   const setFilters = useStore((state) => state.setFilters)
   const fetchBugs = useStore((state) => state.fetchBugs)
@@ -82,6 +93,8 @@ function App() {
   const stagePriorityChange = useStore((state) => state.stagePriorityChange)
   const stageSeverityChange = useStore((state) => state.stageSeverityChange)
   const stageQeVerifyChange = useStore((state) => state.stageQeVerifyChange)
+  const stageBetaStatusChange = useStore((state) => state.stageBetaStatusChange)
+  const stageBetaTrackingChange = useStore((state) => state.stageBetaTrackingChange)
   const applyChanges = useStore((state) => state.applyChanges)
   const clearAllChanges = useStore((state) => state.clearAllChanges)
 
@@ -252,9 +265,44 @@ function App() {
             stageQeVerifyChange(bugId, currentQeVerify, currentQeVerify)
           }
         }
+
+        // Handle beta tracking flags for moves to uplift
+        if (toColumn === 'uplift' && betaVersion !== undefined) {
+          const statusField = getBetaStatusField(betaVersion)
+          const trackingField = getBetaTrackingField(betaVersion)
+          const currentStatus = getBugBetaStatus(bug, betaVersion) ?? '---'
+          const currentTracking = getBugBetaTracking(bug, betaVersion) ?? '---'
+
+          if (currentStatus !== 'affected') {
+            stageBetaStatusChange(bugId, currentStatus, 'affected', statusField)
+          }
+          if (currentTracking !== '?') {
+            stageBetaTrackingChange(bugId, currentTracking, '?', trackingField)
+          }
+        } else if (existingChange?.betaStatus || existingChange?.betaTracking) {
+          // Revert auto-staged beta flags when moving away from uplift
+          const updatedChange = useStore.getState().changes.get(bugId)
+          if (!updatedChange?.status && betaVersion !== undefined) {
+            const statusField = getBetaStatusField(betaVersion)
+            const trackingField = getBetaTrackingField(betaVersion)
+            const currentStatus = getBugBetaStatus(bug, betaVersion) ?? '---'
+            const currentTracking = getBugBetaTracking(bug, betaVersion) ?? '---'
+            stageBetaStatusChange(bugId, currentStatus, currentStatus, statusField)
+            stageBetaTrackingChange(bugId, currentTracking, currentTracking, trackingField)
+          }
+        }
       }
     },
-    [stageChange, bugs, stageWhiteboardChange, stageQeVerifyChange, changes],
+    [
+      stageChange,
+      bugs,
+      stageWhiteboardChange,
+      stageQeVerifyChange,
+      stageBetaStatusChange,
+      stageBetaTrackingChange,
+      changes,
+      betaVersion,
+    ],
   )
 
   // Handle assignee change
@@ -525,6 +573,15 @@ function App() {
           </div>
         )}
 
+        {/* Truncation warning */}
+        {isTruncated && (
+          <div className="mb-6 rounded-lg bg-accent-warning/20 p-4 text-accent-warning">
+            <span className="material-icons mr-2 align-middle">warning</span>
+            Results may be incomplete. Add a whiteboard tag or component filter to narrow your
+            search.
+          </div>
+        )}
+
         {/* Board or Welcome */}
         {bugs.length === 0 && !isLoadingBugs && !hasActiveFilters && !bugsError ? (
           <EmptyBoardWelcome />
@@ -543,6 +600,7 @@ function App() {
             onApplyChanges={handleApplyChanges}
             onClearChanges={handleClearChanges}
             hasActiveFilters={hasActiveFilters}
+            betaVersion={betaVersion}
           />
         )}
       </main>

@@ -135,3 +135,26 @@ export function tryCreateBugId(id?: number): BugId | undefined {
     return undefined
   }
 }
+
+// ============================================================================
+// Firefox Beta Version
+// ============================================================================
+
+/**
+ * A Firefox Beta version number.
+ * Create with `createFirefoxBetaVersion()`.
+ */
+export type FirefoxBetaVersion = Brand<number, 'FirefoxBetaVersion'>
+
+/**
+ * Create a branded FirefoxBetaVersion from a number.
+ * Validates that the version is a positive integer in a reasonable range.
+ */
+export function createFirefoxBetaVersion(version: number): FirefoxBetaVersion {
+  if (!Number.isInteger(version) || version < 100 || version > 300) {
+    throw new Error(
+      `Invalid Firefox beta version: ${String(version)}. Must be an integer between 100 and 300.`,
+    )
+  }
+  return version as FirefoxBetaVersion
+}

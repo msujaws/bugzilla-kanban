@@ -8,6 +8,9 @@ import type { KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
 import { COLUMN_NAMES } from '@/types'
+import type { FirefoxBetaVersion } from '@/types/branded'
+import { getBugBetaStatus, getBugBetaTracking } from '@/lib/firefox/beta-version'
+import { isUpliftComplete } from '@/lib/bugzilla/column-assignment'
 
 // Estimated height of each card in pixels (used for virtual scrolling)
 const ESTIMATED_CARD_HEIGHT = 160
@@ -52,6 +55,7 @@ interface ColumnProps {
   isGrabbing?: boolean
   isDropTarget?: boolean
   hasActiveFilters?: boolean
+  betaVersion?: FirefoxBetaVersion
 }
 
 const columnIcons: Record<KanbanColumn, string> = {
@@ -60,6 +64,7 @@ const columnIcons: Record<KanbanColumn, string> = {
   'in-progress': 'code',
   'in-testing': 'science',
   done: 'done_all',
+  uplift: 'arrow_upward',
 }
 
 const columnDescriptions: Record<KanbanColumn, string> = {
@@ -68,6 +73,7 @@ const columnDescriptions: Record<KanbanColumn, string> = {
   'in-progress': 'Bugs with status ASSIGNED',
   'in-testing': 'Bugs with status RESOLVED, resolution FIXED, and qe-verify+ flag',
   done: 'Bugs with status RESOLVED/VERIFIED/CLOSED and resolution FIXED (last 2 weeks)',
+  uplift: 'Bugs needing uplift to Firefox Beta (status-firefox affected)',
 }
 
 const columnEmptyMessages: Record<KanbanColumn, { title: string; subtitle: string }> = {
@@ -76,6 +82,7 @@ const columnEmptyMessages: Record<KanbanColumn, { title: string; subtitle: strin
   'in-progress': { title: 'All clear!', subtitle: 'Keyboards are resting.' },
   'in-testing': { title: 'QE standing by!', subtitle: 'Send over some bugz to verify.' },
   done: { title: 'Ship it!', subtitle: 'Check back after some bugz are resolved.' },
+  uplift: { title: 'No uplifts needed!', subtitle: 'Beta is looking good.' },
 }
 
 export function Column({
@@ -103,6 +110,7 @@ export function Column({
   isGrabbing = false,
   isDropTarget = false,
   hasActiveFilters = false,
+  betaVersion,
 }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column,
@@ -271,6 +279,7 @@ export function Column({
                 >
                   <Card
                     bug={bug}
+                    column={column}
                     isStaged={stagedBugIds.has(bug.id)}
                     isAssigneeStaged={stagedAssigneeBugIds?.has(bug.id)}
                     stagedAssignee={stagedAssignees?.get(bug.id)}
@@ -290,6 +299,21 @@ export function Column({
                     onPriorityChange={onPriorityChange}
                     onSeverityChange={onSeverityChange}
                     onQeVerifyChange={onQeVerifyChange}
+                    trackingDisplayValue={
+                      column === 'uplift' && betaVersion !== undefined
+                        ? (getBugBetaTracking(bug, betaVersion) ?? '---')
+                        : undefined
+                    }
+                    statusDisplayValue={
+                      column === 'uplift' && betaVersion !== undefined
+                        ? (getBugBetaStatus(bug, betaVersion) ?? '---')
+                        : undefined
+                    }
+                    isUpliftComplete={
+                      column === 'uplift' && betaVersion !== undefined
+                        ? isUpliftComplete(bug, betaVersion)
+                        : undefined
+                    }
                   />
                 </div>
               )

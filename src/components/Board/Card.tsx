@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useId } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
+import type { KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import { formatAssignee } from '@/lib/bugzilla/display-utils'
 import { getQeVerifyStatus, type QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
@@ -15,6 +16,7 @@ const BUGZILLA_BUG_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?id='
 
 interface CardProps {
   bug: BugzillaBug
+  column?: KanbanColumn
   isStaged?: boolean
   isDragging?: boolean
   isSelected?: boolean
@@ -36,6 +38,9 @@ interface CardProps {
   onPriorityChange?: (bugId: number, priority: string) => void
   onSeverityChange?: (bugId: number, severity: string) => void
   onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
+  trackingDisplayValue?: string
+  statusDisplayValue?: string
+  isUpliftComplete?: boolean
 }
 
 const priorityColors: Record<string, string> = {
@@ -56,6 +61,7 @@ const severityColors: Record<string, string> = {
 
 export function Card({
   bug,
+  column,
   isStaged = false,
   isDragging = false,
   isSelected = false,
@@ -77,6 +83,9 @@ export function Card({
   onPriorityChange,
   onSeverityChange,
   onQeVerifyChange,
+  trackingDisplayValue,
+  statusDisplayValue,
+  isUpliftComplete,
 }: CardProps) {
   const [isAssigneePickerOpen, setIsAssigneePickerOpen] = useState(false)
   const [isPointsPickerOpen, setIsPointsPickerOpen] = useState(false)
@@ -297,13 +306,31 @@ export function Card({
             Shift to grab
           </span>
         )}
-        {/* Story Points - top right */}
-        {/* Show if: has valid points, OR points are staged to be cleared (show '---') */}
-        {((displayedPoints !== undefined &&
-          displayedPoints !== 0 &&
-          displayedPoints !== '0' &&
-          displayedPoints !== '') ||
-          (isPointsStaged && displayedPoints === undefined)) &&
+        {/* Uplift column: show green checkmark or tracking flag value */}
+        {column === 'uplift' ? (
+          isUpliftComplete ? (
+            <span
+              aria-label="Uplift complete"
+              className="ml-auto flex items-center gap-0.5 rounded bg-green-600/20 px-1.5 py-0.5 text-xs font-bold text-green-400"
+            >
+              <span className="material-icons text-sm">check</span>
+            </span>
+          ) : trackingDisplayValue ? (
+            <span
+              aria-label="Tracking flag value"
+              className="ml-auto rounded-full bg-accent-primary/20 px-2 py-0.5 text-xs font-bold text-accent-primary"
+            >
+              {trackingDisplayValue}
+            </span>
+          ) : undefined
+        ) : (
+          /* Story Points - top right */
+          /* Show if: has valid points, OR points are staged to be cleared (show '---') */
+          ((displayedPoints !== undefined &&
+            displayedPoints !== 0 &&
+            displayedPoints !== '0' &&
+            displayedPoints !== '') ||
+            (isPointsStaged && displayedPoints === undefined)) &&
           (onPointsChange ? (
             <button
               ref={pointsButtonRef}
@@ -326,7 +353,8 @@ export function Card({
             >
               {displayedPointsLabel}
             </span>
-          ))}
+          ))
+        )}
       </div>
 
       {/* Summary */}
@@ -390,7 +418,12 @@ export function Card({
 
       {/* Assignee and QE Verification row */}
       <div className="flex items-center gap-2 text-xs text-text-tertiary">
-        {allAssignees && onAssigneeChange ? (
+        {column === 'uplift' && statusDisplayValue ? (
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="material-icons text-sm">flag</span>
+            <span className="min-w-0 flex-1 truncate">{statusDisplayValue}</span>
+          </div>
+        ) : allAssignees && onAssigneeChange ? (
           <button
             ref={assigneeButtonRef}
             type="button"

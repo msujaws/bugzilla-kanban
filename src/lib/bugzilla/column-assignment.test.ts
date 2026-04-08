@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { hasQeVerifyFlag, assignBugToColumn } from './column-assignment'
+import { hasQeVerifyFlag, assignBugToColumn, isUpliftComplete } from './column-assignment'
 import { SPRINT_TAG } from './sprint-tag'
 import type { BugzillaBug } from './types'
+import { createFirefoxBetaVersion } from '@/types/branded'
 
 const createBug = (overrides: Partial<BugzillaBug>): BugzillaBug => ({
   id: 1,
@@ -170,5 +171,119 @@ describe('assignBugToColumn', () => {
   it('should assign CLOSED status to done', () => {
     const bug = createBug({ status: 'CLOSED' })
     expect(assignBugToColumn(bug)).toBe('done')
+  })
+
+  // Uplift column tests
+  describe('with betaVersion', () => {
+    const betaVersion = createFirefoxBetaVersion(150)
+
+    it('should assign RESOLVED FIXED with affected status to uplift', () => {
+      const bug = createBug({
+        status: 'RESOLVED',
+        resolution: 'FIXED',
+        cf_status_firefox150: 'affected',
+      })
+      expect(assignBugToColumn(bug, betaVersion)).toBe('uplift')
+    })
+
+    it('should assign RESOLVED FIXED with qe-verify+ and affected to uplift', () => {
+      const bug = createBug({
+        status: 'RESOLVED',
+        resolution: 'FIXED',
+        flags: [{ name: 'qe-verify', status: '+' }],
+        cf_status_firefox150: 'affected',
+      })
+      expect(assignBugToColumn(bug, betaVersion)).toBe('uplift')
+    })
+
+    it('should assign VERIFIED with affected to uplift', () => {
+      const bug = createBug({
+        status: 'VERIFIED',
+        cf_status_firefox150: 'affected',
+      })
+      expect(assignBugToColumn(bug, betaVersion)).toBe('uplift')
+    })
+
+    it('should NOT assign to uplift when status is fixed', () => {
+      const bug = createBug({
+        status: 'RESOLVED',
+        resolution: 'FIXED',
+        cf_status_firefox150: 'fixed',
+      })
+      expect(assignBugToColumn(bug, betaVersion)).not.toBe('uplift')
+    })
+
+    it('should NOT assign to uplift when status is unaffected', () => {
+      const bug = createBug({
+        status: 'RESOLVED',
+        resolution: 'FIXED',
+        cf_status_firefox150: 'unaffected',
+      })
+      expect(assignBugToColumn(bug, betaVersion)).not.toBe('uplift')
+    })
+
+    it('should NOT assign to uplift when status is ---', () => {
+      const bug = createBug({
+        status: 'RESOLVED',
+        resolution: 'FIXED',
+        cf_status_firefox150: '---',
+      })
+      expect(assignBugToColumn(bug, betaVersion)).not.toBe('uplift')
+    })
+
+    it('should NOT assign NEW bugs to uplift even if affected', () => {
+      const bug = createBug({
+        status: 'NEW',
+        cf_status_firefox150: 'affected',
+      })
+      expect(assignBugToColumn(bug, betaVersion)).toBe('backlog')
+    })
+
+    it('should NOT assign ASSIGNED bugs to uplift even if affected', () => {
+      const bug = createBug({
+        status: 'ASSIGNED',
+        cf_status_firefox150: 'affected',
+      })
+      expect(assignBugToColumn(bug, betaVersion)).toBe('in-progress')
+    })
+
+    it('should fall back to normal assignment without betaVersion', () => {
+      const bug = createBug({
+        status: 'RESOLVED',
+        resolution: 'FIXED',
+        cf_status_firefox150: 'affected',
+      })
+      expect(assignBugToColumn(bug)).toBe('done')
+    })
+  })
+})
+
+describe('isUpliftComplete', () => {
+  const betaVersion = createFirefoxBetaVersion(150)
+
+  it('should return true when status is fixed', () => {
+    const bug = createBug({
+      status: 'RESOLVED',
+      resolution: 'FIXED',
+      cf_status_firefox150: 'fixed',
+    })
+    expect(isUpliftComplete(bug, betaVersion)).toBe(true)
+  })
+
+  it('should return false when status is affected', () => {
+    const bug = createBug({
+      status: 'RESOLVED',
+      resolution: 'FIXED',
+      cf_status_firefox150: 'affected',
+    })
+    expect(isUpliftComplete(bug, betaVersion)).toBe(false)
+  })
+
+  it('should return false when status field is not set', () => {
+    const bug = createBug({
+      status: 'RESOLVED',
+      resolution: 'FIXED',
+    })
+    expect(isUpliftComplete(bug, betaVersion)).toBe(false)
   })
 })

@@ -183,10 +183,12 @@ describe('BugsSlice', () => {
       const { fetchBugs } = useStore.getState()
       await fetchBugs(testApiKey)
 
-      expect(mockGetBugs).toHaveBeenCalledWith({
-        whiteboardTag: '[kanban]',
-        component: 'Core',
-      })
+      expect(mockGetBugs).toHaveBeenCalledWith(
+        expect.objectContaining({
+          whiteboardTag: '[kanban]',
+          component: 'Core',
+        }),
+      )
     })
 
     it('should filter out security and confidential bugs', async () => {

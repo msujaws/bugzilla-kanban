@@ -25,6 +25,7 @@ vi.mock('@/lib/bugzilla/status-mapper', () => ({
         'in-progress': 'IN_PROGRESS',
         'in-review': 'IN_PROGRESS',
         done: 'RESOLVED',
+        uplift: 'RESOLVED',
       }
       return mapping[column] ?? 'NEW'
     }),
@@ -949,6 +950,130 @@ describe('StagedSlice', () => {
 
       expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
         { id: 123, priority: 'P1', severity: 'blocker' },
+      ])
+    })
+  })
+
+  describe('stageBetaStatusChange', () => {
+    it('should add a new beta status change', () => {
+      const { stageBetaStatusChange } = useStore.getState()
+
+      stageBetaStatusChange(123, '---', 'affected', 'cf_status_firefox150')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.betaStatus).toEqual({
+        from: '---',
+        to: 'affected',
+        field: 'cf_status_firefox150',
+      })
+    })
+
+    it('should remove beta status change if reverting to original', () => {
+      const { stageBetaStatusChange } = useStore.getState()
+
+      stageBetaStatusChange(123, '---', 'affected', 'cf_status_firefox150')
+      stageBetaStatusChange(123, '---', '---', 'cf_status_firefox150')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('should preserve other changes when adding beta status', () => {
+      const { stageChange, stageBetaStatusChange } = useStore.getState()
+
+      stageChange(123, 'done', 'uplift')
+      stageBetaStatusChange(123, '---', 'affected', 'cf_status_firefox150')
+
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.status).toEqual({ from: 'done', to: 'uplift' })
+      expect(changes.get(123)?.betaStatus).toEqual({
+        from: '---',
+        to: 'affected',
+        field: 'cf_status_firefox150',
+      })
+    })
+  })
+
+  describe('stageBetaTrackingChange', () => {
+    it('should add a new beta tracking change', () => {
+      const { stageBetaTrackingChange } = useStore.getState()
+
+      stageBetaTrackingChange(123, '---', '?', 'cf_tracking_firefox150')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.betaTracking).toEqual({
+        from: '---',
+        to: '?',
+        field: 'cf_tracking_firefox150',
+      })
+    })
+
+    it('should remove beta tracking change if reverting to original', () => {
+      const { stageBetaTrackingChange } = useStore.getState()
+
+      stageBetaTrackingChange(123, '---', '?', 'cf_tracking_firefox150')
+      stageBetaTrackingChange(123, '---', '---', 'cf_tracking_firefox150')
+
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+  })
+
+  describe('applyChanges with beta tracking flags', () => {
+    it('should include beta status field in API call', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageBetaStatusChange, applyChanges } = useStore.getState()
+
+      stageBetaStatusChange(123, '---', 'affected', 'cf_status_firefox150')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, cf_status_firefox150: 'affected' },
+      ])
+    })
+
+    it('should include beta tracking field in API call', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageBetaTrackingChange, applyChanges } = useStore.getState()
+
+      stageBetaTrackingChange(123, '---', '?', 'cf_tracking_firefox150')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([{ id: 123, cf_tracking_firefox150: '?' }])
+    })
+
+    it('should include both beta flags with status change', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({
+        successful: [123],
+        failed: [],
+      })
+
+      const { stageChange, stageBetaStatusChange, stageBetaTrackingChange, applyChanges } =
+        useStore.getState()
+
+      stageChange(123, 'done', 'uplift')
+      stageBetaStatusChange(123, '---', 'affected', 'cf_status_firefox150')
+      stageBetaTrackingChange(123, '---', '?', 'cf_tracking_firefox150')
+      await applyChanges(testApiKey)
+
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        {
+          id: 123,
+          status: 'RESOLVED',
+          resolution: 'FIXED',
+          cf_status_firefox150: 'affected',
+          cf_tracking_firefox150: '?',
+        },
       ])
     })
   })

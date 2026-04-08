@@ -8,6 +8,13 @@ import { filterMetaBugs } from '@/lib/bugzilla/meta-filter'
 import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
 import type { ApiKey } from '@/types/branded'
 import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
+import {
+  getCurrentBetaVersion,
+  getBetaStatusField,
+  getBetaTrackingField,
+} from '@/lib/firefox/beta-version'
+
+const RESOLVED_QUERY_LIMIT = 250
 
 /**
  * Check if a bug is public (not in any security or confidential groups).
@@ -28,6 +35,7 @@ export interface BugsSlice {
   bugs: BugzillaBug[]
   isLoading: boolean
   error: string | null
+  isTruncated: boolean
   filters: BugsFilters
   lastApiKey: ApiKey | null
 
@@ -44,6 +52,7 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
   bugs: [],
   isLoading: false,
   error: null,
+  isTruncated: false,
   filters: {
     whiteboardTag: '',
     component: '',
@@ -66,13 +75,50 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
       if (filters.component) {
         bugFilters.component = filters.component
       }
+      // Include beta tracking flag fields if we know the current beta version
+      const betaVersion = getCurrentBetaVersion()
+      if (betaVersion !== undefined) {
+        bugFilters.extraFields = [
+          getBetaStatusField(betaVersion),
+          getBetaTrackingField(betaVersion),
+        ]
+      }
 
-      const allBugs = await client.getBugs(bugFilters)
+      // Query 1: All open bugs (no limit — there shouldn't be too many)
+      const openFilters: BugFilters = {
+        ...bugFilters,
+        status: ['UNCONFIRMED', 'NEW', 'ASSIGNED', 'REOPENED'],
+      }
+
+      // Query 2: Recently resolved/verified/closed bugs, most recent first.
+      // Limited to avoid Bugzilla gateway timeouts on large components.
+      const resolvedFilters: BugFilters = {
+        ...bugFilters,
+        status: ['RESOLVED', 'VERIFIED', 'CLOSED'],
+        order: 'changeddate DESC',
+        limit: RESOLVED_QUERY_LIMIT,
+      }
+
+      const [openBugs, resolvedBugs] = await Promise.all([
+        client.getBugs(openFilters),
+        client.getBugs(resolvedFilters),
+      ])
+
+      const isTruncated = resolvedBugs.length >= RESOLVED_QUERY_LIMIT
+      // Deduplicate in case a bug appears in both results
+      const seenIds = new Set<number>()
+      const allBugs: BugzillaBug[] = []
+      for (const bug of [...openBugs, ...resolvedBugs]) {
+        if (!seenIds.has(bug.id)) {
+          seenIds.add(bug.id)
+          allBugs.push(bug)
+        }
+      }
       // Filter out security and confidential bugs (those with non-empty groups)
       const publicBugs = allBugs.filter(isPublicBug)
       // Always filter out meta bugs
       const bugs = filterMetaBugs(publicBugs, true)
-      set({ bugs, isLoading: false, error: null })
+      set({ bugs, isLoading: false, error: null, isTruncated })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       set({ bugs: [], isLoading: false, error: errorMessage })
