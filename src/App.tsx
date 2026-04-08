@@ -573,13 +573,12 @@ function App() {
           </div>
         )}
 
-        {/* Truncation warning */}
+        {/* Truncation note */}
         {isTruncated && (
-          <div className="mb-6 rounded-lg bg-accent-warning/20 p-4 text-accent-warning">
-            <span className="material-icons mr-2 align-middle">warning</span>
-            Results may be incomplete. Add a whiteboard tag or component filter to narrow your
-            search.
-          </div>
+          <p className="mb-4 text-center text-sm text-text-tertiary">
+            Showing up to 250 recently changed resolved bugs. Add a whiteboard tag or component
+            filter to see all results.
+          </p>
         )}
 
         {/* Board or Welcome */}
