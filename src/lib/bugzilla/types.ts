@@ -22,6 +22,8 @@ export interface BugzillaBug {
   }
   priority: string
   severity: string
+  /** The Bugzilla product (e.g., 'Firefox', 'Core', 'Toolkit'). */
+  product?: string
   component: string
   whiteboard: string
   last_change_time: string
@@ -34,6 +36,10 @@ export interface BugzillaBug {
   keywords?: string[]
   /** Story points (Firefox custom field) */
   cf_fx_points?: number | string
+  /** Target release milestone (product-dependent format: `Firefox 152` or `mozilla152`). */
+  target_milestone?: string
+  /** Iteration within a Nightly cycle (e.g., `152.1`). */
+  cf_fx_iteration?: string
   /** Dynamic status tracking flags for Firefox versions (e.g., cf_status_firefox150) */
   [key: `cf_status_firefox${number}`]: string | undefined
   /** Dynamic tracking flags for Firefox versions (e.g., cf_tracking_firefox150) */
@@ -59,6 +65,8 @@ export interface BugFilters {
   order?: string
   /** Additional fields to include in the API response (e.g., tracking flag fields) */
   extraFields?: string[]
+  /** Match bugs whose `target_milestone` equals any of these values (OR semantics). */
+  targetMilestones?: string[]
 }
 
 export interface BugUpdateFlag {
@@ -76,6 +84,8 @@ export interface BugUpdate {
   priority?: string
   severity?: string
   flags?: BugUpdateFlag[]
+  target_milestone?: string
+  cf_fx_iteration?: string
   /** Dynamic status tracking flags for Firefox versions */
   [key: `cf_status_firefox${number}`]: string | undefined
   /** Dynamic tracking flags for Firefox versions */

@@ -38,6 +38,7 @@ export class BugzillaClient {
       'assigned_to_detail',
       'priority',
       'severity',
+      'product',
       'component',
       'whiteboard',
       'last_change_time',
@@ -46,6 +47,8 @@ export class BugzillaClient {
       'flags',
       'keywords',
       'cf_fx_points',
+      'target_milestone',
+      'cf_fx_iteration',
     ]
     if (filters.extraFields) {
       includeFields.push(...filters.extraFields)
@@ -63,6 +66,12 @@ export class BugzillaClient {
     if (filters.status && filters.status.length > 0) {
       for (const status of filters.status) {
         params.append('status', status)
+      }
+    }
+
+    if (filters.targetMilestones && filters.targetMilestones.length > 0) {
+      for (const milestone of filters.targetMilestones) {
+        params.append('target_milestone', milestone)
       }
     }
 
@@ -139,6 +148,12 @@ export class BugzillaClient {
         }
         if (update.flags !== undefined) {
           changes.flags = update.flags
+        }
+        if (update.target_milestone !== undefined) {
+          changes.target_milestone = update.target_milestone
+        }
+        if (update.cf_fx_iteration !== undefined) {
+          changes.cf_fx_iteration = update.cf_fx_iteration
         }
         // Forward dynamic tracking flag fields (cf_status_firefox*, cf_tracking_firefox*)
         for (const key of Object.keys(update)) {
