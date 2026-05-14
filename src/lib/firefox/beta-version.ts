@@ -41,6 +41,15 @@ export function getCurrentBetaVersion(date: Date = new Date()): FirefoxBetaVersi
   return undefined
 }
 
+/** Returns the earliest Firefox Beta version known to the release schedule. */
+export function getEarliestBetaVersion(): FirefoxBetaVersion {
+  const first = BETA_SCHEDULE[0]
+  if (!first) {
+    throw new Error('BETA_SCHEDULE is empty')
+  }
+  return first.version
+}
+
 /** Returns the Bugzilla API field name for the status tracking flag. */
 export function getBetaStatusField(version: FirefoxBetaVersion): string {
   return `cf_status_firefox${String(version)}`

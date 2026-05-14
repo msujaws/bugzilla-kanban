@@ -158,3 +158,17 @@ export function createFirefoxBetaVersion(version: number): FirefoxBetaVersion {
   }
   return version as FirefoxBetaVersion
 }
+
+/**
+ * Safely attempt to create a FirefoxBetaVersion, returning undefined if invalid.
+ */
+export function tryCreateFirefoxBetaVersion(version?: number): FirefoxBetaVersion | undefined {
+  if (version === undefined) {
+    return undefined
+  }
+  try {
+    return createFirefoxBetaVersion(version)
+  } catch {
+    return undefined
+  }
+}
