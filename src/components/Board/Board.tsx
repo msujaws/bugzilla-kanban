@@ -15,7 +15,6 @@ import { BacklogSection } from './BacklogSection'
 import { StatusMapper, type KanbanColumn } from '@/lib/bugzilla/status-mapper'
 import { assignBugToColumn } from '@/lib/bugzilla/column-assignment'
 import { sortBugs } from '@/lib/bugzilla/sort-bugs'
-import { filterRecentBugs } from '@/lib/bugzilla/date-filter'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
 import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
@@ -34,12 +33,14 @@ interface BoardProps {
   onPriorityChange?: (bugId: number, priority: string) => void
   onSeverityChange?: (bugId: number, severity: string) => void
   onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
+  onIterationChange?: (bugId: number, iteration: string | undefined) => void
   onInvalidMove?: (bugId: number, reason: string) => void
   isLoading?: boolean
   onApplyChanges?: () => void
   onClearChanges?: () => void
   hasActiveFilters?: boolean
   betaVersion?: FirefoxBetaVersion
+  iterationOptions?: string[]
 }
 
 interface SelectedPosition {
@@ -63,12 +64,14 @@ export function Board({
   onPriorityChange,
   onSeverityChange,
   onQeVerifyChange,
+  onIterationChange,
   onInvalidMove,
   isLoading = false,
   onApplyChanges,
   onClearChanges,
   hasActiveFilters = false,
   betaVersion,
+  iterationOptions,
 }: BoardProps) {
   // Conditionally include uplift column when beta version is known
   const columns = useMemo(
@@ -125,10 +128,11 @@ export function Board({
       grouped.set(column, columnBugs)
     }
 
-    // Filter done column to only show bugs with FIXED resolution from the past 2 weeks
+    // Filter done column to only show bugs with FIXED resolution.
+    // Cycle scoping (via target_milestone in the Bugzilla query) already limits the result set.
     const doneBugs = grouped.get('done') ?? []
     const fixedDoneBugs = doneBugs.filter((bug) => bug.resolution === 'FIXED')
-    grouped.set('done', filterRecentBugs(fixedDoneBugs))
+    grouped.set('done', fixedDoneBugs)
 
     // Sort bugs within each column by the configured sort order
     for (const column of allColumns) {
@@ -256,6 +260,28 @@ export function Board({
       }
     }
     return qeVerifies
+  }, [stagedChanges])
+
+  // Get bug IDs with staged iteration changes
+  const stagedIterationBugIds = useMemo(() => {
+    const ids = new Set<number>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.iteration) {
+        ids.add(bugId)
+      }
+    }
+    return ids
+  }, [stagedChanges])
+
+  // Get staged iterations map (bugId -> new iteration)
+  const stagedIterations = useMemo(() => {
+    const iterations = new Map<number, string | undefined>()
+    for (const [bugId, change] of stagedChanges) {
+      if (change.iteration) {
+        iterations.set(bugId, change.iteration.to)
+      }
+    }
+    return iterations
   }, [stagedChanges])
 
   // Get all assignees from bugs on the board
@@ -626,12 +652,16 @@ export function Board({
                 stagedSeverities={stagedSeverities}
                 stagedQeVerifyBugIds={stagedQeVerifyBugIds}
                 stagedQeVerifies={stagedQeVerifies}
+                stagedIterationBugIds={stagedIterationBugIds}
+                stagedIterations={stagedIterations}
+                iterationOptions={iterationOptions}
                 allAssignees={allAssignees}
                 onAssigneeChange={onAssigneeChange}
                 onPointsChange={onPointsChange}
                 onPriorityChange={onPriorityChange}
                 onSeverityChange={onSeverityChange}
                 onQeVerifyChange={onQeVerifyChange}
+                onIterationChange={onIterationChange}
                 isLoading={isLoading}
                 selectedIndex={
                   selectedPosition?.columnIndex === columnIndex

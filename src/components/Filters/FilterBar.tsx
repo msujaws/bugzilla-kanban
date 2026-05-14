@@ -1,7 +1,16 @@
-import { type KeyboardEvent, useRef, useEffect, useCallback } from 'react'
+import { type KeyboardEvent, useRef, useEffect, useCallback, useMemo } from 'react'
 import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import { AssigneeFilter } from './AssigneeFilter'
+import {
+  getCurrentNightlyVersion,
+  getNightlyVersionOptions,
+  isCycleVersion,
+  ALL_RELEASES,
+  UNSCHEDULED,
+  type NightlyCycleFilter,
+} from '@/lib/firefox/nightly-version'
+import { tryCreateFirefoxBetaVersion } from '@/types/branded'
 
 const DEBOUNCE_DELAY = 300
 
@@ -9,9 +18,11 @@ interface FilterBarProps {
   whiteboardTag: string
   component: string
   sortOrder: SortOrder
+  nightlyVersion?: NightlyCycleFilter
   onWhiteboardTagChange: (value: string) => void
   onComponentChange: (value: string) => void
   onSortOrderChange: (value: SortOrder) => void
+  onNightlyVersionChange?: (version: NightlyCycleFilter | undefined) => void
   onApplyFilters: () => void
   isLoading: boolean
   assignees?: Assignee[]
@@ -24,9 +35,11 @@ export function FilterBar({
   whiteboardTag,
   component,
   sortOrder,
+  nightlyVersion,
   onWhiteboardTagChange,
   onComponentChange,
   onSortOrderChange,
+  onNightlyVersionChange,
   onApplyFilters,
   isLoading,
   assignees = [],
@@ -36,11 +49,46 @@ export function FilterBar({
 }: FilterBarProps) {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
+  const currentNightly = useMemo(() => getCurrentNightlyVersion(), [])
+  const versionOptions = useMemo(
+    () =>
+      getNightlyVersionOptions(
+        currentNightly,
+        isCycleVersion(nightlyVersion) ? nightlyVersion : undefined,
+      ),
+    [nightlyVersion, currentNightly],
+  )
+
+  const isCustomNightly =
+    nightlyVersion !== undefined &&
+    (nightlyVersion === ALL_RELEASES ||
+      nightlyVersion === UNSCHEDULED ||
+      (currentNightly !== undefined && nightlyVersion !== currentNightly))
+
+  const nightlySelectValue =
+    nightlyVersion === ALL_RELEASES
+      ? ALL_RELEASES
+      : nightlyVersion === UNSCHEDULED
+        ? UNSCHEDULED
+        : nightlyVersion === undefined
+          ? ''
+          : String(nightlyVersion)
+
+  const customNightlyLabel =
+    nightlyVersion === ALL_RELEASES
+      ? 'All releases'
+      : nightlyVersion === UNSCHEDULED
+        ? 'Unscheduled (---)'
+        : isCycleVersion(nightlyVersion)
+          ? `Firefox ${String(nightlyVersion)}`
+          : ''
+
   const hasFilters =
     whiteboardTag !== '' ||
     component !== '' ||
     sortOrder !== 'priority' ||
-    selectedAssignee !== undefined
+    selectedAssignee !== undefined ||
+    isCustomNightly
 
   // Debounced auto-apply
   const debouncedApply = useCallback(() => {
@@ -90,6 +138,21 @@ export function FilterBar({
     onComponentChange('')
     onSortOrderChange('priority')
     onAssigneeChange?.()
+    onNightlyVersionChange?.(currentNightly)
+  }
+
+  const handleNightlyVersionChange = (raw: string) => {
+    if (!onNightlyVersionChange) return
+    if (raw === ALL_RELEASES) {
+      onNightlyVersionChange(ALL_RELEASES)
+      return
+    }
+    if (raw === UNSCHEDULED) {
+      onNightlyVersionChange(UNSCHEDULED)
+      return
+    }
+    const version = tryCreateFirefoxBetaVersion(Number(raw))
+    onNightlyVersionChange(version)
   }
 
   return (
@@ -139,6 +202,37 @@ export function FilterBar({
             className="w-full rounded border border-bg-tertiary bg-bg-primary px-3 py-2 text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
+
+        {/* Nightly cycle */}
+        {onNightlyVersionChange && (
+          <div className="flex flex-col self-end">
+            <label
+              htmlFor="nightly-cycle-filter"
+              className="mb-1 block text-sm text-text-secondary"
+            >
+              Nightly cycle
+            </label>
+            <select
+              id="nightly-cycle-filter"
+              value={nightlySelectValue}
+              onChange={(e) => {
+                handleNightlyVersionChange(e.target.value)
+              }}
+              disabled={isLoading}
+              className="rounded border border-bg-tertiary bg-bg-primary px-3 py-2 text-text-primary focus:border-accent-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value={ALL_RELEASES}>All releases</option>
+              <option value={UNSCHEDULED}>Unscheduled (---)</option>
+              {versionOptions.length > 0 && <option disabled>──────────</option>}
+              {versionOptions.map((option) => (
+                <option key={String(option)} value={String(option)}>
+                  Firefox {String(option)}
+                  {currentNightly !== undefined && option === currentNightly ? ' (current)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Assignee filter */}
         {onAssigneeChange && (
@@ -269,6 +363,21 @@ export function FilterBar({
                 }}
                 className="ml-1 rounded-full hover:bg-accent-primary/30 focus:outline-none focus:ring-1 focus:ring-accent-primary"
                 aria-label={`Remove assignee filter`}
+              >
+                <span className="material-icons text-sm">close</span>
+              </button>
+            </span>
+          )}
+          {isCustomNightly && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent-primary/20 px-2 py-1 text-xs text-accent-primary">
+              {customNightlyLabel}
+              <button
+                type="button"
+                onClick={() => {
+                  onNightlyVersionChange?.(currentNightly)
+                }}
+                className="ml-1 rounded-full hover:bg-accent-primary/30 focus:outline-none focus:ring-1 focus:ring-accent-primary"
+                aria-label={`Reset Nightly cycle to current`}
               >
                 <span className="material-icons text-sm">close</span>
               </button>

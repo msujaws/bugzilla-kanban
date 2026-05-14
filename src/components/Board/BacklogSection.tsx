@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { Card } from './Card'
 import type { BugzillaBug } from '@/lib/bugzilla/types'
 import type { StagedChange } from '@/store/slices/staged-slice'
 import type { Assignee } from '@/hooks/use-board-assignees'
 import type { QeVerifyStatus } from '@/lib/bugzilla/qe-verify'
+import { fuzzyMatch } from '@/lib/text/fuzzy-match'
 
 interface BacklogSectionProps {
   bugs: BugzillaBug[]
@@ -38,6 +39,13 @@ export function BacklogSection({
   const { setNodeRef, isOver } = useDroppable({
     id: 'backlog',
   })
+
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const visibleBugs = useMemo(() => {
+    if (searchQuery.trim() === '') return bugs
+    return bugs.filter((bug) => fuzzyMatch(bug.summary, searchQuery))
+  }, [bugs, searchQuery])
 
   // Get staged bug IDs for this section
   const stagedBugIds = useMemo(() => {
@@ -160,8 +168,9 @@ export function BacklogSection({
     return map
   }, [stagedChanges])
 
-  const stagedCount = bugs.filter((bug) => stagedBugIds.has(bug.id)).length
+  const stagedCount = visibleBugs.filter((bug) => stagedBugIds.has(bug.id)).length
   const countId = 'backlog-count'
+  const isSearching = searchQuery.trim() !== ''
 
   // Determine section styling based on state
   const getSectionClassName = () => {
@@ -184,11 +193,39 @@ export function BacklogSection({
       className={getSectionClassName()}
     >
       {/* Section Header */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="material-icons text-text-secondary">inbox</span>
           <h2 className="text-lg font-bold text-text-primary">Backlog</h2>
         </div>
+
+        {/* Search input — aligned right of the title */}
+        <div className="flex flex-1 items-center gap-2 sm:justify-end">
+          <span className="material-icons text-text-tertiary">search</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+            }}
+            placeholder="Search backlog…"
+            aria-label="Search backlog"
+            className="w-full max-w-xs rounded border border-bg-tertiary bg-bg-primary px-3 py-1.5 text-sm text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none"
+          />
+          {isSearching && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('')
+              }}
+              aria-label="Clear search"
+              className="text-text-tertiary hover:text-text-primary"
+            >
+              <span className="material-icons text-base">close</span>
+            </button>
+          )}
+        </div>
+
         <div className="flex items-center gap-2">
           {stagedCount > 0 && (
             <span className="rounded bg-accent-primary/20 px-2 py-0.5 text-xs text-accent-primary">
@@ -199,7 +236,7 @@ export function BacklogSection({
             id={countId}
             className="rounded-full bg-bg-tertiary px-2 py-0.5 text-sm font-bold text-text-secondary"
           >
-            {bugs.length}
+            {isSearching ? `${String(visibleBugs.length)} / ${String(bugs.length)}` : bugs.length}
           </span>
         </div>
       </div>
@@ -235,10 +272,18 @@ export function BacklogSection({
         </div>
       )}
 
+      {/* No search results */}
+      {!isLoading && bugs.length > 0 && isSearching && visibleBugs.length === 0 && (
+        <div className="flex flex-1 flex-col items-center justify-start pt-8 gap-2 text-text-secondary">
+          <span className="material-icons text-4xl">search_off</span>
+          <p className="text-sm">No bugs match &ldquo;{searchQuery}&rdquo;.</p>
+        </div>
+      )}
+
       {/* Bug Cards - horizontal scrolling grid */}
-      {!isLoading && bugs.length > 0 && (
+      {!isLoading && visibleBugs.length > 0 && (
         <div className="flex flex-wrap gap-3 overflow-y-auto max-h-[400px]">
-          {bugs.map((bug) => (
+          {visibleBugs.map((bug) => (
             <div key={bug.id} className="w-72 flex-shrink-0">
               <Card
                 bug={bug}

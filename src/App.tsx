@@ -4,6 +4,7 @@ import { ApiKeyInput } from './components/Auth/ApiKeyInput'
 import { ApiKeyStatus } from './components/Auth/ApiKeyStatus'
 import { FilterBar } from './components/Filters/FilterBar'
 import { Board } from './components/Board/Board'
+import { GanttChart } from './components/Gantt/GanttChart'
 import { EmptyBoardWelcome } from './components/Board/EmptyBoardWelcome'
 import { ApplyChangesButton } from './components/Board/ApplyChangesButton'
 
@@ -30,6 +31,15 @@ import {
   getBugBetaStatus,
   getBugBetaTracking,
 } from './lib/firefox/beta-version'
+import { formatTargetMilestone, matchesCycle } from './lib/bugzilla/target-milestone'
+import {
+  getCurrentNightlyVersion,
+  getIterationOptions,
+  isCycleVersion,
+  parseIterationVersion,
+  type NightlyCycleFilter,
+} from './lib/firefox/nightly-version'
+import { tryCreateFirefoxBetaVersion } from './types/branded'
 
 function App() {
   // Compute Firefox Beta version once on mount
@@ -95,6 +105,8 @@ function App() {
   const stageQeVerifyChange = useStore((state) => state.stageQeVerifyChange)
   const stageBetaStatusChange = useStore((state) => state.stageBetaStatusChange)
   const stageBetaTrackingChange = useStore((state) => state.stageBetaTrackingChange)
+  const stageTargetMilestoneChange = useStore((state) => state.stageTargetMilestoneChange)
+  const stageIterationChange = useStore((state) => state.stageIterationChange)
   const applyChanges = useStore((state) => state.applyChanges)
   const clearAllChanges = useStore((state) => state.clearAllChanges)
 
@@ -106,6 +118,8 @@ function App() {
   // Assignee filter state
   const assigneeFilter = useStore((state) => state.assigneeFilter)
   const setAssigneeFilter = useStore((state) => state.setAssigneeFilter)
+  const viewMode = useStore((state) => state.viewMode)
+  const setViewMode = useStore((state) => state.setViewMode)
 
   // Compute if any filters are active (for empty state guidance)
   const hasActiveFilters =
@@ -207,6 +221,13 @@ function App() {
     [setFilters],
   )
 
+  const handleNightlyVersionChange = useCallback(
+    (version: NightlyCycleFilter | undefined) => {
+      setFilters({ nightlyVersion: version })
+    },
+    [setFilters],
+  )
+
   // Handle apply filters (fetch bugs and update URL)
   const handleApplyFilters = useCallback(() => {
     if (!apiKey) {
@@ -266,6 +287,54 @@ function App() {
           }
         }
 
+        // Auto-set target_milestone when moving into todo or in-progress.
+        // Only applies when a specific cycle is selected — not for the
+        // 'All releases' or 'Unscheduled' sentinel filters.
+        if (
+          (toColumn === 'todo' || toColumn === 'in-progress') &&
+          isCycleVersion(filters.nightlyVersion)
+        ) {
+          const currentMilestone = bug.target_milestone ?? '---'
+          if (!matchesCycle(bug.target_milestone, filters.nightlyVersion)) {
+            const newMilestone = formatTargetMilestone(filters.nightlyVersion, bug.product)
+            stageTargetMilestoneChange(bugId, currentMilestone, newMilestone)
+          }
+        } else if (existingChange?.targetMilestone) {
+          // Revert auto-staged milestone when moving away from todo/in-progress.
+          const updatedChange = useStore.getState().changes.get(bugId)
+          if (!updatedChange?.status) {
+            const currentMilestone = bug.target_milestone ?? '---'
+            stageTargetMilestoneChange(bugId, currentMilestone, currentMilestone)
+          }
+        }
+
+        // Auto-set the iteration to the first iteration of the cycle when a bug
+        // is pulled from the backlog into todo or in-progress. Skip if the bug
+        // already has an iteration in the target cycle.
+        if (fromColumn === 'backlog' && (toColumn === 'todo' || toColumn === 'in-progress')) {
+          const targetCycle = isCycleVersion(filters.nightlyVersion)
+            ? filters.nightlyVersion
+            : getCurrentNightlyVersion()
+          if (targetCycle !== undefined) {
+            const existingIterationCycle = bug.cf_fx_iteration
+              ? parseIterationVersion(bug.cf_fx_iteration)
+              : undefined
+            if (existingIterationCycle !== (targetCycle as number)) {
+              const firstIteration = getIterationOptions(targetCycle)[0]
+              if (firstIteration !== undefined) {
+                stageIterationChange(bugId, bug.cf_fx_iteration, firstIteration)
+              }
+            }
+          }
+        } else if (existingChange?.iteration) {
+          // Revert the auto-staged iteration when moving away from todo/in-progress
+          // back to the original column.
+          const updatedChange = useStore.getState().changes.get(bugId)
+          if (!updatedChange?.status) {
+            stageIterationChange(bugId, bug.cf_fx_iteration, bug.cf_fx_iteration)
+          }
+        }
+
         // Handle beta tracking flags for moves to uplift
         if (toColumn === 'uplift' && betaVersion !== undefined) {
           const statusField = getBetaStatusField(betaVersion)
@@ -300,8 +369,11 @@ function App() {
       stageQeVerifyChange,
       stageBetaStatusChange,
       stageBetaTrackingChange,
+      stageTargetMilestoneChange,
+      stageIterationChange,
       changes,
       betaVersion,
+      filters.nightlyVersion,
     ],
   )
 
@@ -360,6 +432,42 @@ function App() {
     },
     [bugs, stageQeVerifyChange],
   )
+
+  // Handle iteration change. Setting an iteration also stages a matching
+  // target_milestone change so the bug stops being "unscheduled" and lands in
+  // the cycle it's being scheduled into. Clearing the iteration leaves the
+  // milestone alone.
+  const handleIterationChange = useCallback(
+    (bugId: number, newIteration: string | undefined) => {
+      const bug = bugs.find((b) => b.id === bugId)
+      if (!bug) return
+
+      stageIterationChange(bugId, bug.cf_fx_iteration, newIteration)
+
+      if (newIteration === undefined) return
+      const parsedVersion = parseIterationVersion(newIteration)
+      if (parsedVersion === undefined) return
+      const version = tryCreateFirefoxBetaVersion(parsedVersion)
+      if (version === undefined) return
+
+      const currentMilestone = bug.target_milestone ?? '---'
+      if (matchesCycle(bug.target_milestone, version)) return
+
+      const newMilestone = formatTargetMilestone(version, bug.product)
+      stageTargetMilestoneChange(bugId, currentMilestone, newMilestone)
+    },
+    [bugs, stageIterationChange, stageTargetMilestoneChange],
+  )
+
+  const iterationOptions = useMemo(() => {
+    if (isCycleVersion(filters.nightlyVersion)) {
+      return getIterationOptions(filters.nightlyVersion)
+    }
+    // For Unscheduled, All releases, or an unknown filter, fall back to the
+    // current Nightly cycle so the picker stays usable for triaging.
+    const currentNightly = getCurrentNightlyVersion()
+    return currentNightly === undefined ? [] : getIterationOptions(currentNightly)
+  }, [filters.nightlyVersion])
 
   // Handle invalid move attempt (e.g., unassigned bug out of backlog)
   const handleInvalidMove = useCallback(
@@ -554,9 +662,11 @@ function App() {
             whiteboardTag={filters.whiteboardTag}
             component={filters.component}
             sortOrder={filters.sortOrder}
+            nightlyVersion={filters.nightlyVersion}
             onWhiteboardTagChange={handleWhiteboardTagChange}
             onComponentChange={handleComponentChange}
             onSortOrderChange={handleSortOrderChange}
+            onNightlyVersionChange={handleNightlyVersionChange}
             onApplyFilters={handleApplyFilters}
             isLoading={isLoadingBugs}
             assignees={allAssignees}
@@ -581,9 +691,54 @@ function App() {
           </p>
         )}
 
+        {/* View mode toggle */}
+        {!(bugs.length === 0 && !isLoadingBugs && !hasActiveFilters && !bugsError) && (
+          <div className="mb-4 flex justify-end">
+            <div role="group" aria-label="View mode" className="flex">
+              <button
+                type="button"
+                aria-pressed={viewMode === 'kanban'}
+                onClick={() => {
+                  setViewMode('kanban')
+                }}
+                className={`flex items-center gap-1 rounded-l border border-r-0 px-3 py-2 text-sm transition-colors ${
+                  viewMode === 'kanban'
+                    ? 'border-accent-primary bg-accent-primary text-white'
+                    : 'border-bg-tertiary bg-bg-primary text-text-secondary hover:bg-bg-tertiary'
+                }`}
+              >
+                <span className="material-icons text-sm">view_kanban</span>
+                Kanban
+              </button>
+              <button
+                type="button"
+                aria-pressed={viewMode === 'gantt'}
+                onClick={() => {
+                  setViewMode('gantt')
+                }}
+                className={`flex items-center gap-1 rounded-r border px-3 py-2 text-sm transition-colors ${
+                  viewMode === 'gantt'
+                    ? 'border-accent-primary bg-accent-primary text-white'
+                    : 'border-bg-tertiary bg-bg-primary text-text-secondary hover:bg-bg-tertiary'
+                }`}
+              >
+                <span className="material-icons text-sm">view_timeline</span>
+                Gantt
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Board or Welcome */}
         {bugs.length === 0 && !isLoadingBugs && !hasActiveFilters && !bugsError ? (
           <EmptyBoardWelcome />
+        ) : viewMode === 'gantt' ? (
+          <GanttChart
+            bugs={bugs}
+            nightlyVersion={
+              isCycleVersion(filters.nightlyVersion) ? filters.nightlyVersion : undefined
+            }
+          />
         ) : (
           <Board
             bugs={bugs}
@@ -594,12 +749,14 @@ function App() {
             onPriorityChange={handlePriorityChange}
             onSeverityChange={handleSeverityChange}
             onQeVerifyChange={handleQeVerifyChange}
+            onIterationChange={handleIterationChange}
             onInvalidMove={handleInvalidMove}
             isLoading={isLoadingBugs}
             onApplyChanges={handleApplyChanges}
             onClearChanges={handleClearChanges}
             hasActiveFilters={hasActiveFilters}
             betaVersion={betaVersion}
+            iterationOptions={iterationOptions}
           />
         )}
       </main>

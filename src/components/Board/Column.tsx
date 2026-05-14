@@ -44,12 +44,16 @@ interface ColumnProps {
   stagedSeverities?: Map<number, string>
   stagedQeVerifyBugIds?: Set<number>
   stagedQeVerifies?: Map<number, QeVerifyStatus>
+  stagedIterationBugIds?: Set<number>
+  stagedIterations?: Map<number, string | undefined>
+  iterationOptions?: string[]
   allAssignees?: Assignee[]
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
   onPointsChange?: (bugId: number, points: number | string | undefined) => void
   onPriorityChange?: (bugId: number, priority: string) => void
   onSeverityChange?: (bugId: number, severity: string) => void
   onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
+  onIterationChange?: (bugId: number, iteration: string | undefined) => void
   isLoading?: boolean
   selectedIndex?: number
   isGrabbing?: boolean
@@ -99,12 +103,16 @@ export function Column({
   stagedSeverities,
   stagedQeVerifyBugIds,
   stagedQeVerifies,
+  stagedIterationBugIds,
+  stagedIterations,
+  iterationOptions,
   allAssignees,
   onAssigneeChange,
   onPointsChange,
   onPriorityChange,
   onSeverityChange,
   onQeVerifyChange,
+  onIterationChange,
   isLoading = false,
   selectedIndex,
   isGrabbing = false,
@@ -291,6 +299,9 @@ export function Column({
                     stagedSeverity={stagedSeverities?.get(bug.id)}
                     isQeVerifyStaged={stagedQeVerifyBugIds?.has(bug.id)}
                     stagedQeVerify={stagedQeVerifies?.get(bug.id)}
+                    isIterationStaged={stagedIterationBugIds?.has(bug.id)}
+                    stagedIteration={stagedIterations?.get(bug.id)}
+                    iterationOptions={iterationOptions}
                     isSelected={selectedIndex === index}
                     isGrabbed={selectedIndex === index && isGrabbing}
                     allAssignees={filteredAssignees}
@@ -299,6 +310,7 @@ export function Column({
                     onPriorityChange={onPriorityChange}
                     onSeverityChange={onSeverityChange}
                     onQeVerifyChange={onQeVerifyChange}
+                    onIterationChange={onIterationChange}
                     trackingDisplayValue={
                       column === 'uplift' && betaVersion !== undefined
                         ? (getBugBetaTracking(bug, betaVersion) ?? '---')

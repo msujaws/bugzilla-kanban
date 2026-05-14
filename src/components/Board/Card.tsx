@@ -11,6 +11,7 @@ import { PointsPicker } from './PointsPicker'
 import { PriorityPicker } from './PriorityPicker'
 import { SeverityPicker } from './SeverityPicker'
 import { QeVerifyPicker } from './QeVerifyPicker'
+import { IterationPicker } from './IterationPicker'
 
 const BUGZILLA_BUG_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?id='
 
@@ -31,6 +32,9 @@ interface CardProps {
   stagedSeverity?: string
   isQeVerifyStaged?: boolean
   stagedQeVerify?: QeVerifyStatus
+  isIterationStaged?: boolean
+  stagedIteration?: string
+  iterationOptions?: string[]
   onClick?: (bug: BugzillaBug) => void
   allAssignees?: Assignee[]
   onAssigneeChange?: (bugId: number, newAssignee: string) => void
@@ -38,6 +42,7 @@ interface CardProps {
   onPriorityChange?: (bugId: number, priority: string) => void
   onSeverityChange?: (bugId: number, severity: string) => void
   onQeVerifyChange?: (bugId: number, status: QeVerifyStatus) => void
+  onIterationChange?: (bugId: number, iteration: string | undefined) => void
   trackingDisplayValue?: string
   statusDisplayValue?: string
   isUpliftComplete?: boolean
@@ -76,6 +81,9 @@ export function Card({
   stagedSeverity,
   isQeVerifyStaged = false,
   stagedQeVerify,
+  isIterationStaged = false,
+  stagedIteration,
+  iterationOptions,
   onClick,
   allAssignees,
   onAssigneeChange,
@@ -83,6 +91,7 @@ export function Card({
   onPriorityChange,
   onSeverityChange,
   onQeVerifyChange,
+  onIterationChange,
   trackingDisplayValue,
   statusDisplayValue,
   isUpliftComplete,
@@ -92,6 +101,7 @@ export function Card({
   const [isPriorityPickerOpen, setIsPriorityPickerOpen] = useState(false)
   const [isSeverityPickerOpen, setIsSeverityPickerOpen] = useState(false)
   const [isQeVerifyPickerOpen, setIsQeVerifyPickerOpen] = useState(false)
+  const [isIterationPickerOpen, setIsIterationPickerOpen] = useState(false)
   const [anchorPosition, setAnchorPosition] = useState<{ x: number; y: number } | undefined>()
 
   // Generate unique IDs for picker listboxes
@@ -100,11 +110,13 @@ export function Card({
   const priorityListboxId = useId()
   const severityListboxId = useId()
   const qeVerifyListboxId = useId()
+  const iterationListboxId = useId()
   const assigneeButtonRef = useRef<HTMLButtonElement>(null)
   const pointsButtonRef = useRef<HTMLButtonElement>(null)
   const priorityButtonRef = useRef<HTMLButtonElement>(null)
   const severityButtonRef = useRef<HTMLButtonElement>(null)
   const qeVerifyButtonRef = useRef<HTMLButtonElement>(null)
+  const iterationButtonRef = useRef<HTMLButtonElement>(null)
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: bug.id,
   })
@@ -149,6 +161,14 @@ export function Card({
     setIsQeVerifyPickerOpen(true)
   }, [])
 
+  const openIterationPicker = useCallback(() => {
+    if (iterationButtonRef.current) {
+      const rect = iterationButtonRef.current.getBoundingClientRect()
+      setAnchorPosition({ x: rect.left, y: rect.bottom + 4 })
+    }
+    setIsIterationPickerOpen(true)
+  }, [])
+
   const handleAssigneeButtonClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     openAssigneePicker()
@@ -172,6 +192,18 @@ export function Card({
   const handleQeVerifyButtonClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     openQeVerifyPicker()
+  }
+
+  const handleIterationButtonClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    openIterationPicker()
+  }
+
+  const handleIterationSelect = (iteration: string | undefined) => {
+    if (onIterationChange) {
+      onIterationChange(bug.id, iteration)
+    }
+    setIsIterationPickerOpen(false)
   }
 
   const handleAssigneeSelect = (email: string) => {
@@ -220,6 +252,7 @@ export function Card({
   const displayedSeverity = isSeverityStaged && stagedSeverity ? stagedSeverity : bug.severity
   const originalQeStatus = getQeVerifyStatus(bug.flags)
   const displayedQeStatus = isQeVerifyStaged && stagedQeVerify ? stagedQeVerify : originalQeStatus
+  const displayedIteration = isIterationStaged ? stagedIteration : bug.cf_fx_iteration
 
   const priorityColor = priorityColors[displayedPriority] ?? 'bg-priority-p5'
   const severityColor = severityColors[displayedSeverity] ?? 'text-text-tertiary'
@@ -414,6 +447,30 @@ export function Card({
         <span className="min-w-0 truncate rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary">
           {bug.component}
         </span>
+
+        {/* Iteration badge */}
+        {onIterationChange && iterationOptions && iterationOptions.length > 0 ? (
+          <button
+            ref={iterationButtonRef}
+            type="button"
+            aria-label={`Change iteration, current: ${displayedIteration ?? 'none'}`}
+            aria-expanded={isIterationPickerOpen}
+            aria-haspopup="listbox"
+            aria-controls={iterationListboxId}
+            onClick={handleIterationButtonClick}
+            className={`flex-shrink-0 whitespace-nowrap rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary transition-colors hover:bg-bg-tertiary/80 ${
+              isIterationStaged ? 'ring-2 ring-accent-staged' : ''
+            }`}
+          >
+            {displayedIteration ?? 'iter ?'}
+          </button>
+        ) : (
+          displayedIteration && (
+            <span className="flex-shrink-0 whitespace-nowrap rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary">
+              {displayedIteration}
+            </span>
+          )
+        )}
       </div>
 
       {/* Assignee and QE Verification row */}
@@ -548,6 +605,21 @@ export function Card({
           currentStatus={displayedQeStatus}
           anchorPosition={anchorPosition}
           listboxId={qeVerifyListboxId}
+        />
+      )}
+
+      {/* Iteration Picker */}
+      {onIterationChange && iterationOptions && iterationOptions.length > 0 && (
+        <IterationPicker
+          isOpen={isIterationPickerOpen}
+          onClose={() => {
+            setIsIterationPickerOpen(false)
+          }}
+          onSelect={handleIterationSelect}
+          iterationOptions={iterationOptions}
+          currentIteration={displayedIteration}
+          anchorPosition={anchorPosition}
+          listboxId={iterationListboxId}
         />
       )}
     </div>

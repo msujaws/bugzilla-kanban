@@ -1218,4 +1218,56 @@ describe('Card', () => {
       ).toBeInTheDocument()
     })
   })
+
+  describe('iteration picker integration', () => {
+    const bugWithIteration: BugzillaBug = { ...mockBug, cf_fx_iteration: '152.2' }
+
+    it('renders an editable iteration badge when onIterationChange and options are provided', () => {
+      render(
+        <Card
+          bug={bugWithIteration}
+          onIterationChange={vi.fn()}
+          iterationOptions={['152.1', '152.2', '152.3']}
+        />,
+      )
+      expect(screen.getByLabelText(/Change iteration/)).toBeInTheDocument()
+    })
+
+    it('does not render a clickable badge when iterationOptions is missing', () => {
+      render(<Card bug={bugWithIteration} onIterationChange={vi.fn()} />)
+      expect(screen.queryByLabelText(/Change iteration/)).not.toBeInTheDocument()
+    })
+
+    it('opens the iteration picker when the badge is clicked', async () => {
+      const user = userEvent.setup()
+      render(
+        <Card
+          bug={bugWithIteration}
+          onIterationChange={vi.fn()}
+          iterationOptions={['152.1', '152.2', '152.3']}
+        />,
+      )
+
+      await user.click(screen.getByLabelText(/Change iteration/))
+
+      expect(screen.getByRole('listbox', { name: /Select iteration/i })).toBeInTheDocument()
+    })
+
+    it('calls onIterationChange when a new iteration is selected', async () => {
+      const user = userEvent.setup()
+      const onIterationChange = vi.fn()
+      render(
+        <Card
+          bug={bugWithIteration}
+          onIterationChange={onIterationChange}
+          iterationOptions={['152.1', '152.2', '152.3']}
+        />,
+      )
+
+      await user.click(screen.getByLabelText(/Change iteration/))
+      await user.click(screen.getByRole('option', { name: /Iteration 152.3/i }))
+
+      expect(onIterationChange).toHaveBeenCalledWith(mockBug.id, '152.3')
+    })
+  })
 })
