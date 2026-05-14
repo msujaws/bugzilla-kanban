@@ -267,13 +267,14 @@ describe('BugsSlice', () => {
     it('should refetch bugs with same filters', async () => {
       const { fetchBugs, refreshBugs } = useStore.getState()
 
-      // Initial fetch
+      // Initial fetch — issues the open/resolved/backlog queries in parallel.
       await fetchBugs(testApiKey)
-      expect(mockGetBugs).toHaveBeenCalledTimes(1)
+      const initialCallCount = mockGetBugs.mock.calls.length
+      expect(initialCallCount).toBeGreaterThan(0)
 
-      // Refresh
+      // Refresh — issues the same set of queries a second time.
       await refreshBugs()
-      expect(mockGetBugs).toHaveBeenCalledTimes(2)
+      expect(mockGetBugs.mock.calls.length).toBe(initialCallCount * 2)
     })
 
     it('should use stored API key for refresh', async () => {
