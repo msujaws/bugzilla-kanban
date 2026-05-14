@@ -1144,4 +1144,76 @@ describe('StagedSlice', () => {
       ])
     })
   })
+
+  describe('stageTargetMilestoneChange', () => {
+    it('stages a target_milestone change', () => {
+      const { stageTargetMilestoneChange } = useStore.getState()
+      stageTargetMilestoneChange(123, '---', 'Firefox 152')
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.targetMilestone).toEqual({ from: '---', to: 'Firefox 152' })
+    })
+
+    it('removes the change when reverting to the original value', () => {
+      const { stageTargetMilestoneChange } = useStore.getState()
+      stageTargetMilestoneChange(123, '---', 'Firefox 152')
+      stageTargetMilestoneChange(123, '---', '---')
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('preserves other staged changes when removing the milestone change', () => {
+      const { stageChange, stageTargetMilestoneChange } = useStore.getState()
+      stageChange(123, 'backlog', 'todo')
+      stageTargetMilestoneChange(123, '---', 'Firefox 152')
+      stageTargetMilestoneChange(123, '---', '---')
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(true)
+      expect(changes.get(123)?.status).toEqual({ from: 'backlog', to: 'todo' })
+      expect(changes.get(123)?.targetMilestone).toBeUndefined()
+    })
+
+    it('applies the target_milestone change to the bug update', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({ successful: [123], failed: [] })
+      const { stageTargetMilestoneChange, applyChanges } = useStore.getState()
+      stageTargetMilestoneChange(123, '---', 'Firefox 152')
+      await applyChanges(testApiKey)
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([
+        { id: 123, target_milestone: 'Firefox 152' },
+      ])
+    })
+  })
+
+  describe('stageIterationChange', () => {
+    it('stages an iteration change', () => {
+      const { stageIterationChange } = useStore.getState()
+      stageIterationChange(123, undefined, '152.1')
+      const { changes } = useStore.getState()
+      expect(changes.get(123)?.iteration).toEqual({ from: undefined, to: '152.1' })
+    })
+
+    it('removes the change when reverting to the original value', () => {
+      const { stageIterationChange } = useStore.getState()
+      stageIterationChange(123, '152.0', '152.1')
+      stageIterationChange(123, '152.0', '152.0')
+      const { changes } = useStore.getState()
+      expect(changes.has(123)).toBe(false)
+    })
+
+    it('applies the cf_fx_iteration change to the bug update', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({ successful: [123], failed: [] })
+      const { stageIterationChange, applyChanges } = useStore.getState()
+      stageIterationChange(123, undefined, '152.2')
+      await applyChanges(testApiKey)
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([{ id: 123, cf_fx_iteration: '152.2' }])
+    })
+
+    it('applies a cleared iteration as an empty string', async () => {
+      mockBatchUpdateBugs.mockResolvedValueOnce({ successful: [123], failed: [] })
+      const { stageIterationChange, applyChanges } = useStore.getState()
+      const cleared: string | undefined = undefined
+      stageIterationChange(123, '152.1', cleared)
+      await applyChanges(testApiKey)
+      expect(mockBatchUpdateBugs).toHaveBeenCalledWith([{ id: 123, cf_fx_iteration: '' }])
+    })
+  })
 })

@@ -5,6 +5,7 @@ import type { StateCreator } from 'zustand'
 import { BugzillaClient } from '@/lib/bugzilla/client'
 import type { BugzillaBug, BugFilters } from '@/lib/bugzilla/types'
 import { filterMetaBugs } from '@/lib/bugzilla/meta-filter'
+import { hasSprintTag } from '@/lib/bugzilla/sprint-tag'
 import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
 import type { ApiKey } from '@/types/branded'
 import { DEFAULT_BUGZILLA_URL } from '@/types/branded'
@@ -13,8 +14,15 @@ import {
   getBetaStatusField,
   getBetaTrackingField,
 } from '@/lib/firefox/beta-version'
+import {
+  getCurrentNightlyVersion,
+  UNSCHEDULED,
+  isCycleVersion,
+  type NightlyCycleFilter,
+} from '@/lib/firefox/nightly-version'
+import { BLANK_MILESTONE, getMilestoneCandidatesForCycle } from '@/lib/bugzilla/target-milestone'
 
-const RESOLVED_QUERY_LIMIT = 250
+const RESOLVED_QUERY_LIMIT = 1000
 
 /**
  * Check if a bug is public (not in any security or confidential groups).
@@ -28,6 +36,12 @@ export interface BugsFilters {
   whiteboardTag: string
   component: string
   sortOrder: SortOrder
+  /**
+   * Selected Nightly cycle filter. Used to scope the target_milestone filter.
+   * A FirefoxBetaVersion narrows to that cycle, `ALL_RELEASES` clears the filter,
+   * and `UNSCHEDULED` shows only bugs with a blank milestone.
+   */
+  nightlyVersion?: NightlyCycleFilter
 }
 
 export interface BugsSlice {
@@ -57,6 +71,7 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
     whiteboardTag: '',
     component: '',
     sortOrder: 'priority',
+    nightlyVersion: getCurrentNightlyVersion(),
   },
   lastApiKey: null,
 
@@ -75,6 +90,12 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
       if (filters.component) {
         bugFilters.component = filters.component
       }
+      if (isCycleVersion(filters.nightlyVersion)) {
+        bugFilters.targetMilestones = getMilestoneCandidatesForCycle(filters.nightlyVersion)
+      } else if (filters.nightlyVersion === UNSCHEDULED) {
+        bugFilters.targetMilestones = [BLANK_MILESTONE]
+      }
+      // ALL_RELEASES (or undefined) — no target_milestone filter.
       // Include beta tracking flag fields if we know the current beta version
       const betaVersion = getCurrentBetaVersion()
       if (betaVersion !== undefined) {
@@ -99,16 +120,31 @@ export const createBugsSlice: StateCreator<BugsSlice> = (set, get) => ({
         limit: RESOLVED_QUERY_LIMIT,
       }
 
-      const [openBugs, resolvedBugs] = await Promise.all([
+      // Query 3: Backlog bugs — NEW/UNCONFIRMED, never filtered by cycle so the
+      // backlog surfaces work from every release.
+      // We drop targetMilestones from the base filters for this query.
+      const { targetMilestones: _milestonesForBacklog, ...baseFiltersWithoutMilestone } = bugFilters
+      const backlogFilters: BugFilters = {
+        ...baseFiltersWithoutMilestone,
+        status: ['UNCONFIRMED', 'NEW'],
+      }
+
+      const [openBugs, resolvedBugs, backlogQueryBugs] = await Promise.all([
         client.getBugs(openFilters),
         client.getBugs(resolvedFilters),
+        client.getBugs(backlogFilters),
       ])
 
+      // Only keep bugs from the backlog query that would actually land in the
+      // backlog column (no sprint tag). Bugs that would land in TODO from
+      // other cycles must not pollute the current cycle's columns.
+      const extraBacklogBugs = backlogQueryBugs.filter((bug) => !hasSprintTag(bug.whiteboard))
+
       const isTruncated = resolvedBugs.length >= RESOLVED_QUERY_LIMIT
-      // Deduplicate in case a bug appears in both results
+      // Deduplicate in case a bug appears in multiple result sets
       const seenIds = new Set<number>()
       const allBugs: BugzillaBug[] = []
-      for (const bug of [...openBugs, ...resolvedBugs]) {
+      for (const bug of [...openBugs, ...resolvedBugs, ...extraBacklogBugs]) {
         if (!seenIds.has(bug.id)) {
           seenIds.add(bug.id)
           allBugs.push(bug)

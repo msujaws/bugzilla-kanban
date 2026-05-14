@@ -118,4 +118,34 @@ describe('filter-storage', () => {
       expect(hasFilters()).toBe(false)
     })
   })
+
+  describe('nightlyVersion round-trip', () => {
+    it('persists and rehydrates a valid nightlyVersion', () => {
+      saveFilters({
+        whiteboardTag: '',
+        component: '',
+        sortOrder: 'priority',
+        // 152 is in the FirefoxBetaVersion valid range (100-300).
+        nightlyVersion: 152 as never,
+      })
+
+      const result = getFilters()
+      expect(result?.nightlyVersion).toBe(152)
+    })
+
+    it('drops an out-of-range nightlyVersion silently', () => {
+      // Bypass type check to simulate a corrupt stored value.
+      localStorage.setItem(
+        'bugzilla_filters',
+        JSON.stringify({
+          whiteboardTag: '',
+          component: '',
+          sortOrder: 'priority',
+          nightlyVersion: 9999,
+        }),
+      )
+      const result = getFilters()
+      expect(result?.nightlyVersion).toBeUndefined()
+    })
+  })
 })

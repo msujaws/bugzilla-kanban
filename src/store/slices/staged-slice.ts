@@ -44,6 +44,8 @@ export interface StagedChange {
   qeVerify?: { from: QeVerifyStatus; to: QeVerifyStatus }
   betaStatus?: { from: string; to: string; field: string }
   betaTracking?: { from: string; to: string; field: string }
+  targetMilestone?: { from: string; to: string }
+  iteration?: { from: string | undefined; to: string | undefined }
 }
 
 export interface ApplyResult {
@@ -71,6 +73,12 @@ export interface StagedSlice {
   stageQeVerifyChange: (bugId: number, fromStatus: QeVerifyStatus, toStatus: QeVerifyStatus) => void
   stageBetaStatusChange: (bugId: number, from: string, to: string, field: string) => void
   stageBetaTrackingChange: (bugId: number, from: string, to: string, field: string) => void
+  stageTargetMilestoneChange: (bugId: number, fromMilestone: string, toMilestone: string) => void
+  stageIterationChange: (
+    bugId: number,
+    fromIteration: string | undefined,
+    toIteration: string | undefined,
+  ) => void
   unstageChange: (bugId: number) => void
   clearAllChanges: () => void
   applyChanges: (apiKey: ApiKey) => Promise<ApplyResult>
@@ -348,6 +356,66 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
     })
   },
 
+  // Stage a target_milestone change for a bug
+  stageTargetMilestoneChange: (bugId: number, fromMilestone: string, toMilestone: string) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      const originalMilestone = existing?.targetMilestone?.from ?? fromMilestone
+
+      if (originalMilestone === toMilestone) {
+        if (existing) {
+          const { targetMilestone: _removed, ...rest } = existing
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        newChanges.set(bugId, {
+          ...existing,
+          targetMilestone: { from: originalMilestone, to: toMilestone },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
+  // Stage a cf_fx_iteration change for a bug
+  stageIterationChange: (
+    bugId: number,
+    fromIteration: string | undefined,
+    toIteration: string | undefined,
+  ) => {
+    set((state) => {
+      const newChanges = new Map(state.changes)
+      const existing = newChanges.get(bugId)
+
+      const originalIteration = existing?.iteration?.from ?? fromIteration
+
+      if (originalIteration === toIteration) {
+        if (existing) {
+          const { iteration: _removed, ...rest } = existing
+          if (Object.keys(rest).length > 0) {
+            newChanges.set(bugId, rest)
+          } else {
+            newChanges.delete(bugId)
+          }
+        }
+      } else {
+        newChanges.set(bugId, {
+          ...existing,
+          iteration: { from: originalIteration, to: toIteration },
+        })
+      }
+
+      return { changes: newChanges }
+    })
+  },
+
   // Remove a staged change
   unstageChange: (bugId: number) => {
     set((state) => {
@@ -424,6 +492,14 @@ export const createStagedSlice: StateCreator<StagedSlice> = (set, get) => ({
         if (change.betaTracking) {
           ;(update as unknown as Record<string, unknown>)[change.betaTracking.field] =
             change.betaTracking.to
+        }
+
+        if (change.targetMilestone) {
+          update.target_milestone = change.targetMilestone.to
+        }
+
+        if (change.iteration) {
+          update.cf_fx_iteration = change.iteration.to ?? ''
         }
 
         updates.push(update)

@@ -1,5 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
+import { tryCreateFirefoxBetaVersion } from '@/types/branded'
+import { ALL_RELEASES, UNSCHEDULED, type NightlyCycleFilter } from '@/lib/firefox/nightly-version'
 
 /**
  * Filter configuration from URL
@@ -8,6 +10,7 @@ export interface UrlFilters {
   whiteboardTag: string
   component: string
   sortOrder: SortOrder
+  nightlyVersion?: NightlyCycleFilter
 }
 
 /**
@@ -26,6 +29,7 @@ const URL_PARAMS = {
   whiteboard: 'whiteboard',
   component: 'component',
   sort: 'sort',
+  nightly: 'nightly',
 } as const
 
 /**
@@ -59,11 +63,21 @@ function parseFiltersFromUrl(): UrlFilters {
   const sortOrder: SortOrder = VALID_SORT_ORDERS.has(sortParam as SortOrder)
     ? (sortParam as SortOrder)
     : 'priority'
+  const nightlyParam = params.get(URL_PARAMS.nightly)
+  let nightlyVersion: NightlyCycleFilter | undefined
+  if (nightlyParam === ALL_RELEASES) {
+    nightlyVersion = ALL_RELEASES
+  } else if (nightlyParam === UNSCHEDULED) {
+    nightlyVersion = UNSCHEDULED
+  } else if (nightlyParam) {
+    nightlyVersion = tryCreateFirefoxBetaVersion(Number(nightlyParam))
+  }
 
   return {
     whiteboardTag,
     component,
     sortOrder,
+    nightlyVersion,
   }
 }
 
@@ -75,7 +89,8 @@ function hasFiltersInUrl(): boolean {
   return (
     params.has(URL_PARAMS.whiteboard) ||
     params.has(URL_PARAMS.component) ||
-    params.has(URL_PARAMS.sort)
+    params.has(URL_PARAMS.sort) ||
+    params.has(URL_PARAMS.nightly)
   )
 }
 
@@ -100,6 +115,9 @@ export function useUrlFilters() {
     }
     if (filters.sortOrder !== DEFAULT_FILTERS.sortOrder) {
       params.set(URL_PARAMS.sort, filters.sortOrder)
+    }
+    if (filters.nightlyVersion !== undefined) {
+      params.set(URL_PARAMS.nightly, String(filters.nightlyVersion))
     }
 
     // Build new URL

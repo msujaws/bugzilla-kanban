@@ -4,6 +4,8 @@
  */
 
 import type { SortOrder } from '@/lib/bugzilla/sort-bugs'
+import { tryCreateFirefoxBetaVersion } from '@/types/branded'
+import { ALL_RELEASES, UNSCHEDULED, type NightlyCycleFilter } from '@/lib/firefox/nightly-version'
 
 const STORAGE_KEY = 'bugzilla_filters'
 
@@ -14,6 +16,7 @@ export interface StoredFilters {
   whiteboardTag: string
   component: string
   sortOrder: SortOrder
+  nightlyVersion?: NightlyCycleFilter
 }
 
 /**
@@ -25,11 +28,23 @@ function isValidFilters(value: unknown): value is StoredFilters {
   }
 
   const obj = value as Record<string, unknown>
-  return (
-    typeof obj.whiteboardTag === 'string' &&
-    typeof obj.component === 'string' &&
-    (obj.sortOrder === 'priority' || obj.sortOrder === 'lastChanged')
-  )
+  if (
+    typeof obj.whiteboardTag !== 'string' ||
+    typeof obj.component !== 'string' ||
+    (obj.sortOrder !== 'priority' && obj.sortOrder !== 'lastChanged')
+  ) {
+    return false
+  }
+  // nightlyVersion is optional; if present, must be a number (cycle) or a known sentinel.
+  if (
+    obj.nightlyVersion !== undefined &&
+    typeof obj.nightlyVersion !== 'number' &&
+    obj.nightlyVersion !== ALL_RELEASES &&
+    obj.nightlyVersion !== UNSCHEDULED
+  ) {
+    return false
+  }
+  return true
 }
 
 /**
@@ -53,7 +68,15 @@ export function getFilters(): StoredFilters | undefined {
   try {
     const parsed: unknown = JSON.parse(stored)
     if (isValidFilters(parsed)) {
-      return parsed
+      // Re-brand the nightly version when it's a number; pass sentinels through;
+      // drop out-of-range numbers silently.
+      let nightlyVersion: NightlyCycleFilter | undefined
+      if (typeof parsed.nightlyVersion === 'number') {
+        nightlyVersion = tryCreateFirefoxBetaVersion(parsed.nightlyVersion)
+      } else if (parsed.nightlyVersion === ALL_RELEASES || parsed.nightlyVersion === UNSCHEDULED) {
+        nightlyVersion = parsed.nightlyVersion
+      }
+      return { ...parsed, nightlyVersion }
     }
     return undefined
   } catch {
