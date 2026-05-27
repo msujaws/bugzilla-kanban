@@ -160,6 +160,19 @@ describe('BugzillaClient', () => {
       )
     })
 
+    it('should return [] when the response body is missing the bugs field', async () => {
+      // A proxy 502 can sometimes parse as JSON without a `bugs` field;
+      // getBugs must coerce that to [] so downstream `.length` reads can't crash.
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({}),
+      })
+
+      const result = await client.getBugs({ whiteboardTag: 'kanban' })
+
+      expect(result).toEqual([])
+    })
+
     it('should handle network errors', async () => {
       global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
 

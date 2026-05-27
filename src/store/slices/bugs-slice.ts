@@ -22,7 +22,7 @@ import {
 } from '@/lib/firefox/nightly-version'
 import { BLANK_MILESTONE, getMilestoneCandidatesForCycle } from '@/lib/bugzilla/target-milestone'
 
-const RESOLVED_QUERY_LIMIT = 1000
+const RESOLVED_QUERY_LIMIT = 250
 
 /**
  * Check if a bug is public (not in any security or confidential groups).

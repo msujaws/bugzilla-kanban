@@ -87,7 +87,10 @@ export class BugzillaClient {
     const url = `${this.baseUrl}/bug${queryString ? `?${queryString}` : ''}`
 
     const response = await this.request<BugzillaSearchResponse>(url)
-    return response.bugs
+    // Guard at the I/O boundary: a malformed/partial response (e.g. a proxy
+    // 502 that still parses as JSON) must not propagate `undefined` into the
+    // store, where downstream `.length` reads would crash the UI.
+    return Array.isArray(response.bugs) ? response.bugs : []
   }
 
   /**
